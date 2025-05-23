@@ -2,7 +2,7 @@
 /**
  * NamespaceManager class
  * 
- * Manages socket.io namespaces and rooms for WebSocket connections
+ * Manages namespaces and rooms for WebSocket connections
  * 
  * @package     Xentixar\Socklet
  * @author      Xentixar

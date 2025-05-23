@@ -1,12 +1,12 @@
 # Socklet
 
-Welcome to Socklet! A framework-agnostic PHP WebSocket and HTTP server library that provides NestJS-like event-based routing and Socket.io-like namespaces and rooms functionality.
+Welcome to Socklet! A framework-agnostic PHP WebSocket and HTTP server library that provides attribute-based routing and powerful namespaces and rooms functionality.
 
 ## Features
 
 - WebSocket and HTTP combined server
-- NestJS-like attribute-based routing
-- Socket.io-like namespaces and rooms
+- Attribute-based routing
+- Namespaces and rooms support
 - Middleware support for authentication and request processing
 - Zero dependencies - built with PHP core functionality only
 - Easy-to-use event-based architecture

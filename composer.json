@@ -1,6 +1,6 @@
 {
     "name": "xentixar/socklet",
-    "description": "Framework-agnostic PHP WebSocket and HTTP server library with NestJS-like event-based routing and Socket.io-like namespaces and rooms.",
+    "description": "Framework-agnostic PHP WebSocket and HTTP server library with attribute-based routing and support for namespaces and rooms.",
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -22,7 +22,6 @@
     "keywords": [
         "websocket",
         "socket",
-        "socket.io",
         "http",
         "https",
         "realtime",

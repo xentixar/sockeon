@@ -61,7 +61,7 @@ class Router
         
         // Register WebSocket routes
         foreach ($ref->getMethods() as $method) {
-            // Socket.io routes
+            // Socket routes
             foreach ($method->getAttributes(SocketOn::class) as $attr) {
                 $event = $attr->newInstance()->event;
                 $this->wsRoutes[$event] = [$controller, $method->getName()];

@@ -58,7 +58,7 @@ public function getUsers($request)
 
 ## Namespaces & Rooms
 
-Socklet provides Socket.io-like namespaces and rooms for organizing WebSocket connections.
+Socklet provides a powerful system of namespaces and rooms for organizing WebSocket connections.
 
 ### Namespaces
 
