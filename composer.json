@@ -1,0 +1,35 @@
+{
+    "name": "xentixar/socklet",
+    "description": "Framework-agnostic PHP WebSocket and HTTP server library with NestJS-like event-based routing and Socket.io-like namespaces and rooms.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Xentixar\\Socklet\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "xentixar",
+            "email": "xentixar@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "keywords": [
+        "websocket",
+        "socket",
+        "socket.io",
+        "http",
+        "https",
+        "realtime",
+        "event-driven",
+        "php",
+        "laravel",
+        "symfony",
+        "framework-agnostic"
+    ]
+}

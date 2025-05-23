@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socklet WebSocket Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .connection-status {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chat-container {
+            display: flex;
+            gap: 20px;
+        }
+        .messages {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .controls {
+            flex: 1;
+        }
+        .message-list {
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .message {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .received {
+            background-color: #e9ecef;
+        }
+        .input-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        .server-status {
+            margin-top: 15px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Socklet WebSocket Client</h1>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            Disconnected
+        </div>
+        
+        <div class="card">
+            <h2>Connection</h2>
+            <div class="input-group">
+                <label for="serverUrl">Server URL:</label>
+                <input type="text" id="serverUrl" value="ws://localhost:8000" placeholder="ws://localhost:8000">
+            </div>
+            <button id="connectBtn">Connect</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+            
+            <div class="server-status">
+                <div>API Status: <span id="apiStatus">Unknown</span></div>
+                <div>Server Time: <span id="serverTime">Unknown</span></div>
+            </div>
+        </div>
+        
+        <div class="card chat-container">
+            <div class="messages">
+                <h2>Messages</h2>
+                <div id="messageList" class="message-list"></div>
+                <div class="input-group">
+                    <label for="messageInput">Message:</label>
+                    <input type="text" id="messageInput" placeholder="Type your message here..." disabled>
+                </div>
+                <button id="sendBtn" disabled>Send Message</button>
+            </div>
+            
+            <div class="controls">
+                <h2>Room</h2>
+                <div class="input-group">
+                    <label for="roomInput">Room:</label>
+                    <input type="text" id="roomInput" placeholder="Enter room name" disabled>
+                </div>
+                <button id="joinRoomBtn" disabled>Join Room</button>
+                <div id="currentRoom" style="margin-top: 10px; font-weight: bold;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const connectionStatus = document.getElementById('connectionStatus');
+            const serverUrlInput = document.getElementById('serverUrl');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const messageList = document.getElementById('messageList');
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const roomInput = document.getElementById('roomInput');
+            const joinRoomBtn = document.getElementById('joinRoomBtn');
+            const currentRoom = document.getElementById('currentRoom');
+            const apiStatus = document.getElementById('apiStatus');
+            const serverTime = document.getElementById('serverTime');
+            
+            // WebSocket connection
+            let socket = null;
+            let currentRoomName = null;
+            
+            // Connect to WebSocket server
+            connectBtn.addEventListener('click', function() {
+                if (socket) {
+                    addSystemMessage('Already connected');
+                    return;
+                }
+                
+                const serverUrl = serverUrlInput.value.trim();
+                if (!serverUrl) {
+                    addSystemMessage('Please enter a server URL');
+                    return;
+                }
+                
+                try {
+                    socket = new WebSocket(serverUrl);
+                    
+                    socket.onopen = function() {
+                        connectionStatus.textContent = 'Connected';
+                        connectionStatus.classList.remove('disconnected');
+                        connectionStatus.classList.add('connected');
+                        
+                        // Enable UI elements
+                        messageInput.disabled = false;
+                        sendBtn.disabled = false;
+                        roomInput.disabled = false;
+                        joinRoomBtn.disabled = false;
+                        connectBtn.disabled = true;
+                        disconnectBtn.disabled = false;
+                        
+                        addSystemMessage('Connected to server');
+                        
+                        // Check server status via HTTP API
+                        checkServerStatus();
+                    };
+                    
+                    socket.onclose = function() {
+                        handleDisconnect();
+                        addSystemMessage('Disconnected from server');
+                    };
+                    
+                    socket.onerror = function(error) {
+                        console.error('WebSocket Error:', error);
+                        addSystemMessage('Error: Could not connect to server');
+                        handleDisconnect();
+                    };
+                    
+                    socket.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        console.log('Received message:', data);
+                        
+                        // Handle different event types
+                        if (data.event === 'message.receive') {
+                            const messageData = data.data;
+                            const fromClient = messageData.from;
+                            const message = messageData.message;
+                            const room = messageData.room || 'global';
+                            
+                            addMessage(`Client ${fromClient}: ${message}`, room);
+                        } else if (data.event === 'room.joined') {
+                            const roomData = data.data;
+                            currentRoomName = roomData.room;
+                            currentRoom.textContent = `Current Room: ${currentRoomName}`;
+                            addSystemMessage(`Joined room: ${currentRoomName}`);
+                        }
+                    };
+                } catch (error) {
+                    console.error('Error creating WebSocket:', error);
+                    addSystemMessage('Error: Could not create WebSocket connection');
+                }
+            });
+            
+            // Disconnect from server
+            disconnectBtn.addEventListener('click', function() {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.close();
+                }
+                handleDisconnect();
+            });
+            
+            // Send message
+            sendBtn.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Join room
+            joinRoomBtn.addEventListener('click', function() {
+                const roomName = roomInput.value.trim();
+                if (!roomName) {
+                    addSystemMessage('Please enter a room name');
+                    return;
+                }
+                
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
+                        event: 'room.join',
+                        data: {
+                            room: roomName
+                        }
+                    }));
+                    
+                    roomInput.value = '';
+                }
+            });
+            
+            // Helper functions
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (!message) {
+                    return;
+                }
+                
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    const messageData = {
+                        message: message
+                    };
+                    
+                    if (currentRoomName) {
+                        messageData.room = currentRoomName;
+                    }
+                    
+                    socket.send(JSON.stringify({
+                        event: 'message.send',
+                        data: messageData
+                    }));
+                    
+                    addMessage(`You: ${message}`, currentRoomName || 'global', true);
+                    messageInput.value = '';
+                } else {
+                    addSystemMessage('Not connected to server');
+                }
+            }
+            
+            function addMessage(text, room, isSelf = false) {
+                const messageElem = document.createElement('div');
+                messageElem.classList.add('message');
+                if (!isSelf) {
+                    messageElem.classList.add('received');
+                }
+                
+                const roomBadge = room ? `[${room}] ` : '';
+                messageElem.textContent = roomBadge + text;
+                
+                messageList.appendChild(messageElem);
+                messageList.scrollTop = messageList.scrollHeight;
+            }
+            
+            function addSystemMessage(text) {
+                const messageElem = document.createElement('div');
+                messageElem.classList.add('message');
+                messageElem.style.color = '#6c757d';
+                messageElem.style.fontStyle = 'italic';
+                messageElem.textContent = `System: ${text}`;
+                
+                messageList.appendChild(messageElem);
+                messageList.scrollTop = messageList.scrollHeight;
+            }
+            
+            function handleDisconnect() {
+                if (socket) {
+                    socket = null;
+                }
+                
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+                
+                // Disable UI elements
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+                roomInput.disabled = true;
+                joinRoomBtn.disabled = true;
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                
+                currentRoomName = null;
+                currentRoom.textContent = '';
+            }
+            
+            function checkServerStatus() {
+                // Get the base URL (HTTP equivalent of the WebSocket URL)
+                const wsUrl = serverUrlInput.value.trim();
+                const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+                
+                fetch(`${httpUrl}/api/status`)
+                    .then(response => response.json())
+                    .then(data => {
+                        apiStatus.textContent = data.status;
+                        serverTime.textContent = data.time;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching server status:', error);
+                        apiStatus.textContent = 'Error';
+                        serverTime.textContent = 'Error';
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
