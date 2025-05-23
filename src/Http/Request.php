@@ -81,8 +81,18 @@ class Request
         $this->headers = $requestData['headers'] ?? [];
         $this->query = $requestData['query'] ?? [];
         $this->params = $requestData['params'] ?? [];
-        $this->body = $requestData['body'] ?? null;
         $this->rawData = $requestData;
+
+        // Handle JSON body
+        $body = $requestData['body'] ?? null;
+        if (is_string($body) && $this->isJson()) {
+            $decodedBody = json_decode($body, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $this->body = $decodedBody;
+                return;
+            }
+        }
+        $this->body = $body;
     }
 
     /**

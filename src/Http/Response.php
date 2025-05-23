@@ -68,10 +68,10 @@ class Response
         
         // Auto-detect content type based on body
         if (is_array($body) || is_object($body)) {
-            $this->contentType = 'application/json';
+            $this->setContentType('application/json');
         }
     }
-
+    
     /**
      * Set response body
      * 
@@ -83,70 +83,9 @@ class Response
         $this->body = $body;
         return $this;
     }
-
-    /**
-     * Set HTTP status code
-     * 
-     * @param int $statusCode The HTTP status code
-     * @return self
-     */
-    public function setStatusCode(int $statusCode): self
-    {
-        $this->statusCode = $statusCode;
-        return $this;
-    }
-
-    /**
-     * Set content type
-     * 
-     * @param string $contentType The content type
-     * @return self
-     */
-    public function setContentType(string $contentType): self
-    {
-        $this->contentType = $contentType;
-        return $this;
-    }
-
-    /**
-     * Set a response header
-     * 
-     * @param string $name  The header name
-     * @param string $value The header value
-     * @return self
-     */
-    public function setHeader(string $name, string $value): self
-    {
-        $this->headers[$name] = $value;
-        return $this;
-    }
-
-    /**
-     * Set multiple response headers
-     * 
-     * @param array $headers The headers to set
-     * @return self
-     */
-    public function setHeaders(array $headers): self
-    {
-        foreach ($headers as $name => $value) {
-            $this->setHeader($name, $value);
-        }
-        return $this;
-    }
-
-    /**
-     * Get the status code
-     * 
-     * @return int The HTTP status code
-     */
-    public function getStatusCode(): int
-    {
-        return $this->statusCode;
-    }
     
     /**
-     * Get the body
+     * Get response body
      * 
      * @return mixed The response body
      */
@@ -156,7 +95,42 @@ class Response
     }
     
     /**
-     * Get the content type
+     * Set HTTP status code
+     * 
+     * @param int $code The HTTP status code
+     * @return self
+     */
+    public function setStatusCode(int $code): self
+    {
+        $this->statusCode = $code;
+        return $this;
+    }
+    
+    /**
+     * Get HTTP status code
+     * 
+     * @return int The HTTP status code
+     */
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+    
+    /**
+     * Set content type
+     * 
+     * @param string $contentType The content type
+     * @return self
+     */
+    public function setContentType(string $contentType): self
+    {
+        $this->contentType = $contentType;
+        $this->headers['Content-Type'] = $contentType;
+        return $this;
+    }
+    
+    /**
+     * Get content type
      * 
      * @return string The content type
      */
@@ -166,21 +140,33 @@ class Response
     }
     
     /**
-     * Get a specific header value
+     * Set response header
      * 
      * @param string $name The header name
-     * @param mixed $default Default value if header is not found
-     * @return mixed The header value or default
+     * @param string $value The header value
+     * @return self
      */
-    public function getHeader(string $name, mixed $default = null): mixed
+    public function setHeader(string $name, string $value): self
     {
-        return $this->headers[$name] ?? $default;
+        $this->headers[$name] = $value;
+        return $this;
     }
     
     /**
-     * Get all headers
+     * Get response header
      * 
-     * @return array The response headers
+     * @param string $name The header name
+     * @return string|null The header value
+     */
+    public function getHeader(string $name): ?string
+    {
+        return $this->headers[$name] ?? null;
+    }
+    
+    /**
+     * Get all response headers
+     * 
+     * @return array The headers
      */
     public function getHeaders(): array
     {
