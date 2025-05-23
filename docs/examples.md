@@ -47,7 +47,7 @@ class ChatController extends SocketController
     }
 }
 
-$server = new Server("0.0.0.0", 8000, null, true);
+$server = new Server("0.0.0.0", 8000, true);
 
 // Add middleware for user data
 $server->addWebSocketMiddleware(function ($clientId, $event, $data, $next) use ($server) {

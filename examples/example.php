@@ -87,7 +87,7 @@ class AppController extends SocketController
 }
 
 // Initialize server instance on all interfaces, port 8000, with debugging enabled
-$server = new Server("0.0.0.0", 8000, null, true);
+$server = new Server("0.0.0.0", 8000, true);
 
 /**
  * Add WebSocket middleware to log events and set up client data
