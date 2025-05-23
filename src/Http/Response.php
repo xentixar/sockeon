@@ -166,6 +166,18 @@ class Response
     }
     
     /**
+     * Get a specific header value
+     * 
+     * @param string $name The header name
+     * @param mixed $default Default value if header is not found
+     * @return mixed The header value or default
+     */
+    public function getHeader(string $name, mixed $default = null): mixed
+    {
+        return $this->headers[$name] ?? $default;
+    }
+    
+    /**
      * Get all headers
      * 
      * @return array The response headers
@@ -249,9 +261,8 @@ class Response
      */
     public static function json(mixed $data, int $statusCode = 200, array $headers = []): self
     {
-        $response = new self($data, $statusCode, $headers);
-        $response->setContentType('application/json');
-        return $response;
+        $headers['Content-Type'] = 'application/json';
+        return new self($data, $statusCode, $headers);
     }
 
     /**

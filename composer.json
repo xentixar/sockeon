@@ -8,6 +8,11 @@
             "Xentixar\\Socklet\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "xentixar",
@@ -30,5 +35,13 @@
         "laravel",
         "symfony",
         "framework-agnostic"
-    ]
+    ],
+    "require-dev": {
+        "pestphp/pest": "^3.8"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
 }
