@@ -4,6 +4,13 @@
  * 
  * Handles HTTP protocol implementation, request parsing and responses
  * 
+ * Features:
+ * - HTTP request parsing
+ * - Query parameter extraction
+ * - Path normalization
+ * - JSON body parsing
+ * - Response generation
+ * 
  * @package     Xentixar\Socklet
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
@@ -12,6 +19,8 @@
 namespace Xentixar\Socklet\Http;
 
 use Xentixar\Socklet\Core\Server;
+use Xentixar\Socklet\Http\Request;
+use Xentixar\Socklet\Http\Response;
 
 class HttpHandler
 {
@@ -47,7 +56,8 @@ class HttpHandler
      */
     public function handle(int $clientId, $client, string $data): void
     {
-        $request = $this->parseHttpRequest($data);
+        $requestData = $this->parseHttpRequest($data);
+        $request = new Request($requestData);
         
         // Create response
         $response = $this->processRequest($request);
@@ -91,11 +101,28 @@ class HttpHandler
             }
         }
         
+        // Parse the URL to extract query parameters and path
         $query = [];
         $url = parse_url($path);
+        $originalPath = $path;
+        
+        // Extract path from URL
+        if (isset($url['path'])) {
+            $path = $url['path'];
+            
+            // Normalize path
+            if (empty($path)) {
+                $path = '/';
+            } elseif ($path[0] !== '/') {
+                $path = '/' . $path;
+            }
+        } else {
+            $path = '/';
+        }
+        
+        // Extract query parameters
         if (isset($url['query'])) {
             parse_str($url['query'], $query);
-            $path = $url['path'];
         }
 
         // Try to parse JSON body
@@ -117,66 +144,32 @@ class HttpHandler
     /**
      * Process an HTTP request and generate response
      * 
-     * @param array $request  The parsed HTTP request
-     * @return string         The HTTP response string
+     * @param Request $request  The Request object
+     * @return string           The HTTP response string
      */
-    protected function processRequest(array $request): string
+    protected function processRequest(Request $request): string
     {
-        $path = $request['path'];
-        $method = $request['method'];
+        $path = $request->getPath();
+        $method = $request->getMethod();
         
         // Use router to dispatch the request through middleware
-        $response = $this->server->getRouter()->dispatchHttp($request);
+        $result = $this->server->getRouter()->dispatchHttp($request);
         
-        if ($response !== null) {
-            if (is_array($response)) {
-                $body = json_encode($response);
-                $contentType = 'application/json';
-                $statusCode = 200;
+        // Convert controller result to Response object if needed
+        if ($result instanceof Response) {
+            $response = $result;
+        } elseif ($result !== null) {
+            if (is_array($result) || is_object($result)) {
+                $response = Response::json($result);
             } else {
-                $body = $response;
-                $contentType = 'text/html';
-                $statusCode = 200;
+                $response = new Response($result);
             }
         } else {
-            $body = json_encode(['error' => 'Not Found']);
-            $contentType = 'application/json';
-            $statusCode = 404;
+            $response = Response::notFound();
         }
         
-        $headers = [
-            "HTTP/1.1 {$statusCode} " . $this->getStatusText($statusCode),
-            "Content-Type: {$contentType}",
-            "Connection: close",
-            "Content-Length: " . strlen($body)
-        ];
-        
-        return implode("\r\n", $headers) . "\r\n\r\n" . $body;
+        return $response->toString();
     }
 
-    /**
-     * Get HTTP status message from status code
-     * 
-     * Returns the standardized HTTP status text for a given status code.
-     * If code is not recognized, returns "Unknown".
-     * 
-     * @param int $code   HTTP status code (e.g., 200, 404, 500)
-     * @return string     Corresponding status text
-     */
-    protected function getStatusText(int $code): string
-    {
-        $texts = [
-            200 => 'OK',
-            201 => 'Created',
-            204 => 'No Content',
-            400 => 'Bad Request',
-            401 => 'Unauthorized',
-            403 => 'Forbidden',
-            404 => 'Not Found',
-            405 => 'Method Not Allowed',
-            500 => 'Internal Server Error'
-        ];
-        
-        return $texts[$code] ?? 'Unknown';
-    }
+
 }

@@ -28,6 +28,8 @@ $server->run();
 use Xentixar\Socklet\Core\Contracts\SocketController;
 use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
 use Xentixar\Socklet\Http\Attributes\HttpRoute;
+use Xentixar\Socklet\Http\Request;
+use Xentixar\Socklet\Http\Response;
 
 class ChatController extends SocketController
 {
@@ -42,12 +44,12 @@ class ChatController extends SocketController
     }
 
     #[HttpRoute('GET', '/status')]
-    public function getStatus($request)
+    public function getStatus(Request $request)
     {
-        return [
+        return Response::json([
             'status' => 'online',
             'time' => date('Y-m-d H:i:s')
-        ];
+        ]);
     }
 }
 ```
@@ -68,8 +70,8 @@ $server->addWebSocketMiddleware(function ($clientId, $event, $data, $next) {
 });
 
 // Add HTTP middleware
-$server->addHttpMiddleware(function ($request, $next) {
-    echo "HTTP Request: {$request['method']} {$request['path']}\n";
+$server->addHttpMiddleware(function (Request $request, $next) {
+    echo "HTTP Request: {$request->getMethod()} {$request->getPath()}\n";
     return $next();
 });
 ```

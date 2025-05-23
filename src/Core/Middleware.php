@@ -12,6 +12,7 @@
 namespace Xentixar\Socklet\Core;
 
 use Closure;
+use Xentixar\Socklet\Http\Request;
 
 class Middleware
 {
@@ -87,11 +88,11 @@ class Middleware
     /**
      * Execute the HTTP middleware stack
      * 
-     * @param array $request HTTP request data
+     * @param Request $request Request object
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @return mixed Result of the target function or middleware if chain is interrupted
      */
-    public function runHttpStack(array $request, Closure $target): mixed
+    public function runHttpStack(Request $request, Closure $target): mixed
     {
         $stack = $this->httpStack;
         

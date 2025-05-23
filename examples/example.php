@@ -15,6 +15,7 @@ use Xentixar\Socklet\Core\Server;
 use Xentixar\Socklet\Core\Contracts\SocketController;
 use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
 use Xentixar\Socklet\Http\Attributes\HttpRoute;
+use Xentixar\Socklet\Http\Request;
 
 class AppController extends SocketController
 {
@@ -71,13 +72,13 @@ class AppController extends SocketController
     /**
      * Handle GET request to /api/status endpoint
      * 
-     * Returns the current` server status and timestamp
+     * Returns the current server status and timestamp
      * 
-     * @param array $request    HTTP request data
+     * @param Request $request  HTTP request object
      * @return array            Status information
      */
     #[HttpRoute('GET', '/api/status')]
-    public function getStatus($request)
+    public function getStatus(Request $request)
     {
         return [
             'status' => 'online',
@@ -112,12 +113,12 @@ $server->addWebSocketMiddleware(function ($clientId, $event, $data, $next) use (
 /**
  * Add HTTP middleware to log incoming requests
  * 
- * @param array     $request    HTTP request data
+ * @param Request     $request    HTTP request data
  * @param callable  $next       Next middleware
  * @return mixed                Result of next middleware
  */
-$server->addHttpMiddleware(function ($request, $next) {
-    echo "HTTP Request: {$request['method']} {$request['path']}\n";
+$server->addHttpMiddleware(function (Request $request, $next) {
+    echo "HTTP Request: " . $request->getMethod() . " " . $request->getPath() . "\n";
     return $next();
 });
 

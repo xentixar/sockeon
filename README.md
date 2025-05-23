@@ -5,8 +5,11 @@ Welcome to Socklet! A framework-agnostic PHP WebSocket and HTTP server library t
 ## Features
 
 - WebSocket and HTTP combined server
-- Attribute-based routing
-- Namespaces and rooms support
+- Attribute-based routing for both WebSocket events and HTTP endpoints
+- Advanced HTTP request and response handling
+- Path parameters and query parameter support
+- RESTful API support with content negotiation
+- Namespaces and rooms support for WebSocket communication
 - Middleware support for authentication and request processing
 - Zero dependencies - built with PHP core functionality only
 - Easy-to-use event-based architecture
@@ -21,6 +24,35 @@ composer require xentixar/socklet
 
 ```php
 use Xentixar\Socklet\Core\Server;
+use Xentixar\Socklet\Core\Contracts\SocketController;
+use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+use Xentixar\Socklet\Http\Attributes\HttpRoute;
+use Xentixar\Socklet\Http\Request;
+use Xentixar\Socklet\Http\Response;
+
+class MyController extends SocketController
+{
+    // WebSocket event handler
+    #[SocketOn('message')]
+    public function handleMessage(int $clientId, array $data)
+    {
+        $this->broadcast('message', [
+            'from' => $clientId,
+            'text' => $data['text'] ?? ''
+        ]);
+    }
+    
+    // HTTP route with path parameter
+    #[HttpRoute('GET', '/users/{id}')]
+    public function getUser(Request $request): Response
+    {
+        $userId = $request->getParam('id');
+        return Response::json([
+            'id' => $userId,
+            'name' => 'Example User'
+        ]);
+    }
+}
 
 // Initialize server
 $server = new Server("0.0.0.0", 8000);
@@ -32,7 +64,10 @@ $server->registerController(new MyController());
 $server->run();
 ```
 
-See the `examples/example.php` file for a complete example.
+See the example files for complete demonstrations:
+- `examples/example.php` - Basic WebSocket and HTTP example
+- `examples/namespace_example.php` - WebSocket namespaces and rooms
+- `examples/advanced_http_example.php` - Advanced HTTP features
 
 ## Documentation
 

@@ -1,10 +1,18 @@
 # Examples
 
-This document provides comprehensive examples of using the Socklet library for various use cases.
+This document provides examples of using the Socklet library for various use cases.
 
-## Basic Chat Application
+## Overview of Example Files
 
-### Server Code
+The `examples` directory contains three key example files:
+
+1. `example.php` - Basic example with both WebSocket and HTTP capabilities
+2. `namespace_example.php` - Demonstrates namespaces and rooms functionality
+3. `advanced_http_example.php` - Shows the enhanced HTTP Request and Response features
+
+## Basic WebSocket and HTTP Example
+
+The basic example demonstrates handling both WebSocket events and HTTP requests in a single controller:
 
 ```php
 <?php
@@ -13,8 +21,10 @@ use Xentixar\Socklet\Core\Server;
 use Xentixar\Socklet\Core\Contracts\SocketController;
 use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
 use Xentixar\Socklet\Http\Attributes\HttpRoute;
+use Xentixar\Socklet\Http\Request;
+use Xentixar\Socklet\Http\Response;
 
-class ChatController extends SocketController
+class AppController extends SocketController
 {
     #[SocketOn('message.send')]
     public function onMessageSend(int $clientId, array $data)
@@ -38,12 +48,12 @@ class ChatController extends SocketController
     }
 
     #[HttpRoute('GET', '/api/status')]
-    public function getStatus($request)
+    public function getStatus(Request $request): Response
     {
-        return [
+        return Response::json([
             'status' => 'online',
             'time' => date('Y-m-d H:i:s')
-        ];
+        ]);
     }
 }
 
@@ -206,44 +216,146 @@ class GameController extends SocketController
 }
 ```
 
-## Real-time Dashboard Example
+## Namespace Example
+
+The namespace example demonstrates how to use namespaces and rooms for role-based WebSocket message broadcasting:
 
 ```php
-class DashboardController extends SocketController
-{
-    #[SocketOn('dashboard.subscribe')]
-    public function onSubscribe(int $clientId, array $data)
-    {
-        $metrics = $data['metrics'] ?? [];
-        foreach ($metrics as $metric) {
-            $this->joinRoom($clientId, "metric-{$metric}");
-        }
-        
-        $this->emit($clientId, 'dashboard.subscribed', [
-            'metrics' => $metrics
-        ]);
-    }
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
 
-    #[HttpRoute('POST', '/api/metrics/update')]
-    public function updateMetrics($request)
+use Xentixar\Socklet\Core\Contracts\SocketController;
+use Xentixar\Socklet\Core\Server;
+use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+
+class TestController extends SocketController
+{
+    /**
+     * Handle test.event WebSocket event
+     * 
+     * Processes incoming messages and broadcasts them to role-specific rooms
+     * 
+     * @param string $clientId   The ID of the client sending the message
+     * @param array  $data       Message data containing:
+     *                          - role: (string) User role ('admin' or other)
+     *                          - message: (string) Optional message content
+     * @return void
+     */
+    #[SocketOn('test.event')]
+    public function sendMessage($clientId, $data)
     {
-        $metric = $request['body']['metric'] ?? null;
-        $value = $request['body']['value'] ?? null;
-        
-        if ($metric && $value !== null) {
-            $this->broadcast('metric.update', [
-                'metric' => $metric,
-                'value' => $value,
-                'timestamp' => time()
-            ], '/', "metric-{$metric}");
-            
-            return ['status' => 'success'];
+        if ($data['role'] == 'admin') {
+            $this->joinRoom($clientId, 'test.room', '/admin');
+            $this->broadcast('test.event', [
+                'message' => $data['message'] ?? 'Hello from server',
+                'time' => date('H:i:s')
+            ], '/admin', 'test.room');
+        } else {
+            $this->joinRoom($clientId, 'test.room', '/user');
+            $this->broadcast('test.event', [
+                'message' => $data['message'] ?? 'Hello from server',
+                'time' => date('H:i:s')
+            ], '/user', 'test.room');
         }
-        
-        return ['status' => 'error', 'message' => 'Invalid metric data'];
     }
 }
+
+// Initialize the WebSocket server
+$server = new Server(
+    port: 8000,
+    debug: true,
+);
+
+$server->registerController(
+    controller: new TestController(),
+);
+
+$server->run();
 ```
+
+In this example:
+- We create role-based namespaces ('/admin' and '/user')
+- Messages are broadcast only to clients in the same namespace and room
+- Different groups of users can communicate in isolation
+
+## Advanced HTTP Example
+
+The advanced HTTP example demonstrates the enhanced Request and Response features with several endpoints showcasing different capabilities:
+
+```php
+<?php
+require __DIR__ . '/../vendor/autoload.php';
+
+use Xentixar\Socklet\Core\Server;
+use Xentixar\Socklet\Core\Contracts\SocketController;
+use Xentixar\Socklet\Http\Attributes\HttpRoute;
+use Xentixar\Socklet\Http\Request;
+use Xentixar\Socklet\Http\Response;
+
+class AdvancedApiController extends SocketController
+{
+    private array $products = [
+        1 => ['id' => 1, 'name' => 'Laptop', 'price' => 999.99, 'category' => 'electronics'],
+        2 => ['id' => 2, 'name' => 'Smartphone', 'price' => 699.99, 'category' => 'electronics'],
+        3 => ['id' => 3, 'name' => 'Coffee Maker', 'price' => 89.99, 'category' => 'appliances'],
+    ];
+    
+    #[HttpRoute('GET', '/')]
+    public function index(Request $request): Response
+    {
+        // Demonstrate Request methods
+        $clientInfo = [
+            'ip' => $request->getIpAddress(),
+            'url' => $request->getUrl(),
+            'isAjax' => $request->isAjax() ? 'Yes' : 'No',
+            'method' => $request->getMethod(),
+            'userAgent' => $request->getHeader('User-Agent', 'Unknown')
+        ];
+        
+        // Content negotiation based on Accept header
+        if (strpos($request->getHeader('Accept', ''), 'application/json') !== false) {
+            return Response::json([
+                'api' => 'Socklet HTTP API',
+                'client' => $clientInfo,
+                'endpoints' => [/* endpoint listing */]
+            ]);
+        }
+        
+        // Return HTML by default
+        $html = "... HTML content ...";
+        return (new Response($html))
+            ->setContentType('text/html')
+            ->setHeader('X-Demo-Mode', 'enabled');
+    }
+    
+    #[HttpRoute('GET', '/products/{id}')]
+    public function getProduct(Request $request): Response
+    {
+        $id = (int)$request->getParam('id');
+        
+        if (!isset($this->products[$id])) {
+            return Response::notFound([
+                'error' => 'Product not found',
+                'id' => $id
+            ]);
+        }
+        
+        return Response::json($this->products[$id]);
+    }
+    
+    // Additional endpoints showing various response types...
+}
+```
+
+This example showcases:
+- Path parameters: `/products/{id}`
+- Query parameters: `GET /filter?category=electronics`
+- Content negotiation based on Accept headers
+- Various response types (JSON, HTML, errors, downloads)
+- Enhanced Request methods (isAjax(), getUrl(), getIpAddress())
+- Enhanced Response methods (notFound(), unauthorized(), redirect(), download())
+
+To experiment with this API, run the example and use a tool like curl or Postman to make requests to different endpoints.
 
 For more details about the concepts used in these examples, refer to:
 - [Core Concepts](./core-concepts.md)

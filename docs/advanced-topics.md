@@ -7,9 +7,7 @@ This document covers advanced usage patterns and configurations for the Socklet 
 ### Authentication Middleware
 
 ```php
-use Xentixar\Socklet\Core\Middleware;
-
-class AuthMiddleware implements Middleware
+class AuthMiddleware
 {
     private $tokens = [];
 

@@ -49,10 +49,111 @@ Use the `#[HttpRoute]` attribute to handle HTTP requests:
 ```php
 use Xentixar\Socklet\Http\Attributes\HttpRoute;
 
-#[HttpRoute('GET', '/api/users')]
-public function getUsers($request)
+// Basic route
+#[HttpRoute('GET', '/api/status')]
+public function getStatus(Request $request): Response
 {
-    return ['users' => []];
+    return Response::json(['status' => 'online']);
+}
+
+// Route with path parameters
+#[HttpRoute('GET', '/users/{id}')]
+public function getUser(Request $request): Response
+{
+    $userId = $request->getParam('id');
+    return Response::json(['userId' => $userId]);
+}
+
+// Route with query parameters
+// Access via: /search?q=term&limit=10
+#[HttpRoute('GET', '/search')]
+public function search(Request $request): Response
+{
+    $query = $request->getQuery('q', '');
+    $limit = $request->getQuery('limit', 10);
+    return Response::json(['results' => []]);
+}
+```
+
+#### Request Object
+
+The `Request` class encapsulates HTTP request data and provides convenient methods to access headers, query parameters, path parameters, and the request body:
+
+```php
+use Xentixar\Socklet\Http\Request;
+
+#[HttpRoute('GET', '/users/{id}')]
+public function getUser(Request $request)
+{
+    // Access path parameters from URL segments
+    $userId = $request->getParam('id');
+    
+    // Access query parameters from the URL string
+    $format = $request->getQuery('format', 'json');
+    
+    // Access headers (case-insensitive)
+    $userAgent = $request->getHeader('User-Agent');
+    $contentType = $request->getHeader('Content-Type');
+    
+    // Request type checks
+    if ($request->isJson()) {
+        // Handle JSON request
+    }
+    
+    if ($request->isAjax()) {
+        // Handle AJAX request
+    }
+    
+    if ($request->isMethod('POST')) {
+        // Handle specific HTTP method
+    }
+    
+    // Get client information
+    $url = $request->getUrl();
+    $ip = $request->getIpAddress();
+    
+    // Access body data
+    $body = $request->getBody();
+    
+    return ['userId' => $userId];
+}
+```
+
+#### Response Object
+
+The `Response` class provides a structured way to create HTTP responses with status codes, headers, and body content:
+
+```php
+use Xentixar\Socklet\Http\Response;
+
+#[HttpRoute('GET', '/api/products')]
+public function listProducts(Request $request)
+{
+    // Common response types
+    return Response::json([
+        'products' => $products,
+        'count' => count($products)
+    ]);
+    
+    // Status code responses
+    return Response::ok(['message' => 'Success']);      // 200 OK
+    return Response::created(['id' => 123]);            // 201 Created
+    return Response::noContent();                       // 204 No Content
+    return Response::badRequest('Invalid input');       // 400 Bad Request
+    return Response::unauthorized('Login required');    // 401 Unauthorized
+    return Response::forbidden('No access');            // 403 Forbidden
+    return Response::notFound('Resource not found');    // 404 Not Found
+    return Response::serverError('Server error');       // 500 Server Error
+    
+    // Specialized responses
+    return Response::redirect('/login');                // 302 Redirect
+    return Response::download($data, 'report.csv');     // File download
+    
+    // Custom response with fluent API
+    return (new Response($html))
+        ->setContentType('text/html')
+        ->setHeader('X-Custom', 'Value')
+        ->setStatusCode(200);
 }
 ```
 
@@ -105,9 +206,14 @@ $server->addWebSocketMiddleware(function ($clientId, $event, $data, $next) {
 ### HTTP Middleware
 
 ```php
-$server->addHttpMiddleware(function ($request, $next) {
-    // Add request timestamp
-    $request['timestamp'] = time();
+use Xentixar\Socklet\Http\Request;
+
+$server->addHttpMiddleware(function (Request $request, $next) {
+    // Add request timestamp using the setData method
+    $request->setData('timestamp', time());
+    
+    // Log the request
+    error_log("Request to: " . $request->getUrl());
     
     // Continue to next middleware
     return $next();
