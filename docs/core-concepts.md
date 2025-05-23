@@ -82,11 +82,24 @@ The `Request` class encapsulates HTTP request data and provides convenient metho
 ```php
 use Xentixar\Socklet\Http\Request;
 
+// Example with path parameters
 #[HttpRoute('GET', '/users/{id}')]
 public function getUser(Request $request)
 {
     // Access path parameters from URL segments
     $userId = $request->getParam('id');
+    return Response::json(['userId' => $userId]);
+}
+
+// Example with JSON body handling
+#[HttpRoute('POST', '/users')]
+public function createUser(Request $request)
+{
+    // JSON bodies are automatically decoded when Content-Type is application/json
+    if ($request->isJson()) {
+        $userData = $request->getBody(); // Returns decoded array
+        // $userData is already decoded from JSON
+    }
     
     // Access query parameters from the URL string
     $format = $request->getQuery('format', 'json');
@@ -112,10 +125,7 @@ public function getUser(Request $request)
     $url = $request->getUrl();
     $ip = $request->getIpAddress();
     
-    // Access body data
-    $body = $request->getBody();
-    
-    return ['userId' => $userId];
+    return Response::json(['status' => 'created']);
 }
 ```
 
@@ -129,6 +139,11 @@ use Xentixar\Socklet\Http\Response;
 #[HttpRoute('GET', '/api/products')]
 public function listProducts(Request $request)
 {
+    // Headers are managed consistently through setHeader and getHeader
+    $response = new Response(['products' => []]);
+    $response->setHeader('X-Custom', 'Value');
+    $response->setContentType('application/json'); // Also sets Content-Type header
+    
     // Common response types
     return Response::json([
         'products' => $products,

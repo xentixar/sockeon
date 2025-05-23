@@ -195,6 +195,7 @@ public function setHeaders(array $headers): self
 public function getStatusCode(): int
 public function getBody(): mixed
 public function getContentType(): string
+public function getHeader(string $name): ?string
 public function getHeaders(): array
 public function toString(): string
 ```
