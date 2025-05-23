@@ -20,7 +20,6 @@ use Xentixar\Socklet\Core\Server;
 $server = new Server(
     host: "0.0.0.0",      // Listen on all interfaces
     port: 8000,           // Port number
-    sslContext: null,     // Optional SSL context
     debug: false          // Enable/disable debug mode
 );
 ```

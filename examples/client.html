@@ -347,7 +347,7 @@
             function checkServerStatus() {
                 // Get the base URL (HTTP equivalent of the WebSocket URL)
                 const wsUrl = serverUrlInput.value.trim();
-                const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+                const httpUrl = wsUrl.replace('ws://', 'http://');
                 
                 fetch(`${httpUrl}/api/status`)
                     .then(response => response.json())

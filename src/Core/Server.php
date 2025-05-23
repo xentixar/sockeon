@@ -73,12 +73,6 @@ class Server
     protected Middleware $middleware;
     
     /**
-     * Whether SSL is enabled
-     * @var bool
-     */
-    protected bool $isSecure;
-    
-    /**
      * Whether debug mode is enabled
      * @var bool
      */
@@ -87,15 +81,13 @@ class Server
     /**
      * Server constructor
      * 
-     * @param string      $host        Host address to bind server to
-     * @param int         $port        Port to bind server to
-     * @param SSLContext  $sslContext  SSL configuration for secure connections
-     * @param bool        $debug       Enable debug mode with verbose output
+     * @param string      $host   Host address to bind server to
+     * @param int         $port   Port to bind server to
+     * @param bool        $debug  Enable debug mode with verbose output
      */
     public function __construct(
         string $host = "0.0.0.0", 
         int $port = 6001, 
-        ?SSLContext $sslContext = null,
         bool $debug = false
     ) {
         $this->router = new Router();
@@ -105,17 +97,12 @@ class Server
         $this->middleware = new Middleware();
         $this->isDebug = $debug;
         
-        // Set up SSL if needed
-        $this->isSecure = $sslContext !== null;
-        $protocol = $this->isSecure ? "ssl" : "tcp";
-        $context = $sslContext ? $sslContext->getContext() : stream_context_create();
-        
+        // Set up the server
         $this->socket = stream_socket_server(
-            "{$protocol}://{$host}:{$port}", 
+            "tcp://{$host}:{$port}", 
             $errno, 
             $errstr, 
-            STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, 
-            $context
+            STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
         );
 
         if (!$this->socket) {
@@ -123,7 +110,7 @@ class Server
         }
 
         stream_set_blocking($this->socket, false);
-        $this->log("Server started on {$protocol}://{$host}:{$port}");
+        $this->log("Server started on tcp://{$host}:{$port}");
     }
 
     /**

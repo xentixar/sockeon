@@ -2,46 +2,6 @@
 
 This document covers advanced usage patterns and configurations for the Socklet library.
 
-## SSL/TLS Configuration
-
-### Basic SSL Setup
-
-```php
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\SSLContext;
-
-// Create SSL context with certificate and private key
-$sslContext = new SSLContext(
-    certificate: '/path/to/certificate.crt',
-    privateKey: '/path/to/private.key'
-);
-
-// Initialize secure server
-$server = new Server(
-    host: "0.0.0.0",
-    port: 8443,
-    sslContext: $sslContext
-);
-```
-
-### Custom SSL Configuration
-
-```php
-// Create context with password-protected key
-$sslContext = new SSLContext(
-    certificate: '/path/to/certificate.crt',
-    privateKey: '/path/to/private.key',
-    certPassword: 'your-private-key-password'
-);
-
-// Additional SSL options can be set
-$sslContext->setOptions([
-    'verify_peer' => true,
-    'verify_peer_name' => true,
-    'allow_self_signed' => false
-]);
-```
-
 ## Custom Middleware Implementation
 
 ### Authentication Middleware

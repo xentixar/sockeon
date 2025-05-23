@@ -8,7 +8,6 @@
 public function __construct(
     string $host = "0.0.0.0",
     int $port = 6001,
-    ?SSLContext $sslContext = null,
     bool $debug = false
 )
 ```
@@ -91,18 +90,6 @@ class HttpRoute
 {
     public function __construct(string $method, string $path)
 }
-```
-
-## SSLContext
-
-### Constructor
-
-```php
-public function __construct(
-    string $certificate,
-    string $privateKey,
-    ?string $certPassword = null
-)
 ```
 
 ## Router

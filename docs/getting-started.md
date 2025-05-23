@@ -125,21 +125,6 @@ public function onRoomMessage(int $clientId, array $data)
 }
 ```
 
-## SSL/TLS Support
-
-```php
-use Xentixar\Socklet\Core\SSLContext;
-
-// Create SSL context
-$sslContext = new SSLContext(
-    '/path/to/certificate.crt',
-    '/path/to/private.key'
-);
-
-// Initialize secure server
-$server = new Server("0.0.0.0", 8443, $sslContext);
-```
-
 For more detailed information, check out the other documentation sections:
 - [Core Concepts](./core-concepts.md)
 - [API Reference](./api-reference.md)

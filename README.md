@@ -4,13 +4,12 @@ Welcome to Socklet! A framework-agnostic PHP WebSocket and HTTP server library t
 
 ## Features
 
-- WebSocket and HTTP/HTTPS combined server
+- WebSocket and HTTP combined server
 - NestJS-like attribute-based routing
 - Socket.io-like namespaces and rooms
 - Middleware support for authentication and request processing
 - Zero dependencies - built with PHP core functionality only
 - Easy-to-use event-based architecture
-- Support for both secure and non-secure connections
 
 ## Installation
 
@@ -62,7 +61,6 @@ See the `examples/example.php` file for a complete example.
    - HTTP API Integration
 
 5. [Advanced Topics](docs/advanced-topics.md)
-   - SSL/TLS Configuration
    - Custom Middleware
    - Error Handling
    - Best Practices
@@ -70,7 +68,6 @@ See the `examples/example.php` file for a complete example.
 ## Requirements
 
 - PHP >= 8.0
-- OpenSSL extension (for SSL/TLS support)
 
 ## Contributing
 
