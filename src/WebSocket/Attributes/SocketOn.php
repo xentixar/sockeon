@@ -13,14 +13,24 @@
 namespace Sockeon\Sockeon\WebSocket\Attributes;
 
 use Attribute;
+use Sockeon\Sockeon\Core\Event;
 
 #[Attribute(Attribute::TARGET_METHOD)]
 class SocketOn
 {
     /**
+     * The event name this handler responds to
+     * @var string
+     */
+    public string $event;
+
+    /**
      * Constructor
      * 
-     * @param string $event  The event name this handler responds to
+     * @param string|Event|string $event  The event name, Event class instance, or Event class string
      */
-    public function __construct(public string $event) {}
+    public function __construct($event)
+    {
+        $this->event = Event::resolveEventName($event);
+    }
 }

@@ -97,6 +97,8 @@ class Server
         $this->middleware = new Middleware();
         $this->isDebug = $debug;
         
+        Event::setServerInstance($this);
+        
         // Set up the server
         $this->socket = stream_socket_server(
             "tcp://{$host}:{$port}", 
