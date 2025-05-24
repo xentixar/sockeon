@@ -13,6 +13,11 @@ Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library t
 - Middleware support for authentication and request processing
 - Zero dependencies - built with PHP core functionality only
 - Easy-to-use event-based architecture
+- Real-time bidirectional communication
+- Room-based broadcasting for efficient message distribution
+- Automatic client connection management
+- JSON data handling and serialization
+- Cross-platform compatibility
 
 ## Installation
 
@@ -64,41 +69,11 @@ $server->registerController(new MyController());
 $server->run();
 ```
 
-See the example files for complete demonstrations:
-- `examples/example.php` - Basic WebSocket and HTTP example
-- `examples/namespace_example.php` - WebSocket namespaces and rooms
-- `examples/advanced_http_example.php` - Advanced HTTP features
-
 ## Documentation
 
-1. [Getting Started](docs/getting-started.md)
-   - Installation
-   - Basic Usage
-   - Quick Example
+For complete documentation, examples, and API reference, please visit:
 
-2. [Core Concepts](docs/core-concepts.md)
-   - Server Setup
-   - WebSocket Events
-   - HTTP Routes
-   - Namespaces & Rooms
-   - Middleware
-
-3. [API Reference](docs/api-reference.md)
-   - Server Class
-   - WebSocket Handler
-   - HTTP Handler
-   - Controllers
-   - Attributes
-
-4. [Examples](docs/examples.md)
-   - Basic Chat Application
-   - Room Management
-   - HTTP API Integration
-
-5. [Advanced Topics](docs/advanced-topics.md)
-   - Custom Middleware
-   - Error Handling
-   - Best Practices
+[https://sockeon.github.io](https://sockeon.github.io)
 
 ## Requirements
 
@@ -116,4 +91,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [GitHub Repository](https://github.com/sockeon/sockeon)
 - [Issue Tracker](https://github.com/sockeon/sockeon/issues)
-- [Examples](examples)
