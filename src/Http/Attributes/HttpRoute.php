@@ -9,12 +9,12 @@
  * - Example: "/users/{id}" will match "/users/123" and pass "id" => "123" as parameter
  * - Query parameters are automatically extracted from the URL
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Http\Attributes;
+namespace Sockeon\Sockeon\Http\Attributes;
 
 use Attribute;
 

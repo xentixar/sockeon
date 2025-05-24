@@ -1,11 +1,11 @@
-# Getting Started with Socklet
+# Getting Started with Sockeon
 
 ## Installation
 
-You can install Socklet using Composer:
+You can install Sockeon using Composer:
 
 ```bash
-composer require xentixar/socklet
+composer require sockeon/sockeon
 ```
 
 ## Basic Usage
@@ -13,7 +13,7 @@ composer require xentixar/socklet
 ### 1. Create a Server
 
 ```php
-use Xentixar\Socklet\Core\Server;
+use Sockeon\Sockeon\Core\Server;
 
 // Initialize server on localhost:8000
 $server = new Server("0.0.0.0", 8000);
@@ -25,11 +25,11 @@ $server->run();
 ### 2. Create a Controller
 
 ```php
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class ChatController extends SocketController
 {

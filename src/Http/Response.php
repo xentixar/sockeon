@@ -4,12 +4,12 @@
  * 
  * Handles HTTP response generation with status codes, headers, and body
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Http;
+namespace Sockeon\Sockeon\Http;
 
 class Response
 {
@@ -188,7 +188,7 @@ class Response
             "Content-Type: {$this->contentType}",
             "Connection: close",
             "Content-Length: " . strlen($body),
-            "X-Powered-By: Socklet PHP"
+            "X-Powered-By: Sockeon"
         ];
         
         // Add security headers if not already set

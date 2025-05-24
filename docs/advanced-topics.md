@@ -1,6 +1,6 @@
 # Advanced Topics
 
-This document covers advanced usage patterns and configurations for the Socklet library.
+This document covers advanced usage patterns and configurations for the Sockeon library.
 
 ## Custom Middleware Implementation
 

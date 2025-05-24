@@ -1,8 +1,8 @@
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\Http\Request;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Http\Request;
 
 test('websocket middleware is executed in order', function () {
     $port = get_test_port();
@@ -24,7 +24,7 @@ test('websocket middleware is executed in order', function () {
     });
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\WebSocket\Attributes\SocketOn('test.event')]
+        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('test.event')]
         public function handle($clientId, $data) {
             return true;
         }
@@ -87,7 +87,7 @@ test('middleware can modify request data', function () {
     });
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('GET', '/test')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/test')]
         public function handleTest($request)
         {
             return [
@@ -124,7 +124,7 @@ test('middleware can handle authentication', function () {
     });
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\WebSocket\Attributes\SocketOn('protected.event')]
+        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('protected.event')]
         public function handleProtected($clientId, $data) {
             return $this->server->getClientData($clientId, 'authenticated') === true;
         }
@@ -164,7 +164,7 @@ test('middleware can handle errors', function () {
     });
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('GET', '/error')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/error')]
         public function handleError($request) {
             throw new \Exception('Test error');
         }

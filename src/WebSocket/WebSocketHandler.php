@@ -4,14 +4,14 @@
  * 
  * Handles WebSocket protocol implementation, connections and message framing
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\WebSocket;
+namespace Sockeon\Sockeon\WebSocket;
 
-use Xentixar\Socklet\Core\Server;
+use Sockeon\Sockeon\Core\Server;
 
 class WebSocketHandler
 {

@@ -1,8 +1,8 @@
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 test('websocket can handle multiple event handlers', function () {
     $port = get_test_port();

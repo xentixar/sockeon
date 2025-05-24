@@ -5,14 +5,14 @@
  * Base class for all socket controllers providing access to core server functionalities
  * Provides methods for emitting events, broadcasting messages, and managing rooms
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Core\Contracts;
+namespace Sockeon\Sockeon\Core\Contracts;
 
-use Xentixar\Socklet\Core\Server;
+use Sockeon\Sockeon\Core\Server;
 
 abstract class SocketController
 {

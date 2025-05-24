@@ -1,17 +1,17 @@
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Router;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Router;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 test('router can handle http routes with parameters', function () {
     $port = get_test_port();
     $server = new Server('127.0.0.1', $port);
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('GET', '/users/{id}')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/users/{id}')]
         public function getUser($request) {
             return [
                 'id' => $request->getParam('id'),
@@ -41,12 +41,12 @@ test('router matches exact routes before parameterized routes', function () {
     $server = new Server('127.0.0.1', $port);
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('GET', '/users/all')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/users/all')]
         public function getAllUsers($request) {
             return ['route' => 'all'];
         }
         
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('GET', '/users/{id}')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/users/{id}')]
         public function getUser($request) {
             return ['route' => 'single'];
         }
@@ -82,22 +82,22 @@ test('router handles multiple http methods for same path', function () {
     $server = new Server('127.0.0.1', $port);
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('GET', '/api/resource')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/api/resource')]
         public function getResource($request) {
             return ['method' => 'GET'];
         }
         
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('POST', '/api/resource')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('POST', '/api/resource')]
         public function createResource($request) {
             return ['method' => 'POST'];
         }
         
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('PUT', '/api/resource')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('PUT', '/api/resource')]
         public function updateResource($request) {
             return ['method' => 'PUT'];
         }
         
-        #[\Xentixar\Socklet\Http\Attributes\HttpRoute('DELETE', '/api/resource')]
+        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('DELETE', '/api/resource')]
         public function deleteResource($request) {
             return ['method' => 'DELETE'];
         }

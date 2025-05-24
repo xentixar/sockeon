@@ -1,22 +1,22 @@
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 test('rooms can be joined and left', function () {
     $port = get_test_port();
     $server = new Server('127.0.0.1', $port);
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\WebSocket\Attributes\SocketOn('room.join')]
+        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('room.join')]
         public function onRoomJoin(int $clientId, array $data)
         {
             parent::joinRoom($clientId, $data['room'] ?? 'default');
             return true;
         }
         
-        #[\Xentixar\Socklet\WebSocket\Attributes\SocketOn('room.leave')]
+        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('room.leave')]
         public function onRoomLeave(int $clientId, array $data)
         {
             parent::leaveRoom($clientId, $data['room'] ?? 'default');
@@ -26,7 +26,7 @@ test('rooms can be joined and left', function () {
     
     $server->registerController($controller);
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Xentixar\Socklet\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
 });
 
 test('messages can be broadcast to rooms', function () {
@@ -34,7 +34,7 @@ test('messages can be broadcast to rooms', function () {
     $server = new Server('127.0.0.1', $port);
     
     $controller = new class extends SocketController {
-        #[\Xentixar\Socklet\WebSocket\Attributes\SocketOn('broadcast.room')]
+        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('broadcast.room')]
         public function broadcastToRoom(int $clientId, array $data)
         {
             $this->broadcast('room.message', [
@@ -47,7 +47,7 @@ test('messages can be broadcast to rooms', function () {
     
     $server->registerController($controller);
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Xentixar\Socklet\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
 });
 
 test('namespaces can be created and managed', function () {
@@ -82,7 +82,7 @@ test('namespaces can be created and managed', function () {
         'message' => 'Hello Admin'
     ]);
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Xentixar\Socklet\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
 });
 
 test('client can join multiple rooms', function () {
@@ -110,7 +110,7 @@ test('client can join multiple rooms', function () {
     
     // Implementation note: We'd need to add a method to check room membership
     // in the NamespaceManager class to make this test more meaningful
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Xentixar\Socklet\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
 });
 
 test('rooms in different namespaces are isolated', function () {
@@ -135,5 +135,5 @@ test('rooms in different namespaces are isolated', function () {
     $server->getNamespaceManager()->joinRoom(1, 'chatroom', '/user');
     $server->getNamespaceManager()->joinRoom(2, 'chatroom', '/admin');
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Xentixar\Socklet\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
 });

@@ -4,12 +4,12 @@
  * 
  * Manages namespaces and rooms for WebSocket connections
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Core;
+namespace Sockeon\Sockeon\Core;
 
 class NamespaceManager
 {

@@ -1,6 +1,6 @@
 # Core Concepts
 
-This document covers the core concepts and components of the Socklet library.
+This document covers the core concepts and components of the Sockeon library.
 
 ## Server
 
@@ -15,7 +15,7 @@ The `Server` class is the main entry point of your application. It handles both 
 - Middleware: Processes requests before they reach controllers
 
 ```php
-use Xentixar\Socklet\Core\Server;
+use Sockeon\Sockeon\Core\Server;
 
 $server = new Server(
     host: "0.0.0.0",      // Listen on all interfaces
@@ -33,7 +33,7 @@ Controllers handle the business logic of your application. They extend `SocketCo
 Use the `#[SocketOn]` attribute to handle WebSocket events:
 
 ```php
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 #[SocketOn('message.send')]
 public function onMessage(int $clientId, array $data)
@@ -47,7 +47,7 @@ public function onMessage(int $clientId, array $data)
 Use the `#[HttpRoute]` attribute to handle HTTP requests:
 
 ```php
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 
 // Basic route
 #[HttpRoute('GET', '/api/status')]
@@ -80,7 +80,7 @@ public function search(Request $request): Response
 The `Request` class encapsulates HTTP request data and provides convenient methods to access headers, query parameters, path parameters, and the request body:
 
 ```php
-use Xentixar\Socklet\Http\Request;
+use Sockeon\Sockeon\Http\Request;
 
 // Example with path parameters
 #[HttpRoute('GET', '/users/{id}')]
@@ -134,7 +134,7 @@ public function createUser(Request $request)
 The `Response` class provides a structured way to create HTTP responses with status codes, headers, and body content:
 
 ```php
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Http\Response;
 
 #[HttpRoute('GET', '/api/products')]
 public function listProducts(Request $request)
@@ -174,7 +174,7 @@ public function listProducts(Request $request)
 
 ## Namespaces & Rooms
 
-Socklet provides a powerful system of namespaces and rooms for organizing WebSocket connections.
+Sockeon provides a powerful system of namespaces and rooms for organizing WebSocket connections.
 
 ### Namespaces
 
@@ -221,7 +221,7 @@ $server->addWebSocketMiddleware(function ($clientId, $event, $data, $next) {
 ### HTTP Middleware
 
 ```php
-use Xentixar\Socklet\Http\Request;
+use Sockeon\Sockeon\Http\Request;
 
 $server->addHttpMiddleware(function (Request $request, $next) {
     // Add request timestamp using the setData method

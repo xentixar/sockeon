@@ -1,11 +1,11 @@
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class TestController extends SocketController 
 {
@@ -35,7 +35,7 @@ test('controller can handle websocket events', function () {
     
     $server->registerController($controller);
     
-    expect($server->getRouter())->toBeInstanceOf(\Xentixar\Socklet\Core\Router::class);
+    expect($server->getRouter())->toBeInstanceOf(\Sockeon\Sockeon\Core\Router::class);
 });
 
 test('controller routes are registered correctly', function () {

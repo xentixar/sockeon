@@ -5,18 +5,18 @@
  * Demonstrates the enhanced Request and Response classes with
  * optimization features and additional methods
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class AdvancedApiController extends SocketController
 {
@@ -47,7 +47,7 @@ class AdvancedApiController extends SocketController
         // Return appropriate response based on Accept header
         if (strpos($request->getHeader('Accept', ''), 'application/json') !== false) {
             return Response::json([
-                'api' => 'Socklet HTTP API',
+                'api' => 'Sockeon HTTP API',
                 'client' => $clientInfo,
                 'endpoints' => [
                     '/products' => 'Get all products',
@@ -63,7 +63,7 @@ class AdvancedApiController extends SocketController
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Socklet HTTP Examples</title>
+            <title>Sockeon HTTP Examples</title>
             <style>
                 body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
                 code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
@@ -72,7 +72,7 @@ class AdvancedApiController extends SocketController
             </style>
         </head>
         <body>
-            <h1>Socklet HTTP Features</h1>
+            <h1>Sockeon HTTP Features</h1>
             
             <h2>Client Information</h2>
             <pre>IP Address: {$clientInfo['ip']}

@@ -1,7 +1,7 @@
 <?php
 
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 test('http request can be created with method and path', function () {
     $request = new Request([

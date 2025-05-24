@@ -1,6 +1,6 @@
 # Examples
 
-This document provides examples of using the Socklet library for various use cases.
+This document provides examples of using the Sockeon library for various use cases.
 
 ## Overview of Example Files
 
@@ -17,12 +17,12 @@ The basic example demonstrates handling both WebSocket events and HTTP requests 
 ```php
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class AppController extends SocketController
 {
@@ -78,7 +78,7 @@ $server->run();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Socklet Chat</title>
+    <title>Sockeon Chat</title>
     <style>
         .message-list {
             height: 400px;
@@ -224,9 +224,9 @@ The namespace example demonstrates how to use namespaces and rooms for role-base
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 class TestController extends SocketController
 {
@@ -286,11 +286,11 @@ The advanced HTTP example demonstrates the enhanced Request and Response feature
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class AdvancedApiController extends SocketController
 {
@@ -315,7 +315,7 @@ class AdvancedApiController extends SocketController
         // Content negotiation based on Accept header
         if (strpos($request->getHeader('Accept', ''), 'application/json') !== false) {
             return Response::json([
-                'api' => 'Socklet HTTP API',
+                'api' => 'Sockeon HTTP API',
                 'client' => $clientInfo,
                 'endpoints' => [/* endpoint listing */]
             ]);

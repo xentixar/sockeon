@@ -5,12 +5,12 @@
  * Attribute for marking methods as WebSocket event handlers
  * Used to associate controller methods with specific WebSocket events
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\WebSocket\Attributes;
+namespace Sockeon\Sockeon\WebSocket\Attributes;
 
 use Attribute;
 

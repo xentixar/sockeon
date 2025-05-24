@@ -1,11 +1,11 @@
 {
-    "name": "xentixar/socklet",
+    "name": "sockeon/sockeon",
     "description": "Framework-agnostic PHP WebSocket and HTTP server library with attribute-based routing and support for namespaces and rooms.",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Xentixar\\Socklet\\": "src/"
+            "Sockeon\\Sockeon\\": "src/"
         }
     },
     "autoload-dev": {

@@ -1,20 +1,20 @@
 <?php
 /**
- * Example Socklet namespace application
+ * Example Sockeon namespace application
  * 
- * This file demonstrates how to use namespaces and rooms in the Socklet library
+ * This file demonstrates how to use namespaces and rooms in the Sockeon library
  * for role-based WebSocket message broadcasting
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 class TestController extends SocketController
 {

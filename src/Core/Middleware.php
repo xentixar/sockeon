@@ -4,15 +4,15 @@
  * 
  * Manages middleware chains for WebSocket and HTTP pipelines
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Core;
+namespace Sockeon\Sockeon\Core;
 
 use Closure;
-use Xentixar\Socklet\Http\Request;
+use Sockeon\Sockeon\Http\Request;
 
 class Middleware
 {

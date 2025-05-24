@@ -10,18 +10,18 @@
  * - Support for path parameters using {parameter} syntax
  * - Automatic query parameter parsing
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Core;
+namespace Sockeon\Sockeon\Core;
 
 use ReflectionClass;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
 
 class Router
 {

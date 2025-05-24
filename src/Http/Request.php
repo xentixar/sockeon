@@ -5,12 +5,12 @@
  * Handles HTTP request data encapsulation and provides convenient
  * methods to access request parameters, headers, and body
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Http;
+namespace Sockeon\Sockeon\Http;
 
 class Request
 {

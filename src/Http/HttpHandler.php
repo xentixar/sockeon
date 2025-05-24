@@ -11,16 +11,16 @@
  * - JSON body parsing
  * - Response generation
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Http;
+namespace Sockeon\Sockeon\Http;
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class HttpHandler
 {

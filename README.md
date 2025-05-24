@@ -1,6 +1,6 @@
-# Socklet
+# Sockeon
 
-Welcome to Socklet! A framework-agnostic PHP WebSocket and HTTP server library that provides attribute-based routing and powerful namespaces and rooms functionality.
+Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library that provides attribute-based routing and powerful namespaces and rooms functionality.
 
 ## Features
 
@@ -17,18 +17,18 @@ Welcome to Socklet! A framework-agnostic PHP WebSocket and HTTP server library t
 ## Installation
 
 ```bash
-composer require xentixar/socklet
+composer require sockeon/sockeon
 ```
 
 ## Quick Start
 
 ```php
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\Attributes\SocketOn;
-use Xentixar\Socklet\Http\Attributes\HttpRoute;
-use Xentixar\Socklet\Http\Request;
-use Xentixar\Socklet\Http\Response;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
+use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\Http\Response;
 
 class MyController extends SocketController
 {
@@ -114,6 +114,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Links
 
-- [GitHub Repository](https://github.com/xentixar/socklet)
-- [Issue Tracker](https://github.com/xentixar/socklet/issues)
+- [GitHub Repository](https://github.com/sockeon/sockeon)
+- [Issue Tracker](https://github.com/sockeon/sockeon/issues)
 - [Examples](examples)

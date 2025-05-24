@@ -1,9 +1,9 @@
 <?php
 
-use Xentixar\Socklet\Core\Server;
-use Xentixar\Socklet\Core\Router;
-use Xentixar\Socklet\Http\HttpHandler;
-use Xentixar\Socklet\WebSocket\WebSocketHandler;
+use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Core\Router;
+use Sockeon\Sockeon\Http\HttpHandler;
+use Sockeon\Sockeon\WebSocket\WebSocketHandler;
 
 test('server can be instantiated with default configuration', function () {
     $port = get_test_port();
@@ -19,8 +19,8 @@ test('server can register controllers', function () {
     $server = new Server('127.0.0.1', $port);
     
     // Mock controller
-    $controller = new class extends \Xentixar\Socklet\Core\Contracts\SocketController {
-        #[\Xentixar\Socklet\WebSocket\Attributes\SocketOn('test.event')]
+    $controller = new class extends \Sockeon\Sockeon\Core\Contracts\SocketController {
+        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('test.event')]
         public function testEvent($clientId, $data) {
             return true;
         }
@@ -46,5 +46,5 @@ test('server adds middleware correctly', function () {
     $server->addWebSocketMiddleware($middleware);
     $server->addHttpMiddleware($httpMiddleware);
     
-    expect($server->getMiddleware())->toBeInstanceOf(\Xentixar\Socklet\Core\Middleware::class);
+    expect($server->getMiddleware())->toBeInstanceOf(\Sockeon\Sockeon\Core\Middleware::class);
 });

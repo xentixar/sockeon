@@ -5,16 +5,16 @@
  * Main class that handles the socket server implementation, client connections,
  * and dispatches requests to appropriate handlers
  * 
- * @package     Xentixar\Socklet
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
 
-namespace Xentixar\Socklet\Core;
+namespace Sockeon\Sockeon\Core;
 
-use Xentixar\Socklet\Core\Contracts\SocketController;
-use Xentixar\Socklet\WebSocket\WebSocketHandler;
-use Xentixar\Socklet\Http\HttpHandler;
+use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\WebSocketHandler;
+use Sockeon\Sockeon\Http\HttpHandler;
 
 class Server
 {
