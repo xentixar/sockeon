@@ -12,6 +12,7 @@
 
 namespace Sockeon\Sockeon\Core\Contracts;
 
+use Sockeon\Sockeon\Core\Event;
 use Sockeon\Sockeon\Core\Server;
 
 abstract class SocketController
@@ -37,27 +38,29 @@ abstract class SocketController
      * Emits an event to a specific client
      * 
      * @param int       $clientId   The ID of the client to send to
-     * @param string    $event      The event name
+     * @param string|Event|string $event The event name, Event instance, or Event class string
      * @param array     $data       The data to send
      * @return void
      */
-    public function emit(int $clientId, string $event, array $data): void
+    public function emit(int $clientId, $event, array $data): void
     {
-        $this->server->send($clientId, $event, $data);
+        $eventName = Event::resolveEventName($event);
+        $this->server->send($clientId, $eventName, $data);
     }
 
     /**
      * Broadcasts an event to multiple clients
      * 
-     * @param string    $event      The event name
+     * @param string|Event|string $event The event name, Event instance, or Event class string
      * @param array     $data       The data to send
      * @param string    $namespace  Optional namespace to broadcast within
      * @param string    $room       Optional room to broadcast to
      * @return void
      */
-    public function broadcast(string $event, array $data, ?string $namespace = null, ?string $room = null): void
+    public function broadcast($event, array $data, ?string $namespace = null, ?string $room = null): void
     {
-        $this->server->broadcast($event, $data, $namespace, $room);
+        $eventName = Event::resolveEventName($event);
+        $this->server->broadcast($eventName, $data, $namespace, $room);
     }
     
     /**
