@@ -81,10 +81,10 @@ class Server
     /**
      * Server constructor
      * 
-     * @param string      $host        Host address to bind server to
-     * @param int         $port        Port to bind server to
-     * @param bool        $debug       Enable debug mode with verbose output
-     * @param array       $corsConfig  CORS configuration options
+     * @param string      $host          Host address to bind server to
+     * @param int         $port          Port to bind server to
+     * @param bool        $debug         Enable debug mode with verbose output
+     * @param array       $corsConfig    CORS configuration options
      */
     public function __construct(
         string $host = "0.0.0.0", 
@@ -93,7 +93,7 @@ class Server
         array $corsConfig = []
     ) {
         $this->router = new Router();
-        $this->wsHandler = new WebSocketHandler($this);
+        $this->wsHandler = new WebSocketHandler($this, $corsConfig['allowed_origins'] ?? []);
         $this->httpHandler = new HttpHandler($this, $corsConfig);
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();

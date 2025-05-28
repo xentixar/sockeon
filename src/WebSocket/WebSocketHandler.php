@@ -28,13 +28,36 @@ class WebSocketHandler
     protected array $handshakes = [];
 
     /**
+     * Allowed origins for WebSocket connections
+     * @var array
+     */
+    protected array $allowedOrigins = ['*'];
+
+    /**
      * Constructor
      * 
      * @param Server $server  The server instance
+     * @param array $allowedOrigins Allowed origins for WebSocket connections
      */
-    public function __construct(Server $server)
+    public function __construct(Server $server, array $allowedOrigins = ['*'])
     {
         $this->server = $server;
+        $this->allowedOrigins = $allowedOrigins;
+    }
+
+    /**
+     * Check if the origin is allowed
+     *
+     * @param string $origin
+     * @return bool
+     */
+    protected function isOriginAllowed(string $origin): bool
+    {
+        if (in_array('*', $this->allowedOrigins)) {
+            return true;
+        }
+
+        return in_array($origin, $this->allowedOrigins);
     }
 
     /**
@@ -93,6 +116,17 @@ class WebSocketHandler
      */
     protected function performHandshake(int $clientId, $client, string $data): bool
     {
+        $origin = null;
+        if (preg_match('/Origin:\s(.+)\r\n/i', $data, $originMatches)) {
+            $origin = trim($originMatches[1]);
+        }
+
+        if ($origin !== null && !$this->isOriginAllowed($origin)) {
+            $response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nOrigin not allowed";
+            fwrite($client, $response);
+            return false;
+        }
+
         if (preg_match('/Sec-WebSocket-Key:\s(.+)\r\n/i', $data, $matches)) {
             $secKey = trim($matches[1]);
             $acceptKey = base64_encode(sha1($secKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
@@ -104,6 +138,10 @@ class WebSocketHandler
                 "Sec-WebSocket-Accept: $acceptKey",
                 "Sec-WebSocket-Version: 13",
             ];
+
+            if ($origin !== null && $this->isOriginAllowed($origin)) {
+                $headers[] = "Access-Control-Allow-Origin: $origin";
+            }
 
             $response = implode("\r\n", $headers) . "\r\n\r\n";
             fwrite($client, $response);
