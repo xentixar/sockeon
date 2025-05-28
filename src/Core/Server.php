@@ -81,18 +81,20 @@ class Server
     /**
      * Server constructor
      * 
-     * @param string      $host   Host address to bind server to
-     * @param int         $port   Port to bind server to
-     * @param bool        $debug  Enable debug mode with verbose output
+     * @param string      $host          Host address to bind server to
+     * @param int         $port          Port to bind server to
+     * @param bool        $debug         Enable debug mode with verbose output
+     * @param array       $corsConfig    CORS configuration options
      */
     public function __construct(
         string $host = "0.0.0.0", 
         int $port = 6001, 
-        bool $debug = false
+        bool $debug = false,
+        array $corsConfig = []
     ) {
         $this->router = new Router();
-        $this->wsHandler = new WebSocketHandler($this);
-        $this->httpHandler = new HttpHandler($this);
+        $this->wsHandler = new WebSocketHandler($this, $corsConfig['allowed_origins'] ?? []);
+        $this->httpHandler = new HttpHandler($this, $corsConfig);
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
         $this->isDebug = $debug;
@@ -231,8 +233,9 @@ class Server
                     // Determine protocol if unknown
                     if ($this->clientTypes[$clientId] === 'unknown') {
                         if (str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') || 
-                            str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ')) {
-                            // HTTP request detected
+                            str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ') ||
+                            str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
+                            str_starts_with($data, 'HEAD ')) {
                             if (strpos($data, 'Upgrade: websocket') !== false) {
                                 $this->clientTypes[$clientId] = 'ws';
                                 $this->log("WebSocket client identified: $clientId");
