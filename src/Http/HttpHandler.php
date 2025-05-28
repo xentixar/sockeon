@@ -35,15 +35,23 @@ class HttpHandler
      * @var array
      */
     protected array $routes = [];
+    
+    /**
+     * CORS configuration
+     * @var CorsConfig
+     */
+    protected CorsConfig $corsConfig;
 
     /**
      * Constructor
      * 
      * @param Server $server  The server instance
+     * @param array $corsConfig Optional CORS configuration
      */
-    public function __construct(Server $server)
+    public function __construct(Server $server, array $corsConfig = [])
     {
         $this->server = $server;
+        $this->corsConfig = new CorsConfig($corsConfig);
     }
 
     /**
@@ -56,14 +64,132 @@ class HttpHandler
      */
     public function handle(int $clientId, $client, string $data): void
     {
+        $this->debug("Received HTTP request from client #{$clientId}");
+        
         $requestData = $this->parseHttpRequest($data);
         $request = new Request($requestData);
         
-        // Create response
-        $response = $this->processRequest($request);
+        $this->debug("Parsed request", [
+            'method' => $request->getMethod(),
+            'path' => $request->getPath(),
+            'headers' => $request->getHeaders()
+        ]);
         
-        // Send response
+        if ($request->getMethod() === 'OPTIONS') {
+            $this->debug("Handling preflight OPTIONS request");
+            $response = $this->handleCorsPreflightRequest($request);
+        } else {
+            $this->debug("Processing standard request");
+            $response = $this->processRequest($request);
+            
+            $this->debug("Applying CORS headers");
+            $response = $this->applyCorsHeaders($request, $response);
+        }
+        
+        $this->debug("Sending response", [
+            'size' => strlen($response),
+            'preview' => substr($response, 0, 100) . (strlen($response) > 100 ? '...' : '')
+        ]);
+        
         fwrite($client, $response);
+    }
+    
+    /**
+     * Handle CORS preflight request
+     * 
+     * @param Request $request
+     * @return string
+     */
+    protected function handleCorsPreflightRequest(Request $request): string
+    {
+        $response = new Response('', 204);
+        $response->setHeader('Content-Type', 'text/plain');
+        return $this->applyCorsHeaders($request, $response->toString(), true);
+    }
+    
+    /**
+     * Apply CORS headers to a response
+     * 
+     * @param Request $request The request object
+     * @param string|Response $response The response or response string
+     * @param bool $isPreflight Whether this is a preflight request
+     * @return string The response with CORS headers
+     */
+    protected function applyCorsHeaders(Request $request, $response, bool $isPreflight = false): string
+    {
+        if ($response instanceof Response) {
+            $response = $response->toString();
+        }
+        
+        $origin = $request->getHeader('Origin');
+        
+        if (!$origin) {
+            return $response;
+        }
+        
+        if (!$this->corsConfig->isOriginAllowed($origin)) {
+            return $response;
+        }
+        
+        [$headers, $body] = $this->parseHttpResponse($response);
+        
+        $headers['Access-Control-Allow-Origin'] = $origin;
+        
+        if ($this->corsConfig->isCredentialsAllowed()) {
+            $headers['Access-Control-Allow-Credentials'] = 'true';
+        }
+        
+        if ($isPreflight) {
+            $allowedMethods = $this->corsConfig->getAllowedMethods();
+            $headers['Access-Control-Allow-Methods'] = is_array($allowedMethods) 
+                ? implode(', ', $allowedMethods) 
+                : $allowedMethods;
+            
+            $allowedHeaders = $this->corsConfig->getAllowedHeaders();
+            $headers['Access-Control-Allow-Headers'] = is_array($allowedHeaders) 
+                ? implode(', ', $allowedHeaders) 
+                : $allowedHeaders;
+            
+            $headers['Access-Control-Max-Age'] = $this->corsConfig->getMaxAge();
+        }
+        
+        $headerString = '';
+        if (isset($headers['Status-Line'])) {
+            $headerString .= $headers['Status-Line'] . "\r\n";
+            unset($headers['Status-Line']);
+        }
+        
+        foreach ($headers as $name => $value) {
+            $headerString .= "$name: $value\r\n";
+        }
+        
+        return $headerString . "\r\n" . $body;
+    }
+    
+    /**
+     * Parse HTTP response into headers and body
+     * 
+     * @param string $response The HTTP response string
+     * @return array [headers, body]
+     */
+    protected function parseHttpResponse(string $response): array
+    {
+        $parts = explode("\r\n\r\n", $response, 2);
+        
+        $headerLines = explode("\r\n", $parts[0]);
+        $statusLine = array_shift($headerLines);
+        
+        $headers = ['Status-Line' => $statusLine];
+        foreach ($headerLines as $line) {
+            if (strpos($line, ':') !== false) {
+                list($name, $value) = explode(':', $line, 2);
+                $headers[trim($name)] = trim($value);
+            }
+        }
+        
+        $body = $parts[1] ?? '';
+        
+        return [$headers, $body];
     }
 
     /**
@@ -101,16 +227,12 @@ class HttpHandler
             }
         }
         
-        // Parse the URL to extract query parameters and path
         $query = [];
         $url = parse_url($path);
-        $originalPath = $path;
         
-        // Extract path from URL
         if (isset($url['path'])) {
             $path = $url['path'];
             
-            // Normalize path
             if (empty($path)) {
                 $path = '/';
             } elseif ($path[0] !== '/') {
@@ -120,12 +242,10 @@ class HttpHandler
             $path = '/';
         }
         
-        // Extract query parameters
         if (isset($url['query'])) {
             parse_str($url['query'], $query);
         }
 
-        // Try to parse JSON body
         $parsedBody = json_decode($body, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             $body = $parsedBody;
@@ -171,5 +291,16 @@ class HttpHandler
         return $response->toString();
     }
 
-
+    /**
+     * Log debug information if debug mode is enabled
+     * 
+     * @param string $message The debug message
+     * @param mixed $data Additional data to log
+     * @return void
+     */
+    protected function debug(string $message, $data = null): void
+    {
+        $dataString = $data !== null ? ' ' . json_encode($data) : '';
+        $this->server->log("[Sockeon HTTP Debug] {$message}{$dataString}");
+    }
 }
