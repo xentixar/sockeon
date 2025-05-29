@@ -15,66 +15,106 @@ class CorsConfig
 {
     /**
      * Allowed origins
-     * @var array|string
+     * @var array<int, string>
      */
-    protected $allowedOrigins = ['*'];
+    protected array $allowedOrigins = ['*'];
 
     /**
      * Allowed methods
-     * @var array|string
+     * @var array<int, string>
      */
-    protected $allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'];
+    protected array $allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'];
 
     /**
      * Allowed headers
-     * @var array|string
+     * @var array<int, string>
      */
-    protected $allowedHeaders = ['Content-Type', 'X-Requested-With', 'Authorization'];
+    protected array $allowedHeaders = ['Content-Type', 'X-Requested-With', 'Authorization'];
 
     /**
      * Whether to allow credentials
      * @var bool
      */
-    protected $allowCredentials = false;
+    protected bool $allowCredentials = false;
 
     /**
      * Max age for preflight requests
      * @var int
      */
-    protected $maxAge = 86400;
+    protected int $maxAge = 86400;
 
     /**
      * Create a new CORS configuration instance
+     *
+     * @param array<string, mixed> $config
      */
     public function __construct(array $config = [])
     {
-        if (isset($config['origins'])) {
-            $this->allowedOrigins = $config['origins'];
+        if (isset($config['origins']) && is_array($config['origins'])) {
+            $origins = [];
+            foreach ($config['origins'] as $origin) {
+                if (is_string($origin)) {
+                    $origins[] = $origin;
+                } elseif (is_scalar($origin) || (is_object($origin) && method_exists($origin, '__toString'))) {
+                    $origins[] = (string) $origin;
+                }
+            }
+            if (!empty($origins)) {
+                $this->allowedOrigins = $origins;
+            }
         }
         
-        if (isset($config['methods'])) {
-            $this->allowedMethods = $config['methods'];
+        if (isset($config['methods']) && is_array($config['methods'])) {
+            $methods = [];
+            foreach ($config['methods'] as $method) {
+                if (is_string($method)) {
+                    $methods[] = $method;
+                } elseif (is_scalar($method) || (is_object($method) && method_exists($method, '__toString'))) {
+                    $methods[] = (string) $method;
+                }
+            }
+            if (!empty($methods)) {
+                $this->allowedMethods = $methods;
+            }
         }
         
-        if (isset($config['headers'])) {
-            $this->allowedHeaders = $config['headers'];
+        if (isset($config['headers']) && is_array($config['headers'])) {
+            $headers = [];
+            foreach ($config['headers'] as $header) {
+                if (is_string($header)) {
+                    $headers[] = $header;
+                } elseif (is_scalar($header) || (is_object($header) && method_exists($header, '__toString'))) {
+                    $headers[] = (string) $header;
+                }
+            }
+            if (!empty($headers)) {
+                $this->allowedHeaders = $headers;
+            }
         }
         
         if (isset($config['credentials'])) {
-            $this->allowCredentials = $config['credentials'];
+            if (is_bool($config['credentials'])) {
+                $this->allowCredentials = $config['credentials'];
+            } else {
+                $this->allowCredentials = !empty($config['credentials']);
+            }
         }
         
         if (isset($config['max_age'])) {
-            $this->maxAge = $config['max_age'];
+            if (is_int($config['max_age'])) {
+                $this->maxAge = $config['max_age'];
+            } elseif (is_numeric($config['max_age'])) {
+                $this->maxAge = (int) $config['max_age'];
+            }
         }
     }
 
     /**
      * Get allowed origins
      * 
-     * @return array|string
+     * @return array<int, string>
      */
-    public function getAllowedOrigins()
+    public function getAllowedOrigins(): array
     {
         return $this->allowedOrigins;
     }
@@ -82,9 +122,9 @@ class CorsConfig
     /**
      * Get allowed methods
      * 
-     * @return array|string
+     * @return array<int, string>
      */
-    public function getAllowedMethods()
+    public function getAllowedMethods(): array
     {
         return $this->allowedMethods;
     }
@@ -92,9 +132,9 @@ class CorsConfig
     /**
      * Get allowed headers
      * 
-     * @return array|string
+     * @return array<int, string>
      */
-    public function getAllowedHeaders()
+    public function getAllowedHeaders(): array
     {
         return $this->allowedHeaders;
     }

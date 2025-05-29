@@ -12,6 +12,8 @@
 
 namespace Sockeon\Sockeon\Core;
 
+use Closure;
+use RuntimeException;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\WebSocketHandler;
 use Sockeon\Sockeon\Http\HttpHandler;
@@ -20,27 +22,27 @@ class Server
 {
     /**
      * Socket resource for the server
-     * @var resource
+     * @var resource|false
      */
     protected $socket;
     
     /**
      * Active client connections
-     * @var array
+     * @var array<int, resource>
      */
     protected array $clients = [];
     
     /**
      * Type of connections for each client (WebSocket or HTTP)
-     * @var array
+     * @var array<int, string>
      */
-    protected array $clientTypes = []; // 'ws' for WebSocket, 'http' for HTTP
+    protected array $clientTypes = [];
     
     /**
      * Custom data associated with clients
-     * @var array
+     * @var array<int, array<string, mixed>>
      */
-    protected array $clientData = []; // Store client-specific data
+    protected array $clientData = [];
     
     /**
      * Router instance
@@ -79,12 +81,12 @@ class Server
     protected bool $isDebug;
 
     /**
-     * Server constructor
-     * 
-     * @param string      $host          Host address to bind server to
-     * @param int         $port          Port to bind server to
-     * @param bool        $debug         Enable debug mode with verbose output
-     * @param array       $corsConfig    CORS configuration options
+     * Constructor
+     *
+     * @param string $host Host address to bind server to
+     * @param int $port Port to bind server to
+     * @param bool $debug Enable debug mode with verbose output
+     * @param array<string, mixed> $corsConfig CORS configuration options
      */
     public function __construct(
         string $host = "0.0.0.0", 
@@ -93,7 +95,19 @@ class Server
         array $corsConfig = []
     ) {
         $this->router = new Router();
-        $this->wsHandler = new WebSocketHandler($this, $corsConfig['allowed_origins'] ?? []);
+
+        $allowedOrigins = [];
+        if (isset($corsConfig['allowed_origins']) && is_array($corsConfig['allowed_origins'])) {
+            foreach ($corsConfig['allowed_origins'] as $origin) {
+                if (is_string($origin)) {
+                    $allowedOrigins[] = $origin;
+                }
+            }
+        } else {
+            $allowedOrigins[] = '*';
+        }
+
+        $this->wsHandler = new WebSocketHandler($this, $allowedOrigins);
         $this->httpHandler = new HttpHandler($this, $corsConfig);
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
@@ -110,7 +124,9 @@ class Server
         );
 
         if (!$this->socket) {
-            throw new \RuntimeException("Socket creation failed: $errstr ($errno)");
+            $errorMessage = is_string($errstr) ? $errstr : 'Unknown error';
+            $errorCode = is_int($errno) ? $errno : 0;
+            throw new RuntimeException("Socket creation failed: " . $errorMessage . " (" . $errorCode . ")");
         }
 
         stream_set_blocking($this->socket, false);
@@ -120,10 +136,10 @@ class Server
     /**
      * Register a controller with the server
      * 
-     * @param SocketController $controller  The controller instance to register
+     * @param SocketController $controller The controller instance to register
      * @return void
      */
-    public function registerController($controller): void
+    public function registerController(SocketController $controller): void
     {
         $controller->setServer($this);
         $this->router->setServer($this);
@@ -133,7 +149,7 @@ class Server
     /**
      * Get the router instance
      * 
-     * @return Router  The router instance
+     * @return Router The router instance
      */
     public function getRouter(): Router
     {
@@ -143,7 +159,7 @@ class Server
     /**
      * Get the namespace manager instance
      * 
-     * @return NamespaceManager  The namespace manager instance
+     * @return NamespaceManager The namespace manager instance
      */
     public function getNamespaceManager(): NamespaceManager
     {
@@ -153,7 +169,7 @@ class Server
     /**
      * Get the HTTP handler instance
      * 
-     * @return HttpHandler  The HTTP handler instance
+     * @return HttpHandler The HTTP handler instance
      */
     public function getHttpHandler(): HttpHandler
     {
@@ -163,7 +179,7 @@ class Server
     /**
      * Get the middleware instance
      * 
-     * @return Middleware  The middleware instance
+     * @return Middleware The middleware instance
      */
     public function getMiddleware(): Middleware
     {
@@ -173,10 +189,10 @@ class Server
     /**
      * Add a WebSocket middleware
      * 
-     * @param \Closure $middleware  The middleware function
-     * @return self                 This server instance for method chaining
+     * @param Closure $middleware The middleware function
+     * @return self This server instance for method chaining
      */
-    public function addWebSocketMiddleware(\Closure $middleware): self
+    public function addWebSocketMiddleware(Closure $middleware): self
     {
         $this->middleware->addWebSocketMiddleware($middleware);
         return $this;
@@ -185,10 +201,10 @@ class Server
     /**
      * Add an HTTP middleware
      * 
-     * @param \Closure $middleware  The middleware function
-     * @return self                 This server instance for method chaining
+     * @param Closure $middleware The middleware function
+     * @return self This server instance for method chaining
      */
-    public function addHttpMiddleware(\Closure $middleware): self
+    public function addHttpMiddleware(Closure $middleware): self
     {
         $this->middleware->addHttpMiddleware($middleware);
         return $this;
@@ -203,7 +219,7 @@ class Server
     {
         $this->log("Server running...");
         
-        while (true) {
+        while (is_resource($this->socket)) {
             $read = $this->clients;
             $read[] = $this->socket;
             $write = $except = null;
@@ -211,14 +227,15 @@ class Server
             if (stream_select($read, $write, $except, 0, 200000)) {
                 if (in_array($this->socket, $read)) {
                     $client = stream_socket_accept($this->socket);
-                    stream_set_blocking($client, false);
-                    $clientId = (int)$client;
-                    $this->clients[$clientId] = $client;
-                    // Initially unknown protocol
-                    $this->clientTypes[$clientId] = 'unknown';
-                    $this->namespaceManager->joinNamespace($clientId);
-                    unset($read[array_search($this->socket, $read)]);
-                    $this->log("Client connected: $clientId");
+                    if (is_resource($client)) {
+                        stream_set_blocking($client, false);
+                        $clientId = (int)$client;
+                        $this->clients[$clientId] = $client;
+                        $this->clientTypes[$clientId] = 'unknown';
+                        $this->namespaceManager->joinNamespace($clientId);
+                        unset($read[array_search($this->socket, $read)]);
+                        $this->log("Client connected: $clientId");
+                    }
                 }
 
                 foreach ($read as $client) {
@@ -230,13 +247,12 @@ class Server
                         continue;
                     }
 
-                    // Determine protocol if unknown
                     if ($this->clientTypes[$clientId] === 'unknown') {
                         if (str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') || 
                             str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ') ||
                             str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
                             str_starts_with($data, 'HEAD ')) {
-                            if (strpos($data, 'Upgrade: websocket') !== false) {
+                            if (str_contains($data, 'Upgrade: websocket')) {
                                 $this->clientTypes[$clientId] = 'ws';
                                 $this->log("WebSocket client identified: $clientId");
                             } else {
@@ -246,7 +262,6 @@ class Server
                         }
                     }
 
-                    // Process based on client type
                     if ($this->clientTypes[$clientId] === 'ws') {
                         $keepAlive = $this->wsHandler->handle($clientId, $client, $data);
                         if (!$keepAlive) {
@@ -254,10 +269,8 @@ class Server
                         }
                     } elseif ($this->clientTypes[$clientId] === 'http') {
                         $this->httpHandler->handle($clientId, $client, $data);
-                        // HTTP connections are closed after handling
                         $this->disconnectClient($clientId);
                     } else {
-                        // Unknown protocol, close connection
                         $this->log("Unknown protocol, disconnecting client: $clientId");
                         $this->disconnectClient($clientId);
                     }
@@ -269,7 +282,7 @@ class Server
     /**
      * Disconnect a client from the server
      * 
-     * @param int $clientId  The client ID to disconnect
+     * @param int $clientId The client ID to disconnect
      * @return void
      */
     public function disconnectClient(int $clientId): void
@@ -278,7 +291,7 @@ class Server
             fclose($this->clients[$clientId]);
             unset($this->clients[$clientId]);
             unset($this->clientTypes[$clientId]);
-            unset($this->clientData[$clientId]); // Clean up client data
+            unset($this->clientData[$clientId]);
             $this->namespaceManager->leaveNamespace($clientId);
             $this->log("Client disconnected: $clientId");
         }
@@ -287,12 +300,12 @@ class Server
     /**
      * Set data for a specific client
      * 
-     * @param int    $clientId  The client ID
-     * @param string $key       The data key
-     * @param mixed  $value     The data value
+     * @param int $clientId The client ID
+     * @param string $key The data key
+     * @param mixed  $value The data value
      * @return void
      */
-    public function setClientData(int $clientId, string $key, $value): void
+    public function setClientData(int $clientId, string $key, mixed $value): void
     {
         if (!isset($this->clientData[$clientId])) {
             $this->clientData[$clientId] = [];
@@ -304,11 +317,11 @@ class Server
     /**
      * Get data for a specific client
      * 
-     * @param int         $clientId  The client ID
-     * @param string|null $key       Optional specific data key to retrieve
-     * @return mixed                 The client data
+     * @param int $clientId The client ID
+     * @param string|null $key Optional specific data key to retrieve
+     * @return mixed The client data
      */
-    public function getClientData(int $clientId, ?string $key = null)
+    public function getClientData(int $clientId, ?string $key = null): mixed
     {
         if (!isset($this->clientData[$clientId])) {
             return null;
@@ -324,9 +337,9 @@ class Server
     /**
      * Send a message to a specific client
      * 
-     * @param int    $clientId  The client ID to send to
-     * @param string $event     The event name
-     * @param array  $data      The data to send
+     * @param int $clientId The client ID to send to
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
      * @return void
      */
     public function send(int $clientId, string $event, array $data): void
@@ -340,10 +353,10 @@ class Server
     /**
      * Broadcast a message to multiple clients
      * 
-     * @param string      $event      The event name
-     * @param array       $data       The data to send
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
      * @param string|null $namespace  Optional namespace to broadcast within
-     * @param string|null $room       Optional room to broadcast to
+     * @param string|null $room Optional room to broadcast to
      * @return void
      */
     public function broadcast(string $event, array $data, ?string $namespace = null, ?string $room = null): void
@@ -351,13 +364,10 @@ class Server
         $frame = $this->wsHandler->prepareMessage($event, $data);
         
         if ($room !== null && $namespace !== null) {
-            // Broadcast to a specific room in a namespace
             $clients = $this->namespaceManager->getClientsInRoom($room, $namespace);
         } elseif ($namespace !== null) {
-            // Broadcast to an entire namespace
             $clients = $this->namespaceManager->getClientsInNamespace($namespace);
         } else {
-            // Broadcast to all clients
             $clients = array_keys($this->clients);
         }
         
@@ -371,9 +381,9 @@ class Server
     /**
      * Add a client to a room
      * 
-     * @param int    $clientId   The client ID to add
-     * @param string $room       The room name
-     * @param string $namespace  The namespace
+     * @param int $clientId The client ID to add
+     * @param string $room The room name
+     * @param string $namespace The namespace
      * @return void
      */
     public function joinRoom(int $clientId, string $room, string $namespace = '/'): void
@@ -384,9 +394,9 @@ class Server
     /**
      * Remove a client from a room
      * 
-     * @param int    $clientId   The client ID to remove
-     * @param string $room       The room name
-     * @param string $namespace  The namespace
+     * @param int $clientId The client ID to remove
+     * @param string $room The room name
+     * @param string $namespace The namespace
      * @return void
      */
     public function leaveRoom(int $clientId, string $room, string $namespace = '/'): void
@@ -397,7 +407,7 @@ class Server
     /**
      * Log a message if debug mode is enabled
      * 
-     * @param string $message  The message to log
+     * @param string $message The message to log
      * @return void
      */
     public function log(string $message): void
