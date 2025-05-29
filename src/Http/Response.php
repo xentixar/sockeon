@@ -21,7 +21,7 @@ class Response
     
     /**
      * Response headers
-     * @var array
+     * @var array<string, string>
      */
     protected array $headers = [];
     
@@ -39,7 +39,7 @@ class Response
     
     /**
      * HTTP status texts
-     * @var array
+     * @var array<int, string>
      */
     protected static array $statusTexts = [
         200 => 'OK',
@@ -56,9 +56,9 @@ class Response
     /**
      * Constructor
      * 
-     * @param mixed $body        The response body
-     * @param int   $statusCode  The HTTP status code
-     * @param array $headers     Additional response headers
+     * @param mixed $body The response body
+     * @param int $statusCode The HTTP status code
+     * @param array<string, string> $headers Additional response headers
      */
     public function __construct(mixed $body = null, int $statusCode = 200, array $headers = [])
     {
@@ -66,7 +66,6 @@ class Response
         $this->statusCode = $statusCode;
         $this->headers = $headers;
         
-        // Auto-detect content type based on body
         if (is_array($body) || is_object($body)) {
             $this->setContentType('application/json');
         }
@@ -166,7 +165,7 @@ class Response
     /**
      * Get all response headers
      * 
-     * @return array The headers
+     * @return array<string, string> The headers
      */
     public function getHeaders(): array
     {
@@ -182,7 +181,6 @@ class Response
     {
         $body = $this->getBodyString();
         
-        // Standard headers for HTTP response
         $headers = [
             "HTTP/1.1 {$this->statusCode} " . $this->getStatusText($this->statusCode),
             "Content-Type: {$this->contentType}",
@@ -191,7 +189,6 @@ class Response
             "X-Powered-By: Sockeon"
         ];
         
-        // Add security headers if not already set
         $securityHeaders = [
             'X-Content-Type-Options' => 'nosniff',
             'X-XSS-Protection' => '1; mode=block',
@@ -204,7 +201,6 @@ class Response
             }
         }
         
-        // Add custom headers
         foreach ($this->headers as $name => $value) {
             $headers[] = "{$name}: {$value}";
         }
@@ -220,17 +216,33 @@ class Response
     protected function getBodyString(): string
     {
         if (is_array($this->body) || is_object($this->body)) {
-            return json_encode($this->body);
+            $json = json_encode($this->body);
+            if ($json === false) {
+                return '{}';
+            }
+            return $json;
         }
         
-        return (string)$this->body;
+        if ($this->body === null) {
+            return '';
+        }
+
+        if (is_string($this->body)) {
+            return $this->body;
+        }
+
+        if (is_numeric($this->body) || is_bool($this->body)) {
+            return (string) $this->body;
+        }
+
+        return '';
     }
 
     /**
      * Get HTTP status text from status code
      * 
      * @param int $code The HTTP status code
-     * @return string   The corresponding status text
+     * @return string The corresponding status text
      */
     protected function getStatusText(int $code): string
     {
@@ -240,9 +252,9 @@ class Response
     /**
      * Create a JSON response
      * 
-     * @param mixed $data       The data to return
-     * @param int   $statusCode The HTTP status code
-     * @param array $headers    Additional headers
+     * @param mixed $data The data to return
+     * @param int $statusCode The HTTP status code
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function json(mixed $data, int $statusCode = 200, array $headers = []): self
@@ -254,8 +266,8 @@ class Response
     /**
      * Create a success response (200 OK)
      * 
-     * @param mixed $data    The data to return
-     * @param array $headers Additional headers
+     * @param mixed $data The data to return
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function ok(mixed $data = null, array $headers = []): self
@@ -266,8 +278,8 @@ class Response
     /**
      * Create a 201 Created response
      * 
-     * @param mixed $data    The data to return
-     * @param array $headers Additional headers
+     * @param mixed $data The data to return
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function created(mixed $data = null, array $headers = []): self
@@ -278,8 +290,8 @@ class Response
     /**
      * Create a 404 Not Found response
      * 
-     * @param mixed $data    The error message or data
-     * @param array $headers Additional headers
+     * @param mixed $data The error message or data
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function notFound(mixed $data = 'Not Found', array $headers = []): self
@@ -293,8 +305,8 @@ class Response
     /**
      * Create a 400 Bad Request response
      * 
-     * @param mixed $data    The error message or data
-     * @param array $headers Additional headers
+     * @param mixed $data The error message or data
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function badRequest(mixed $data = 'Bad Request', array $headers = []): self
@@ -308,8 +320,8 @@ class Response
     /**
      * Create a 500 Internal Server Error response
      * 
-     * @param mixed $data    The error message or data
-     * @param array $headers Additional headers
+     * @param mixed $data The error message or data
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function serverError(mixed $data = 'Internal Server Error', array $headers = []): self
@@ -323,8 +335,8 @@ class Response
     /**
      * Create a 401 Unauthorized response
      * 
-     * @param mixed $data    The error message or data
-     * @param array $headers Additional headers
+     * @param mixed $data The error message or data
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function unauthorized(mixed $data = 'Unauthorized', array $headers = []): self
@@ -338,8 +350,8 @@ class Response
     /**
      * Create a 403 Forbidden response
      * 
-     * @param mixed $data    The error message or data
-     * @param array $headers Additional headers
+     * @param mixed $data The error message or data
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function forbidden(mixed $data = 'Forbidden', array $headers = []): self
@@ -353,7 +365,7 @@ class Response
     /**
      * Create a 204 No Content response
      * 
-     * @param array $headers Additional headers
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function noContent(array $headers = []): self
@@ -364,9 +376,9 @@ class Response
     /**
      * Create a redirect response
      * 
-     * @param string $url      The URL to redirect to
-     * @param int    $status   The HTTP status code (301, 302, 303, 307, 308)
-     * @param array  $headers  Additional headers
+     * @param string $url The URL to redirect to
+     * @param int $status The HTTP status code (301, 302, 303, 307, 308)
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function redirect(string $url, int $status = 302, array $headers = []): self
@@ -378,10 +390,10 @@ class Response
     /**
      * Create a file download response
      * 
-     * @param string $content     The file content
-     * @param string $filename    The suggested filename for the download
+     * @param string $content The file content
+     * @param string $filename The suggested filename for the download
      * @param string $contentType The content type
-     * @param array  $headers     Additional headers
+     * @param array<string, string> $headers Additional headers
      * @return self
      */
     public static function download(string $content, string $filename, string $contentType = 'application/octet-stream', array $headers = []): self

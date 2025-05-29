@@ -34,19 +34,19 @@ class Request
     
     /**
      * Request headers
-     * @var array
+     * @var array<string, string>
      */
     protected array $headers;
     
     /**
      * Query parameters
-     * @var array
+     * @var array<string, mixed>
      */
     protected array $query;
     
     /**
      * Path parameters
-     * @var array
+     * @var array<string, string>
      */
     protected array $params;
     
@@ -58,32 +58,66 @@ class Request
     
     /**
      * Raw request data
-     * @var array
+     * @var array<string, mixed>
      */
     protected array $rawData;
     
     /**
      * Normalized headers cache (lowercase keys)
-     * @var array|null
+     * @var array<string, string>|null
      */
     protected ?array $normalizedHeaders = null;
 
     /**
      * Constructor
      * 
-     * @param array $requestData The parsed HTTP request data
+     * @param array<string, mixed> $requestData The parsed HTTP request data
      */
     public function __construct(array $requestData)
     {
-        $this->method = $requestData['method'] ?? '';
-        $this->path = $requestData['path'] ?? '/';
-        $this->protocol = $requestData['protocol'] ?? '';
-        $this->headers = $requestData['headers'] ?? [];
-        $this->query = $requestData['query'] ?? [];
-        $this->params = $requestData['params'] ?? [];
+        $this->method = isset($requestData['method']) ?
+            (is_string($requestData['method']) ? $requestData['method'] : '') : '';
+
+        $this->path = isset($requestData['path']) ?
+            (is_string($requestData['path']) ? $requestData['path'] : '/') : '/';
+
+        $this->protocol = isset($requestData['protocol']) ?
+            (is_string($requestData['protocol']) ? $requestData['protocol'] : '') : '';
+
+        $this->headers = [];
+        if (isset($requestData['headers']) && is_array($requestData['headers'])) {
+            foreach ($requestData['headers'] as $key => $value) {
+                $headerKey = is_string($key) ? $key : '';
+                $headerValue = is_string($value) ? $value : '';
+                if (!empty($headerKey)) {
+                    $this->headers[$headerKey] = $headerValue;
+                }
+            }
+        }
+
+        $this->query = [];
+        if (isset($requestData['query']) && is_array($requestData['query'])) {
+            foreach ($requestData['query'] as $key => $value) {
+                $queryKey = is_string($key) ? $key : '';
+                if (!empty($queryKey)) {
+                    $this->query[$queryKey] = $value;
+                }
+            }
+        }
+
+        $this->params = [];
+        if (isset($requestData['params']) && is_array($requestData['params'])) {
+            foreach ($requestData['params'] as $key => $value) {
+                $paramKey = is_string($key) ? $key : '';
+                $paramValue = is_string($value) ? $value : '';
+                if (!empty($paramKey)) {
+                    $this->params[$paramKey] = $paramValue;
+                }
+            }
+        }
+
         $this->rawData = $requestData;
 
-        // Handle JSON body
         $body = $requestData['body'] ?? null;
         if (is_string($body) && $this->isJson()) {
             $decodedBody = json_decode($body, true);
@@ -128,7 +162,7 @@ class Request
     /**
      * Get all headers
      * 
-     * @return array All request headers
+     * @return array<string, string> All request headers
      */
     public function getHeaders(): array
     {
@@ -144,7 +178,6 @@ class Request
      */
     public function getHeader(string $name, mixed $default = null): mixed
     {
-        // Initialize normalized headers cache if not already done
         if ($this->normalizedHeaders === null) {
             $this->normalizedHeaders = [];
             foreach ($this->headers as $key => $value) {
@@ -159,7 +192,7 @@ class Request
     /**
      * Get all query parameters
      * 
-     * @return array All query parameters
+     * @return array<string, mixed> All query parameters
      */
     public function getQueryParams(): array
     {
@@ -181,7 +214,7 @@ class Request
     /**
      * Get all path parameters
      * 
-     * @return array All path parameters
+     * @return array<string, string> All path parameters
      */
     public function getPathParams(): array
     {
@@ -218,7 +251,10 @@ class Request
     public function isJson(): bool
     {
         $contentType = $this->getHeader('Content-Type');
-        return $contentType && strpos($contentType, 'application/json') !== false;
+        if (!is_string($contentType)) {
+            return false;
+        }
+        return str_contains($contentType, 'application/json');
     }
     
     /**
@@ -250,7 +286,10 @@ class Request
      */
     public function getUrl(bool $includeQuery = true): string
     {
-        $host = $this->getHeader('Host', '');
+        $host = $this->getHeader('Host');
+        if (!is_string($host)) {
+            $host = '';
+        }
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $url = "{$protocol}://{$host}{$this->path}";
         
@@ -293,7 +332,7 @@ class Request
     /**
      * Create from raw request array
      * 
-     * @param array $request The raw request array
+     * @param array<string, mixed> $request The raw request array
      * @return self New Request instance
      */
     public static function fromArray(array $request): self
@@ -304,7 +343,7 @@ class Request
     /**
      * Convert to array
      * 
-     * @return array The request as an array
+     * @return array<string, mixed> The request as an array
      */
     public function toArray(): array
     {

@@ -18,13 +18,13 @@ class Middleware
 {
     /**
      * Stack of WebSocket middleware functions
-     * @var array
+     * @var array<int, Closure>
      */
     protected array $wsStack = [];
     
     /**
      * Stack of HTTP middleware functions
-     * @var array
+     * @var array<int, Closure>
      */
     protected array $httpStack = [];
     
@@ -55,7 +55,7 @@ class Middleware
      * 
      * @param int $clientId Client ID
      * @param string $event Event name
-     * @param array $data Event data
+     * @param array<string, mixed> $data Event data
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @return mixed Result of the target function or middleware if chain is interrupted
      */
@@ -63,25 +63,20 @@ class Middleware
     {
         $stack = $this->wsStack;
         
-        // Define the executor function that will iterate through middleware
         $run = function (int $index) use (&$run, $stack, $clientId, $event, $data, $target) {
             if ($index >= count($stack)) {
-                // End of middleware stack, execute the target
                 return $target($clientId, $data);
             }
             
-            // Execute the current middleware
             $middleware = $stack[$index];
             
-            // The next function for this middleware
-            $next = function () use ($index, $run, $clientId, $event, $data) {
+            $next = function () use ($index, $run) {
                 return $run($index + 1);
             };
             
             return $middleware($clientId, $event, $data, $next);
         };
         
-        // Start execution at the beginning of the stack
         return $run(0);
     }
     
@@ -96,25 +91,20 @@ class Middleware
     {
         $stack = $this->httpStack;
         
-        // Define the executor function that will iterate through middleware
         $run = function (int $index) use (&$run, $stack, $request, $target) {
             if ($index >= count($stack)) {
-                // End of middleware stack, execute the target
                 return $target($request);
             }
             
-            // Execute the current middleware
             $middleware = $stack[$index];
             
-            // The next function for this middleware
-            $next = function () use ($index, $run, $request) {
+            $next = function () use ($index, $run) {
                 return $run($index + 1);
             };
             
             return $middleware($request, $next);
         };
         
-        // Start execution at the beginning of the stack
         return $run(0);
     }
 }
