@@ -12,6 +12,7 @@
 namespace Sockeon\Sockeon\WebSocket;
 
 use Sockeon\Sockeon\Core\Server;
+use Throwable;
 
 class WebSocketHandler
 {
@@ -61,56 +62,48 @@ class WebSocketHandler
     }
 
     /**
-     * Handle an incoming WebSocket message
+     * Handle data from a WebSocket client
      * 
-     * @param int $clientId The client identifier
+     * @param int $clientId The client ID
      * @param resource $client The client socket resource
-     * @param string $data The raw data received from the client
-     * @return bool Whether the client should remain connected
+     * @param string $data The received data
+     * @return bool Whether to keep the connection alive
      */
     public function handle(int $clientId, $client, string $data): bool
     {
-        if (!isset($this->handshakes[$clientId])) {
-            return $this->performHandshake($clientId, $client, $data);
-        }
-
-        $frames = $this->decodeWebSocketFrame($data);
-        if (empty($frames)) {
-            return true;
-        }
-
-        foreach ($frames as $frame) {
-
-            if (isset($frame['opcode']) && $frame['opcode'] == 9) {
-                $this->sendPong($client);
-                continue;
+        try {
+            if (!isset($this->handshakes[$clientId])) {
+                return $this->performHandshake($clientId, $client, $data);
             }
 
-            if (isset($frame['opcode']) && $frame['opcode'] == 8) {
-                return false;
+            $frames = $this->decodeWebSocketFrame($data);
+            if (empty($frames)) {
+                return true;
             }
 
-            if (isset($frame['opcode'], $frame['payload']) && $frame['opcode'] == 1 && is_string($frame['payload'])) {
-                $message = json_decode($frame['payload'], true);
-                if (is_array($message) && isset($message['event'], $message['data'])) {
-                    $event = is_string($message['event']) ? $message['event'] : (string)$message['event']; //@phpstan-ignore-line
-
-                    $eventData = [];
-                    if (is_array($message['data'])) {
-                        foreach ($message['data'] as $key => $value) {
-                            $stringKey = is_string($key) ? $key : (string)$key;
-                            $eventData[$stringKey] = $value;
-                        }
-                    } else {
-                        $eventData['data'] = $message['data'];
+            foreach ($frames as $frame) {
+                if ($frame['opcode'] === 8) {
+                    $this->server->getLogger()->debug("Received close frame from client: $clientId");
+                    return false;
+                } elseif ($frame['opcode'] === 9) {
+                    $this->server->getLogger()->debug("Received ping from client: $clientId");
+                    $pongFrame = $this->encodeWebSocketFrame($frame['payload'] ?? '', 10);
+                    fwrite($client, $pongFrame);
+                } elseif ($frame['opcode'] === 10) {
+                    $this->server->getLogger()->debug("Received pong from client: $clientId");
+                } elseif ($frame['opcode'] === 1 || $frame['opcode'] === 2) {
+                    if ($frame['payload'] ?? false) {
+                        $this->handleMessage($clientId, $frame['payload']);
                     }
-
-                    $this->server->getRouter()->dispatch($clientId, $event, $eventData);
                 }
             }
-        }
 
-        return true;
+            return true;
+        } catch (Throwable $e) {
+            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'WebSocketHandler::handle']);
+            
+            return true;
+        }
     }
 
     /**
@@ -328,5 +321,41 @@ class WebSocketHandler
         }
 
         return $this->encodeWebSocketFrame($message);
+    }
+
+    /**
+     * Handle an incoming WebSocket message
+     * 
+     * @param int $clientId The client ID
+     * @param string $payload The message payload
+     * @return void
+     */
+    protected function handleMessage(int $clientId, string $payload): void
+    {
+        try {
+            $message = json_decode($payload, true);
+            
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->server->getLogger()->warning("Invalid JSON received from client: $clientId", [
+                    'error' => json_last_error_msg(),
+                    'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : '')
+                ]);
+                return;
+            }
+            
+            if (!isset($message['event']) || !is_string($message['event'])) {
+                $this->server->getLogger()->warning("Invalid message format from client: $clientId", [
+                    'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : '')
+                ]);
+                return;
+            }
+            
+            $event = $message['event'];
+            $data = $message['data'] ?? [];
+            
+            $this->server->getRouter()->dispatch($clientId, $event, $data);
+        } catch (Throwable $e) {
+            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'WebSocketHandler::handleMessage']);
+        }
     }
 }

@@ -13,6 +13,7 @@ namespace Sockeon\Sockeon\Logging;
 
 use DateTime;
 use DateTimeInterface;
+use Throwable;
 
 class Logger implements LoggerInterface
 {
@@ -69,7 +70,7 @@ class Logger implements LoggerInterface
         bool $logToConsole = true,
         bool $separateLogFiles = true
     ) {
-        $this->logDirectory = $logDirectory ?? dirname(__DIR__, 2) . '/logs';
+        $this->logDirectory = $logDirectory ?? dirname(__DIR__, 5) . '/logs';
         $this->minLogLevel = $minLogLevel;
         $this->logToConsole = $logToConsole;
         $this->separateLogFiles = $separateLogFiles;
@@ -204,6 +205,29 @@ class Logger implements LoggerInterface
     }
 
     /**
+     * Log an exception with full traceback information
+     *
+     * @param Throwable $exception The exception to log
+     * @param array<string, mixed> $context Additional context data
+     * @param string $level Log level, defaults to error
+     * @return void
+     */
+    public function exception(Throwable $exception, array $context = [], string $level = LogLevel::ERROR): void
+    {
+        $message = get_class($exception) . ': ' . $exception->getMessage();
+
+        $context['exception'] = [
+            'class' => get_class($exception),
+            'code' => $exception->getCode(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $exception->getTraceAsString()
+        ];
+
+        $this->log($level, $message, $context);
+    }
+
+    /**
      * Check if a message with the given level should be logged
      *
      * @param string $level Log level to check
@@ -226,9 +250,21 @@ class Logger implements LoggerInterface
     {
         $timestamp = (new DateTime())->format('Y-m-d H:i:s');
         $levelString = strtoupper($level);
-        $contextString = !empty($context) ? ' ' . json_encode($context, JSON_UNESCAPED_SLASHES) : '';
 
-        return "[$timestamp] $levelString: $message$contextString";
+        $formattedMessage = "[$timestamp] $levelString: $message";
+
+        if (isset($context['exception']) && is_array($context['exception'])) {
+            $exception = $context['exception'];
+            $formattedMessage .= PHP_EOL . "  File: {$exception['file']}:{$exception['line']}";
+            $formattedMessage .= PHP_EOL . "  Code: {$exception['code']}";
+            $formattedMessage .= PHP_EOL . "  Trace:";
+            $formattedMessage .= PHP_EOL . "  " . str_replace(PHP_EOL, PHP_EOL . "  ", $exception['trace']);
+
+            unset($context['exception']);
+        }
+
+        $contextString = !empty($context) ? ' ' . json_encode($context, JSON_UNESCAPED_SLASHES) : '';
+        return $formattedMessage . $contextString;
     }
 
     /**

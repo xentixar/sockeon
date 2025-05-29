@@ -14,9 +14,13 @@ namespace Sockeon\Sockeon\Core;
 
 use Closure;
 use RuntimeException;
+use Throwable;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\WebSocketHandler;
 use Sockeon\Sockeon\Http\HttpHandler;
+use Sockeon\Sockeon\Logging\Logger;
+use Sockeon\Sockeon\Logging\LoggerInterface;
+use Sockeon\Sockeon\Logging\LogLevel;
 
 class Server
 {
@@ -79,6 +83,12 @@ class Server
      * @var bool
      */
     protected bool $isDebug;
+    
+    /**
+     * Logger instance
+     * @var LoggerInterface
+     */
+    protected LoggerInterface $logger;
 
     /**
      * Constructor
@@ -87,14 +97,25 @@ class Server
      * @param int $port Port to bind server to
      * @param bool $debug Enable debug mode with verbose output
      * @param array<string, mixed> $corsConfig CORS configuration options
+     * @param LoggerInterface|null $logger Custom logger implementation
+     * @throws Throwable
      */
     public function __construct(
         string $host = "0.0.0.0", 
         int $port = 6001, 
         bool $debug = false,
-        array $corsConfig = []
+        array $corsConfig = [],
+        ?LoggerInterface $logger = null
     ) {
         $this->router = new Router();
+        $this->isDebug = $debug;
+        
+        $this->logger = $logger ?? new Logger(
+            __DIR__ . "/logs",
+            $debug ? LogLevel::DEBUG : LogLevel::INFO,
+            true,
+            false
+        );
 
         $allowedOrigins = [];
         if (isset($corsConfig['allowed_origins']) && is_array($corsConfig['allowed_origins'])) {
@@ -111,23 +132,27 @@ class Server
         $this->httpHandler = new HttpHandler($this, $corsConfig);
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
-        $this->isDebug = $debug;
         
-        $this->socket = stream_socket_server(
-            "tcp://{$host}:{$port}", 
-            $errno, 
-            $errstr, 
-            STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
-        );
+        try {
+            $this->socket = stream_socket_server(
+                "tcp://{$host}:{$port}", 
+                $errno, 
+                $errstr, 
+                STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
+            );
 
-        if (!$this->socket) {
-            $errorMessage = is_string($errstr) ? $errstr : 'Unknown error';
-            $errorCode = is_int($errno) ? $errno : 0;
-            throw new RuntimeException("Socket creation failed: " . $errorMessage . " (" . $errorCode . ")");
+            if (!$this->socket) {
+                $errorMessage = is_string($errstr) ? $errstr : 'Unknown error';
+                $errorCode = is_int($errno) ? $errno : 0;
+                throw new RuntimeException("Socket creation failed: " . $errorMessage . " (" . $errorCode . ")");
+            }
+
+            stream_set_blocking($this->socket, false);
+            $this->logger->info("Server started on tcp://{$host}:{$port}");
+        } catch (Throwable $e) {
+            $this->logger->exception($e);
+            throw $e;
         }
-
-        stream_set_blocking($this->socket, false);
-        $this->log("Server started on tcp://{$host}:{$port}");
     }
 
     /**
@@ -138,9 +163,34 @@ class Server
      */
     public function registerController(SocketController $controller): void
     {
-        $controller->setServer($this);
-        $this->router->setServer($this);
-        $this->router->register($controller);
+        try {
+            $controller->setServer($this);
+            $this->router->setServer($this);
+            $this->router->register($controller);
+        } catch (Throwable $e) {
+            $this->logger->exception($e);
+        }
+    }
+    
+    /**
+     * Get the logger instance
+     * 
+     * @return LoggerInterface The logger instance
+     */
+    public function getLogger(): LoggerInterface
+    {
+        return $this->logger;
+    }
+    
+    /**
+     * Set a custom logger instance
+     * 
+     * @param LoggerInterface $logger The logger instance
+     * @return void
+     */
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
     }
 
     /**
@@ -214,64 +264,84 @@ class Server
      */
     public function run(): void
     {
-        $this->log("Server running...");
+        $this->logger->info("Server running...");
         
         while (is_resource($this->socket)) {
-            $read = $this->clients;
-            $read[] = $this->socket;
-            $write = $except = null;
+            try {
+                $read = $this->clients;
+                $read[] = $this->socket;
+                $write = $except = null;
 
-            if (stream_select($read, $write, $except, 0, 200000)) {
-                if (in_array($this->socket, $read)) {
-                    $client = stream_socket_accept($this->socket);
-                    if (is_resource($client)) {
-                        stream_set_blocking($client, false);
-                        $clientId = (int)$client;
-                        $this->clients[$clientId] = $client;
-                        $this->clientTypes[$clientId] = 'unknown';
-                        $this->namespaceManager->joinNamespace($clientId);
-                        unset($read[array_search($this->socket, $read)]);
-                        $this->log("Client connected: $clientId");
-                    }
-                }
-
-                foreach ($read as $client) {
-                    $clientId = (int)$client;
-                    $data = fread($client, 8192);
-                    
-                    if ($data === '' || $data === false) {
-                        $this->disconnectClient($clientId);
-                        continue;
+                if (stream_select($read, $write, $except, 0, 200000)) {
+                    if (in_array($this->socket, $read)) {
+                        try {
+                            $client = stream_socket_accept($this->socket);
+                            if (is_resource($client)) {
+                                stream_set_blocking($client, false);
+                                $clientId = (int)$client;
+                                $this->clients[$clientId] = $client;
+                                $this->clientTypes[$clientId] = 'unknown';
+                                $this->namespaceManager->joinNamespace($clientId);
+                                unset($read[array_search($this->socket, $read)]);
+                                $this->logger->debug("Client connected: $clientId");
+                            }
+                        } catch (Throwable $e) {
+                            $this->logger->exception($e, ['context' => 'Connection acceptance']);
+                        }
                     }
 
-                    if ($this->clientTypes[$clientId] === 'unknown') {
-                        if (str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') || 
-                            str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ') ||
-                            str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
-                            str_starts_with($data, 'HEAD ')) {
-                            if (str_contains($data, 'Upgrade: websocket')) {
-                                $this->clientTypes[$clientId] = 'ws';
-                                $this->log("WebSocket client identified: $clientId");
+                    foreach ($read as $client) {
+                        try {
+                            $clientId = (int)$client;
+                            $data = fread($client, 8192);
+                            
+                            if ($data === '' || $data === false) {
+                                $this->disconnectClient($clientId);
+                                continue;
+                            }
+
+                            if ($this->clientTypes[$clientId] === 'unknown') {
+                                if (str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') || 
+                                    str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ') ||
+                                    str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
+                                    str_starts_with($data, 'HEAD ')) {
+                                    if (str_contains($data, 'Upgrade: websocket')) {
+                                        $this->clientTypes[$clientId] = 'ws';
+                                        $this->logger->debug("WebSocket client identified: $clientId");
+                                    } else {
+                                        $this->clientTypes[$clientId] = 'http';
+                                        $this->logger->debug("HTTP client identified: $clientId");
+                                    }
+                                }
+                            }
+
+                            if ($this->clientTypes[$clientId] === 'ws') {
+                                $keepAlive = $this->wsHandler->handle($clientId, $client, $data);
+                                if (!$keepAlive) {
+                                    $this->disconnectClient($clientId);
+                                }
+                            } elseif ($this->clientTypes[$clientId] === 'http') {
+                                $this->httpHandler->handle($clientId, $client, $data);
+                                $this->disconnectClient($clientId);
                             } else {
-                                $this->clientTypes[$clientId] = 'http';
-                                $this->log("HTTP client identified: $clientId");
+                                $this->logger->warning("Unknown protocol, disconnecting client: $clientId");
+                                $this->disconnectClient($clientId);
+                            }
+                        } catch (Throwable $e) {
+                            $clientId = (int)$client;
+                            $this->logger->exception($e, ['clientId' => $clientId]);
+                            
+                            try {
+                                $this->disconnectClient($clientId);
+                            } catch (Throwable $innerEx) {
+                                $this->logger->error("Failed to disconnect client after error: {$innerEx->getMessage()}");
                             }
                         }
                     }
-
-                    if ($this->clientTypes[$clientId] === 'ws') {
-                        $keepAlive = $this->wsHandler->handle($clientId, $client, $data);
-                        if (!$keepAlive) {
-                            $this->disconnectClient($clientId);
-                        }
-                    } elseif ($this->clientTypes[$clientId] === 'http') {
-                        $this->httpHandler->handle($clientId, $client, $data);
-                        $this->disconnectClient($clientId);
-                    } else {
-                        $this->log("Unknown protocol, disconnecting client: $clientId");
-                        $this->disconnectClient($clientId);
-                    }
                 }
+            } catch (Throwable $e) {
+                $this->logger->exception($e, ['context' => 'Server main loop']);
+                usleep(100000);
             }
         }
     }
@@ -284,13 +354,17 @@ class Server
      */
     public function disconnectClient(int $clientId): void
     {
-        if (isset($this->clients[$clientId])) {
-            fclose($this->clients[$clientId]);
-            unset($this->clients[$clientId]);
-            unset($this->clientTypes[$clientId]);
-            unset($this->clientData[$clientId]);
-            $this->namespaceManager->leaveNamespace($clientId);
-            $this->log("Client disconnected: $clientId");
+        try {
+            if (isset($this->clients[$clientId])) {
+                fclose($this->clients[$clientId]);
+                unset($this->clients[$clientId]);
+                unset($this->clientTypes[$clientId]);
+                unset($this->clientData[$clientId]);
+                $this->namespaceManager->leaveNamespace($clientId);
+                $this->logger->debug("Client disconnected: $clientId");
+            }
+        } catch (Throwable $e) {
+            $this->logger->exception($e, ['context' => 'Client disconnection', 'clientId' => $clientId]);
         }
     }
 
@@ -399,18 +473,5 @@ class Server
     public function leaveRoom(int $clientId, string $room, string $namespace = '/'): void
     {
         $this->namespaceManager->leaveRoom($clientId, $room, $namespace);
-    }
-    
-    /**
-     * Log a message if debug mode is enabled
-     * 
-     * @param string $message The message to log
-     * @return void
-     */
-    public function log(string $message): void
-    {
-        if ($this->isDebug) {
-            echo "[" . date('Y-m-d H:i:s') . "] $message\n";
-        }
     }
 }

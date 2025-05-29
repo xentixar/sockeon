@@ -12,6 +12,8 @@
 
 namespace Sockeon\Sockeon\Logging;
 
+use Throwable;
+
 interface LoggerInterface
 {
     /**
@@ -95,11 +97,22 @@ interface LoggerInterface
     public function debug(string $message, array $context = []): void;
 
     /**
+     * Log an exception with full traceback information
+     *
+     * @param Throwable $exception The exception to log
+     * @param array<string, mixed> $context Additional context data
+     * @param string $level Log level, defaults to error
+     * @return void
+     */
+    public function exception(Throwable $exception, array $context = [], string $level = LogLevel::ERROR): void;
+    
+    /**
      * Log a message with arbitrary level
      *
      * @param string $level Log level
      * @param string $message Log message
      * @param array<string, mixed> $context Additional context data
+     * @return void
      */
     public function log(string $level, string $message, array $context = []): void;
 }
