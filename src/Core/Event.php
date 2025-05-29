@@ -12,6 +12,8 @@
 
 namespace Sockeon\Sockeon\Core;
 
+use Sockeon\Sockeon\Core\Traits\SocketEvent;
+
 abstract class Event
 {
     /**
@@ -34,9 +36,9 @@ abstract class Event
 
     /**
      * Constructor
-     * 
-     * @param string $name  The event name (optional, will use name() method if not provided)
-     * @param string $label The human-readable label for the event (optional)
+     *
+     * @param string|null $name The event name (optional, will use name() method if not provided)
+     * @param string|null $label The human-readable label for the event (optional)
      */
     public function __construct(?string $name = null, ?string $label = null)
     {
@@ -134,9 +136,9 @@ abstract class Event
     /**
      * Statically emit an event to a specific client
      * 
-     * @param int       $clientId   The ID of the client to send to
+     * @param int $clientId   The ID of the client to send to
      * @param string|self|string $event The event name, Event instance, or Event class string
-     * @param array     $data       The data to send
+     * @param array<string, mixed> $data       The data to send
      * @return void
      * @throws \RuntimeException If server instance is not set
      */
@@ -144,16 +146,16 @@ abstract class Event
     {
         $server = self::getServerInstance();
         $eventName = self::resolveEventName($event);
-        $server->send($clientId, $eventName, $data);
+        $server->send($clientId, $eventName, $data); //@phpstan-ignore-line
     }
-    
+
     /**
      * Statically broadcast an event to multiple clients
-     * 
+     *
      * @param string|self|string $event The event name, Event instance, or Event class string
-     * @param array     $data       The data to send
-     * @param string    $namespace  Optional namespace to broadcast within
-     * @param string    $room       Optional room to broadcast to
+     * @param array<string, mixed> $data The data to send
+     * @param string|null $namespace Optional namespace to broadcast within
+     * @param string|null $room Optional room to broadcast to
      * @return void
      * @throws \RuntimeException If server instance is not set
      */
@@ -161,6 +163,6 @@ abstract class Event
     {
         $server = self::getServerInstance();
         $eventName = self::resolveEventName($event);
-        $server->broadcast($eventName, $data, $namespace, $room);
+        $server->broadcast($eventName, $data, $namespace, $room); //@phpstan-ignore-line
     }
 }

@@ -11,18 +11,19 @@
 
 namespace Sockeon\Sockeon\Core\Traits;
 
+//@phpstan-ignore-next-line
 trait EmittableEvent
 {
     /**
      * Emit this event directly to a specific client
      * 
-     * @param int   $clientId The ID of the client to send to
-     * @param array $data     The data to send
+     * @param int $clientId The ID of the client to send to
+     * @param array<string, mixed> $data     The data to send
      * @return void
      */
     public static function emitTo(int $clientId, array $data): void
     {
-        self::getServerInstance()->send($clientId, self::getEventName(), $data);
+        self::getServerInstance()->send($clientId, self::getEventName(), $data); //@phpstan-ignore-line
     }
     
     /**

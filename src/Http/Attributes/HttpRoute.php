@@ -24,8 +24,8 @@ class HttpRoute
     /**
      * Constructor
      * 
-     * @param string $method  The HTTP method (GET, POST, PUT, DELETE, etc.)
-     * @param string $path    The URL path to handle, can include path parameters like {id}
+     * @param string $method The HTTP method (GET, POST, PUT, DELETE, etc.)
+     * @param string $path The URL path to handle, can include path parameters like {id}
      */
     public function __construct(
         public string $method,

@@ -28,11 +28,11 @@ class HttpHandler
      * Reference to the server instance
      * @var Server
      */
-    protected $server;
-    
+    protected Server $server;
+
     /**
      * Registered HTTP routes
-     * @var array
+     * @var array<string, array{0: object, 1: string}>
      */
     protected array $routes = [];
     
@@ -45,8 +45,8 @@ class HttpHandler
     /**
      * Constructor
      * 
-     * @param Server $server  The server instance
-     * @param array $corsConfig Optional CORS configuration
+     * @param Server $server The server instance
+     * @param array<string, mixed> $corsConfig Optional CORS configuration
      */
     public function __construct(Server $server, array $corsConfig = [])
     {
@@ -57,9 +57,9 @@ class HttpHandler
     /**
      * Handle an incoming HTTP request
      * 
-     * @param int       $clientId  The client identifier
-     * @param resource  $client    The client socket resource
-     * @param string    $data      The raw HTTP request data
+     * @param int $clientId The client identifier
+     * @param resource $client The client socket resource
+     * @param string $data The raw HTTP request data
      * @return void
      */
     public function handle(int $clientId, $client, string $data): void
@@ -123,7 +123,7 @@ class HttpHandler
         
         $origin = $request->getHeader('Origin');
         
-        if (!$origin) {
+        if (!$origin || !is_string($origin)) {
             return $response;
         }
         
@@ -141,16 +141,12 @@ class HttpHandler
         
         if ($isPreflight) {
             $allowedMethods = $this->corsConfig->getAllowedMethods();
-            $headers['Access-Control-Allow-Methods'] = is_array($allowedMethods) 
-                ? implode(', ', $allowedMethods) 
-                : $allowedMethods;
-            
+            $headers['Access-Control-Allow-Methods'] = implode(', ', $allowedMethods);
+
             $allowedHeaders = $this->corsConfig->getAllowedHeaders();
-            $headers['Access-Control-Allow-Headers'] = is_array($allowedHeaders) 
-                ? implode(', ', $allowedHeaders) 
-                : $allowedHeaders;
-            
-            $headers['Access-Control-Max-Age'] = $this->corsConfig->getMaxAge();
+            $headers['Access-Control-Allow-Headers'] = implode(', ', $allowedHeaders);
+
+            $headers['Access-Control-Max-Age'] = (string)$this->corsConfig->getMaxAge();
         }
         
         $headerString = '';
@@ -160,7 +156,7 @@ class HttpHandler
         }
         
         foreach ($headers as $name => $value) {
-            $headerString .= "$name: $value\r\n";
+            $headerString .= $name . ": " . $value . "\r\n";
         }
         
         return $headerString . "\r\n" . $body;
@@ -170,7 +166,7 @@ class HttpHandler
      * Parse HTTP response into headers and body
      * 
      * @param string $response The HTTP response string
-     * @return array [headers, body]
+     * @return array{0: array<string, string>, 1: string} [headers, body]
      */
     protected function parseHttpResponse(string $response): array
     {
@@ -178,35 +174,36 @@ class HttpHandler
         
         $headerLines = explode("\r\n", $parts[0]);
         $statusLine = array_shift($headerLines);
-        
+
         $headers = ['Status-Line' => $statusLine];
         foreach ($headerLines as $line) {
-            if (strpos($line, ':') !== false) {
+            if (str_contains($line, ':')) {
                 list($name, $value) = explode(':', $line, 2);
                 $headers[trim($name)] = trim($value);
             }
         }
         
         $body = $parts[1] ?? '';
-        
+
         return [$headers, $body];
     }
 
     /**
      * Parse raw HTTP request into structured format
      * 
-     * @param string $data  The raw HTTP request data
-     * @return array        The parsed request as an associative array
+     * @param string $data The raw HTTP request data
+     * @return array<string, mixed> The parsed request as an associative array
      */
     protected function parseHttpRequest(string $data): array
     {
         $lines = explode("\r\n", $data);
-        $requestLine = explode(' ', array_shift($lines));
-        
+        $firstLine = $lines[0];
+        $requestLine = $firstLine ? explode(' ', $firstLine) : [];
+
         $method = $requestLine[0] ?? '';
         $path = $requestLine[1] ?? '/';
         $protocol = $requestLine[2] ?? '';
-        
+
         $headers = [];
         $headersDone = false;
         $body = '';
@@ -218,7 +215,7 @@ class HttpHandler
                     continue;
                 }
                 
-                if (strpos($line, ':') !== false) {
+                if (str_contains($line, ':')) {
                     list($key, $value) = explode(':', $line, 2);
                     $headers[trim($key)] = trim($value);
                 }
@@ -264,18 +261,16 @@ class HttpHandler
     /**
      * Process an HTTP request and generate response
      * 
-     * @param Request $request  The Request object
-     * @return string           The HTTP response string
+     * @param Request $request The Request object
+     * @return string The HTTP response string
      */
     protected function processRequest(Request $request): string
     {
         $path = $request->getPath();
         $method = $request->getMethod();
         
-        // Use router to dispatch the request through middleware
         $result = $this->server->getRouter()->dispatchHttp($request);
         
-        // Convert controller result to Response object if needed
         if ($result instanceof Response) {
             $response = $result;
         } elseif ($result !== null) {
