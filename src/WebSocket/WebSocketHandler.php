@@ -87,13 +87,17 @@ class WebSocketHandler
                     return false;
                 } elseif ($frame['opcode'] === 9) {
                     $this->server->getLogger()->debug("Received ping from client: $clientId");
-                    $pongFrame = $this->encodeWebSocketFrame($frame['payload'] ?? '', 10);
+                    $payload = isset($frame['payload']) ? (is_string($frame['payload']) ? $frame['payload'] : '') : '';
+                    $pongFrame = $this->encodeWebSocketFrame($payload, 10);
                     fwrite($client, $pongFrame);
                 } elseif ($frame['opcode'] === 10) {
                     $this->server->getLogger()->debug("Received pong from client: $clientId");
                 } elseif ($frame['opcode'] === 1 || $frame['opcode'] === 2) {
                     if ($frame['payload'] ?? false) {
-                        $this->handleMessage($clientId, $frame['payload']);
+                        $payload = is_string($frame['payload']) ? $frame['payload'] : '';
+                        if (!empty($payload)) {
+                            $this->handleMessage($clientId, $payload);
+                        }
                     }
                 }
             }
@@ -343,7 +347,7 @@ class WebSocketHandler
                 return;
             }
             
-            if (!isset($message['event']) || !is_string($message['event'])) {
+            if (!is_array($message) || !isset($message['event']) || !is_string($message['event'])) {
                 $this->server->getLogger()->warning("Invalid message format from client: $clientId", [
                     'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : '')
                 ]);
@@ -351,9 +355,9 @@ class WebSocketHandler
             }
             
             $event = $message['event'];
-            $data = $message['data'] ?? [];
-            
-            $this->server->getRouter()->dispatch($clientId, $event, $data);
+            $data = isset($message['data']) && is_array($message['data']) ? $message['data'] : [];
+
+            $this->server->getRouter()->dispatch($clientId, $event, $data); //@phpstan-ignore-line
         } catch (Throwable $e) {
             $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'WebSocketHandler::handleMessage']);
         }

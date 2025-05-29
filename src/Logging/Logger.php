@@ -254,6 +254,7 @@ class Logger implements LoggerInterface
         $formattedMessage = "[$timestamp] $levelString: $message";
 
         if (isset($context['exception']) && is_array($context['exception'])) {
+            /** @var array<string, string> $exception */
             $exception = $context['exception'];
             $formattedMessage .= PHP_EOL . "  File: {$exception['file']}:{$exception['line']}";
             $formattedMessage .= PHP_EOL . "  Code: {$exception['code']}";
