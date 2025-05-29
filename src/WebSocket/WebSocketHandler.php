@@ -19,17 +19,17 @@ class WebSocketHandler
      * Reference to the server instance
      * @var Server
      */
-    protected $server;
-    
+    protected Server $server;
+
     /**
      * Tracks completed handshakes by client ID
-     * @var array
+     * @var array<int, bool>
      */
     protected array $handshakes = [];
 
     /**
      * Allowed origins for WebSocket connections
-     * @var array
+     * @var array<int, string>
      */
     protected array $allowedOrigins = ['*'];
 
@@ -37,7 +37,7 @@ class WebSocketHandler
      * Constructor
      * 
      * @param Server $server  The server instance
-     * @param array $allowedOrigins Allowed origins for WebSocket connections
+     * @param array<int, string> $allowedOrigins Allowed origins for WebSocket connections
      */
     public function __construct(Server $server, array $allowedOrigins = ['*'])
     {
@@ -63,42 +63,49 @@ class WebSocketHandler
     /**
      * Handle an incoming WebSocket message
      * 
-     * @param int       $clientId  The client identifier
-     * @param resource  $client    The client socket resource
-     * @param string    $data      The raw data received from the client
-     * @return bool                Whether the client should remain connected
+     * @param int $clientId The client identifier
+     * @param resource $client The client socket resource
+     * @param string $data The raw data received from the client
+     * @return bool Whether the client should remain connected
      */
-    public function handle(int $clientId, $client, $data): bool
+    public function handle(int $clientId, $client, string $data): bool
     {
-        // Check if this is a new connection needing handshake
         if (!isset($this->handshakes[$clientId])) {
             return $this->performHandshake($clientId, $client, $data);
         }
 
-        // Handle WebSocket frames
         $frames = $this->decodeWebSocketFrame($data);
         if (empty($frames)) {
             return true;
         }
 
         foreach ($frames as $frame) {
-            // Handle ping/pong for keepalive
-            if ($frame['opcode'] == 9) {
-                // Ping received, send pong
+
+            if (isset($frame['opcode']) && $frame['opcode'] == 9) {
                 $this->sendPong($client);
                 continue;
             }
 
-            // Check for connection close
-            if ($frame['opcode'] == 8) {
-                return false; // Connection should be closed
+            if (isset($frame['opcode']) && $frame['opcode'] == 8) {
+                return false;
             }
 
-            // Handle regular text message
-            if ($frame['opcode'] == 1 && isset($frame['payload'])) {
+            if (isset($frame['opcode'], $frame['payload']) && $frame['opcode'] == 1 && is_string($frame['payload'])) {
                 $message = json_decode($frame['payload'], true);
-                if (isset($message['event'], $message['data'])) {
-                    $this->server->getRouter()->dispatch($clientId, $message['event'], $message['data']);
+                if (is_array($message) && isset($message['event'], $message['data'])) {
+                    $event = is_string($message['event']) ? $message['event'] : (string)$message['event']; //@phpstan-ignore-line
+
+                    $eventData = [];
+                    if (is_array($message['data'])) {
+                        foreach ($message['data'] as $key => $value) {
+                            $stringKey = is_string($key) ? $key : (string)$key;
+                            $eventData[$stringKey] = $value;
+                        }
+                    } else {
+                        $eventData['data'] = $message['data'];
+                    }
+
+                    $this->server->getRouter()->dispatch($clientId, $event, $eventData);
                 }
             }
         }
@@ -109,10 +116,10 @@ class WebSocketHandler
     /**
      * Perform WebSocket handshake with client
      * 
-     * @param int       $clientId  The client identifier
-     * @param resource  $client    The client socket resource
-     * @param string    $data      The HTTP handshake request
-     * @return bool                Whether the handshake was successful
+     * @param int $clientId The client identifier
+     * @param resource $client The client socket resource
+     * @param string $data The HTTP handshake request
+     * @return bool Whether the handshake was successful
      */
     protected function performHandshake(int $clientId, $client, string $data): bool
     {
@@ -156,14 +163,19 @@ class WebSocketHandler
     /**
      * Decode WebSocket frames from raw binary data
      * 
-     * @param string $data  The raw WebSocket frame data
-     * @return array        An array of parsed WebSocket frames
+     * @param string $data The raw WebSocket frame data
+     * @return array<int, array<string, mixed>> An array of parsed WebSocket frames
      */
     protected function decodeWebSocketFrame(string $data): array
     {
         $frames = [];
         
         while (strlen($data) > 0) {
+            // Make sure we have at least 2 bytes
+            if (strlen($data) < 2) {
+                break;
+            }
+
             $firstByte = ord($data[0]);
             $secondByte = ord($data[1]);
             
@@ -173,23 +185,59 @@ class WebSocketHandler
             $payloadLength = $secondByte & 0x7F;
             
             $offset = 2;
-            
+            $extendedPayloadLength = 0;
+
+            // Extended payload length - 16 bits
             if ($payloadLength == 126) {
-                $payloadLength = unpack('n', substr($data, 2, 2))[1];
+                // Make sure we have enough bytes for extended 16-bit length
+                if (strlen($data) < 4) {
+                    break;
+                }
+                $unpacked = unpack('n', substr($data, 2, 2));
+                if (!$unpacked || !isset($unpacked[1])) {
+                    break;
+                }
+                $extendedPayloadLength = $unpacked[1];
+                $payloadLength = $extendedPayloadLength;
                 $offset += 2;
-            } elseif ($payloadLength == 127) {
-                $payloadLength = unpack('J', substr($data, 2, 8))[1];
+            }
+            // Extended payload length - 64 bits
+            elseif ($payloadLength == 127) {
+                // Make sure we have enough bytes for extended 64-bit length
+                if (strlen($data) < 10) {
+                    break;
+                }
+                $unpacked = unpack('J', substr($data, 2, 8));
+                if (!$unpacked || !isset($unpacked[1])) {
+                    break;
+                }
+                $extendedPayloadLength = $unpacked[1];
+                $payloadLength = $extendedPayloadLength;
                 $offset += 8;
             }
             
+            // Check if we have enough data for the entire frame
+            $frameLength = $offset;
+            if ($masked) {
+                $frameLength += 4;  // Add mask key length
+            }
+            $frameLength += $payloadLength; // @phpstan-ignore-line
+
+            if (strlen($data) < $frameLength) {
+                break;
+            }
+
+            // Process the frame
             if ($masked) {
                 $maskKey = substr($data, $offset, 4);
                 $offset += 4;
-                
-                $payload = substr($data, $offset, $payloadLength);
+
+                $payload = substr($data, $offset, $payloadLength); // @phpstan-ignore-line
                 $unmaskedPayload = '';
                 
-                for ($i = 0; $i < strlen($payload); $i++) {
+                // Apply mask
+                $length = strlen($payload);
+                for ($i = 0; $i < $length; $i++) {
                     $unmaskedPayload .= $payload[$i] ^ $maskKey[$i % 4];
                 }
                 
@@ -200,7 +248,7 @@ class WebSocketHandler
                     'payload' => $unmaskedPayload
                 ];
             } else {
-                $payload = substr($data, $offset, $payloadLength);
+                $payload = substr($data, $offset, $payloadLength);  // @phpstan-ignore-line
                 $frames[] = [
                     'fin' => $fin,
                     'opcode' => $opcode,
@@ -209,7 +257,8 @@ class WebSocketHandler
                 ];
             }
             
-            $data = substr($data, $offset + $payloadLength);
+            // Move to the next frame
+            $data = substr($data, $frameLength);
         }
         
         return $frames;
@@ -218,9 +267,9 @@ class WebSocketHandler
     /**
      * Encode a message into a WebSocket frame
      * 
-     * @param string $payload  The payload to encode
-     * @param int    $opcode   The WebSocket opcode (1=text, 8=close, 9=ping, 10=pong)
-     * @return string          The encoded WebSocket frame
+     * @param string $payload The payload to encode
+     * @param int $opcode The WebSocket opcode (1=text, 8=close, 9=ping, 10=pong)
+     * @return string The encoded WebSocket frame
      */
     public function encodeWebSocketFrame(string $payload, int $opcode = 1): string
     {
@@ -245,21 +294,21 @@ class WebSocketHandler
     /**
      * Send a pong frame in response to a ping
      * 
-     * @param resource $client  The client socket resource
+     * @param resource $client The client socket resource
      * @return void
      */
     public function sendPong($client): void
     {
-        $pongFrame = $this->encodeWebSocketFrame('', 10); // Opcode 10 for pong
+        $pongFrame = $this->encodeWebSocketFrame('', 10);
         fwrite($client, $pongFrame);
     }
 
     /**
      * Prepare a message for sending over WebSocket
      * 
-     * @param string $event  The event name
-     * @param array  $data   The data to send
-     * @return string        The encoded WebSocket message
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @return string The encoded WebSocket message
      */
     public function prepareMessage(string $event, array $data): string
     {
@@ -268,6 +317,16 @@ class WebSocketHandler
             'data' => $data
         ]);
         
+        if ($message === false) {
+            $message = json_encode([
+                'event' => 'error',
+                'data' => ['message' => 'Failed to encode message']
+            ]);
+            if ($message === false) {
+                $message = '{"event":"error","data":{"message":"JSON encoding error"}}';
+            }
+        }
+
         return $this->encodeWebSocketFrame($message);
     }
 }

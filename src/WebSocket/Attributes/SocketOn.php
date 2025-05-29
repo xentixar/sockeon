@@ -20,7 +20,7 @@ class SocketOn
     /**
      * Constructor
      * 
-     * @param string $event  The event name this handler responds to
+     * @param string $event The event name this handler responds to
      */
     public function __construct(public string $event) {}
 }

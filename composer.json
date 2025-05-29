@@ -44,5 +44,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
+    },
+    "options": {
+        "symlink": true
     }
 }

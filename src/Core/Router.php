@@ -27,13 +27,13 @@ class Router
 {
     /**
      * WebSocket routes
-     * @var array
+     * @var array<string, array{0: SocketController, 1: string}>
      */
     protected array $wsRoutes = [];
     
     /**
      * HTTP routes
-     * @var array
+     * @var array<string, array{0: SocketController, 1: string}>
      */
     protected array $httpRoutes = [];
     
@@ -46,7 +46,7 @@ class Router
     /**
      * Set the server instance
      * 
-     * @param Server $server  The server instance
+     * @param Server $server The server instance
      * @return void
      */
     public function setServer(Server $server): void
@@ -59,22 +59,19 @@ class Router
      * 
      * Uses reflection to find attributes and register handlers
      * 
-     * @param SocketController $controller  The controller instance to register
+     * @param SocketController $controller The controller instance to register
      * @return void
      */
     public function register(SocketController $controller): void
     {
         $ref = new ReflectionClass($controller);
         
-        // Register WebSocket routes
         foreach ($ref->getMethods() as $method) {
-            // Socket routes
             foreach ($method->getAttributes(SocketOn::class) as $attr) {
                 $event = $attr->newInstance()->event;
                 $this->wsRoutes[$event] = [$controller, $method->getName()];
             }
             
-            // HTTP routes
             foreach ($method->getAttributes(HttpRoute::class) as $attr) {
                 $httpAttr = $attr->newInstance();
                 $key = $httpAttr->method . ' ' . $httpAttr->path;
@@ -86,9 +83,9 @@ class Router
     /**
      * Dispatch a WebSocket event to the appropriate handler
      * 
-     * @param int    $clientId  The client identifier
-     * @param string $event     The event name
-     * @param array  $data      The event data
+     * @param int $clientId The client identifier
+     * @param string $event The event name
+     * @param array<string, mixed> $data The event data
      * @return void
      */
     public function dispatch(int $clientId, string $event, array $data): void
@@ -97,7 +94,6 @@ class Router
             [$controller, $method] = $this->wsRoutes[$event];
             
             if ($this->server) {
-                // Use middleware if server is set
                 $this->server->getMiddleware()->runWebSocketStack(
                     $clientId, 
                     $event, 
@@ -107,7 +103,6 @@ class Router
                     }
                 );
             } else {
-                // Direct call if no server is set
                 $controller->$method($clientId, $data);
             }
         }
@@ -116,8 +111,8 @@ class Router
     /**
      * Dispatch an HTTP request to the appropriate handler
      * 
-     * @param Request $request  The Request object
-     * @return mixed            The response from the handler
+     * @param Request $request The Request object
+     * @return mixed The response from the handler
      */
     public function dispatchHttp(Request $request): mixed
     {
@@ -125,23 +120,19 @@ class Router
         $path = $request->getPath();
         $key = $method . ' ' . $path;
         
-        // Check for direct match first
         if (isset($this->httpRoutes[$key])) {
             return $this->executeHttpRoute($this->httpRoutes[$key], $request);
         }
         
-        // Check for routes with path parameters
         foreach ($this->httpRoutes as $routeKey => $handler) {
             [$routeMethod, $routePath] = explode(' ', $routeKey, 2);
             
-            // Skip routes with different HTTP methods
             if ($routeMethod !== $method) {
                 continue;
             }
             
             $pathParams = [];
             if ($this->matchRoute($routePath, $path, $pathParams)) {
-                // Add path parameters to the request by updating the Request object
                 $requestData = $request->toArray();
                 $requestData['params'] = $pathParams;
                 $request = Request::fromArray($requestData);
@@ -156,16 +147,15 @@ class Router
     /**
      * Execute an HTTP route handler with middleware
      * 
-     * @param array $handler    The controller and method to call
-     * @param Request $request  The Request object
-     * @return mixed            The response from the handler
+     * @param array{0: SocketController, 1: string} $handler The controller and method to call
+     * @param Request $request The Request object
+     * @return mixed The response from the handler
      */
     private function executeHttpRoute(array $handler, Request $request): mixed
     {
         [$controller, $method] = $handler;
         
         if ($this->server) {
-            // Use middleware if server is set
             return $this->server->getMiddleware()->runHttpStack(
                 $request,
                 function ($request) use ($controller, $method) {
@@ -173,7 +163,6 @@ class Router
                 }
             );
         } else {
-            // Direct call if no server is set
             return $controller->$method($request);
         }
     }
@@ -183,19 +172,17 @@ class Router
      * 
      * Supports path parameters in the format {paramName}
      * 
-     * @param string $pattern     The route pattern with parameters
-     * @param string $path        The actual request path
-     * @param array  &$params     Reference to array for extracted parameters
-     * @return bool               True if the route matches, false otherwise
+     * @param string $pattern The route pattern with parameters
+     * @param string $path The actual request path
+     * @param array<string, string> &$params Reference to array for extracted parameters
+     * @return bool True if the route matches, false otherwise
      */
     private function matchRoute(string $pattern, string $path, array &$params): bool
     {
-        // Convert route pattern to regex
         $regex = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $pattern);
         $regex = '#^' . $regex . '$#';
         
         if (preg_match($regex, $path, $matches)) {
-            // Extract named parameters
             foreach ($matches as $key => $value) {
                 if (is_string($key)) {
                     $params[$key] = $value;
@@ -210,7 +197,7 @@ class Router
     /**
      * Get all registered HTTP routes
      * 
-     * @return array  The registered HTTP routes
+     * @return array<string, array{0: SocketController, 1: string}> The registered HTTP routes
      */
     public function getHttpRoutes(): array
     {
