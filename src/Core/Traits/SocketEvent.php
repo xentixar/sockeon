@@ -11,6 +11,7 @@
 
 namespace Sockeon\Sockeon\Core\Traits;
 
+//@phpstan-ignore-next-line
 trait SocketEvent
 {
     use EmittableEvent, BroadcastableEvent {
