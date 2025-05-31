@@ -19,9 +19,9 @@ class Logger implements LoggerInterface
 {
     /**
      * Directory path where log files will be stored
-     * @var string
+     * @var string|null
      */
-    protected string $logDirectory;
+    protected string|null $logDirectory;
 
     /**
      * Current minimum log level
@@ -36,10 +36,16 @@ class Logger implements LoggerInterface
     protected bool $logToConsole;
 
     /**
-     * Whether to create separate log files for each level
+     * Whether to log to a file
      * @var bool
      */
-    protected bool $separateLogFiles;
+    protected bool $logToFile;
+
+    /**
+     * Whether to create separate log files for each level
+     * @var bool|null
+     */
+    protected bool|null $separateLogFiles;
 
     /**
      * ANSI color codes for console output
@@ -62,21 +68,26 @@ class Logger implements LoggerInterface
      * @param string|null $logDirectory Directory where log files will be stored
      * @param string $minLogLevel Minimum log level to record
      * @param bool $logToConsole Whether to output logs to console
+     * @param bool $logToFile Whether to log to a file
      * @param bool $separateLogFiles Whether to create separate files for each level
      */
     public function __construct(
-        ?string $logDirectory = null,
         string $minLogLevel = LogLevel::DEBUG,
         bool $logToConsole = true,
-        bool $separateLogFiles = true
+        bool $logToFile = true,
+        ?string $logDirectory = null,
+        ?bool $separateLogFiles = null
     ) {
-        $this->logDirectory = $logDirectory ?? dirname(__DIR__, 5) . '/logs';
         $this->minLogLevel = $minLogLevel;
         $this->logToConsole = $logToConsole;
-        $this->separateLogFiles = $separateLogFiles;
+        $this->logToFile = $logToFile;
 
-        if (!file_exists($this->logDirectory)) {
-            mkdir($this->logDirectory, 0755, true);
+        if ($this->logToFile) {
+            $this->logDirectory = $logDirectory ?? dirname(__DIR__, 5) . '/logs';
+            $this->separateLogFiles = $separateLogFiles;
+            if (!file_exists($this->logDirectory)) {
+                mkdir($this->logDirectory, 0755, true);
+            }
         }
     }
 
@@ -196,7 +207,9 @@ class Logger implements LoggerInterface
         if ($this->shouldLog($level)) {
             $logEntry = $this->formatLogEntry($level, $message, $context);
 
-            $this->writeToFile($level, $logEntry);
+            if ($this->logToFile) {
+                $this->writeToFile($level, $logEntry);
+            }
 
             if ($this->logToConsole) {
                 $this->writeToConsole($level, $logEntry);
@@ -316,6 +329,16 @@ class Logger implements LoggerInterface
     public function setMinLogLevel(string $level): void
     {
         $this->minLogLevel = $level;
+    }
+
+    /**
+     * Enable or disable file output
+     *
+     * @param bool $logToFile Whether to output logs to file
+     */
+    public function setLogToFile(bool $logToFile): void
+    {
+        $this->logToFile = $logToFile;
     }
 
     /**

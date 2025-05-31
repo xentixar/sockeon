@@ -1,23 +1,34 @@
 <?php
 
+use Sockeon\Sockeon\Core\NamespaceManager;
 use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 test('rooms can be joined and left', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
-        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('room.join')]
-        public function onRoomJoin(int $clientId, array $data)
+        /**
+         * @param int $clientId
+         * @param array<string, string> $data
+         * @return true
+         */
+        #[SocketOn('room.join')]
+        public function onRoomJoin(int $clientId, array $data): bool
         {
             parent::joinRoom($clientId, $data['room'] ?? 'default');
             return true;
         }
-        
-        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('room.leave')]
-        public function onRoomLeave(int $clientId, array $data)
+
+        /**
+         * @param int $clientId
+         * @param array<string, string> $data
+         * @return true
+         */
+        #[SocketOn('room.leave')]
+        public function onRoomLeave(int $clientId, array $data): bool
         {
             parent::leaveRoom($clientId, $data['room'] ?? 'default');
             return true;
@@ -26,16 +37,21 @@ test('rooms can be joined and left', function () {
     
     $server->registerController($controller);
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(NamespaceManager::class);
 });
 
 test('messages can be broadcast to rooms', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
-        #[\Sockeon\Sockeon\WebSocket\Attributes\SocketOn('broadcast.room')]
-        public function broadcastToRoom(int $clientId, array $data)
+        /**
+         * @param int $clientId
+         * @param array<string, string> $data
+         * @return bool
+         */
+        #[SocketOn('broadcast.room')]
+        public function broadcastToRoom(int $clientId, array $data): bool
         {
             $this->broadcast('room.message', [
                 'message' => $data['message'] ?? '',
@@ -47,23 +63,33 @@ test('messages can be broadcast to rooms', function () {
     
     $server->registerController($controller);
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(NamespaceManager::class);
 });
 
 test('namespaces can be created and managed', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
+        /**
+         * @param int $clientId
+         * @param array<string, string> $data
+         * @return bool
+         */
         #[SocketOn('namespace.join')]
-        public function joinNamespace(int $clientId, array $data)
+        public function joinNamespace(int $clientId, array $data): bool
         {
             $this->joinRoom($clientId, 'room1', $data['namespace'] ?? '/');
             return true;
         }
-        
+
+        /**
+         * @param int $clientId
+         * @param array<string, string> $data
+         * @return bool
+         */
         #[SocketOn('namespace.broadcast')]
-        public function broadcastToNamespace(int $clientId, array $data)
+        public function broadcastToNamespace(int $clientId, array $data): bool
         {
             $this->broadcast('message', [
                 'data' => $data['message'] ?? ''
@@ -74,7 +100,6 @@ test('namespaces can be created and managed', function () {
     
     $server->registerController($controller);
     
-    // Simulate events
     $router = $server->getRouter();
     $router->dispatch(1, 'namespace.join', ['namespace' => '/admin']);
     $router->dispatch(1, 'namespace.broadcast', [
@@ -82,16 +107,21 @@ test('namespaces can be created and managed', function () {
         'message' => 'Hello Admin'
     ]);
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(NamespaceManager::class);
 });
 
 test('client can join multiple rooms', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
+        /**
+         * @param int $clientId
+         * @param array<string, array<string>> $data
+         * @return bool
+         */
         #[SocketOn('rooms.join')]
-        public function joinRooms(int $clientId, array $data)
+        public function joinRooms(int $clientId, array $data): bool
         {
             foreach ($data['rooms'] ?? [] as $room) {
                 $this->joinRoom($clientId, $room);
@@ -102,7 +132,6 @@ test('client can join multiple rooms', function () {
     
     $server->registerController($controller);
     
-    // Join multiple rooms
     $router = $server->getRouter();
     $router->dispatch(1, 'rooms.join', [
         'rooms' => ['room1', 'room2', 'room3']
@@ -110,16 +139,21 @@ test('client can join multiple rooms', function () {
     
     // Implementation note: We'd need to add a method to check room membership
     // in the NamespaceManager class to make this test more meaningful
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(NamespaceManager::class);
 });
 
 test('rooms in different namespaces are isolated', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
+        /**
+         * @param int $clientId
+         * @param array<string, string> $data
+         * @return bool
+         */
         #[SocketOn('room.broadcast')]
-        public function broadcastToRoom(int $clientId, array $data)
+        public function broadcastToRoom(int $clientId, array $data): bool
         {
             $this->broadcast('message', [
                 'data' => $data['message'] ?? ''
@@ -130,10 +164,9 @@ test('rooms in different namespaces are isolated', function () {
     
     $server->registerController($controller);
     
-    // Create same room name in different namespaces
     $router = $server->getRouter();
     $server->getNamespaceManager()->joinRoom(1, 'chatroom', '/user');
     $server->getNamespaceManager()->joinRoom(2, 'chatroom', '/admin');
     
-    expect($server->getNamespaceManager())->toBeInstanceOf(\Sockeon\Sockeon\Core\NamespaceManager::class);
+    expect($server->getNamespaceManager())->toBeInstanceOf(NamespaceManager::class);
 });

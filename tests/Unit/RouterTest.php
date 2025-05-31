@@ -3,16 +3,22 @@
 use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Core\Router;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\Http\Response;
 
 test('router can handle http routes with parameters', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
-    
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
+
     $controller = new class extends SocketController {
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/users/{id}')]
-        public function getUser($request) {
+        /**
+         * @param Request $request
+         * @return array<string, mixed>
+         */
+        #[HttpRoute('GET', '/users/{id}')]
+        public function getUser(Request $request): array
+        {
             return [
                 'id' => $request->getParam('id'),
                 'found' => true
@@ -37,24 +43,33 @@ test('router can handle http routes with parameters', function () {
 });
 
 test('router matches exact routes before parameterized routes', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
-    
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
+
     $controller = new class extends SocketController {
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/users/all')]
-        public function getAllUsers($request) {
+        /**
+         * @param Request $request
+         * @return array<string, mixed>
+         */
+        #[HttpRoute('GET', '/users/all')]
+        public function getAllUsers(Request $request): array
+        {
             return ['route' => 'all'];
         }
-        
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/users/{id}')]
-        public function getUser($request) {
+
+        /**
+         * @param Request $request
+         * @return array<string, mixed>
+         */
+        #[HttpRoute('GET', '/users/{id}')]
+        public function getUser(Request $request): array
+        {
             return ['route' => 'single'];
         }
     };
     
     $server->registerController($controller);
     
-    // Test exact route
     $request1 = new Request([
         'method' => 'GET',
         'path' => '/users/all',
@@ -65,7 +80,6 @@ test('router matches exact routes before parameterized routes', function () {
     $result1 = $server->getRouter()->dispatchHttp($request1);
     expect($result1)->toBe(['route' => 'all']);
     
-    // Test parameterized route
     $request2 = new Request([
         'method' => 'GET',
         'path' => '/users/123',
@@ -78,27 +92,47 @@ test('router matches exact routes before parameterized routes', function () {
 });
 
 test('router handles multiple http methods for same path', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('GET', '/api/resource')]
-        public function getResource($request) {
+        /**
+         * @param Request $request
+         * @return string[]
+         */
+        #[HttpRoute('GET', '/api/resource')]
+        public function getResource(Request $request): array
+        {
             return ['method' => 'GET'];
         }
-        
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('POST', '/api/resource')]
-        public function createResource($request) {
+
+        /**
+         * @param Request $request
+         * @return string[]
+         */
+        #[HttpRoute('POST', '/api/resource')]
+        public function createResource(Request $request): array
+        {
             return ['method' => 'POST'];
         }
-        
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('PUT', '/api/resource')]
-        public function updateResource($request) {
+
+        /**
+         * @param Request $request
+         * @return string[]
+         */
+        #[HttpRoute('PUT', '/api/resource')]
+        public function updateResource(Request $request): array
+        {
             return ['method' => 'PUT'];
         }
-        
-        #[\Sockeon\Sockeon\Http\Attributes\HttpRoute('DELETE', '/api/resource')]
-        public function deleteResource($request) {
+
+        /**
+         * @param Request $request
+         * @return string[]
+         */
+        #[HttpRoute('DELETE', '/api/resource')]
+        public function deleteResource(Request $request): array
+        {
             return ['method' => 'DELETE'];
         }
     };

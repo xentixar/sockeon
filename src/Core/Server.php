@@ -25,6 +25,18 @@ use Sockeon\Sockeon\Logging\LogLevel;
 class Server
 {
     /**
+     * Host address to bind server to
+     * @var string
+     */
+    protected string $host;
+
+    /**
+     * Port to bind server to
+     * @var int
+     */
+    protected int $port;
+
+    /**
      * Socket resource for the server
      * @var resource|false
      */
@@ -107,14 +119,17 @@ class Server
         array $corsConfig = [],
         ?LoggerInterface $logger = null
     ) {
+        $this->host = $host;
+        $this->port = $port;
         $this->router = new Router();
         $this->isDebug = $debug;
         
         $this->logger = $logger ?? new Logger(
-            __DIR__ . "/logs",
-            $debug ? LogLevel::DEBUG : LogLevel::INFO,
-            true,
-            false
+            minLogLevel: $debug ? LogLevel::DEBUG : LogLevel::INFO,
+            logToConsole: true,
+            logToFile: false,
+            logDirectory: null,
+            separateLogFiles: null,
         );
 
         $allowedOrigins = [];
@@ -132,27 +147,6 @@ class Server
         $this->httpHandler = new HttpHandler($this, $corsConfig);
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
-        
-        try {
-            $this->socket = stream_socket_server(
-                "tcp://{$host}:{$port}", 
-                $errno, 
-                $errstr, 
-                STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
-            );
-
-            if (!$this->socket) {
-                $errorMessage = is_string($errstr) ? $errstr : 'Unknown error';
-                $errorCode = is_int($errno) ? $errno : 0;
-                throw new RuntimeException("Socket creation failed: " . $errorMessage . " (" . $errorCode . ")");
-            }
-
-            stream_set_blocking($this->socket, false);
-            $this->logger->info("Server started on tcp://{$host}:{$port}");
-        } catch (Throwable $e) {
-            $this->logger->exception($e);
-            throw $e;
-        }
     }
 
     /**
@@ -259,12 +253,34 @@ class Server
 
     /**
      * Start the server and listen for connections
-     * 
+     *
      * @return void
+     * @throws Throwable
      */
     public function run(): void
     {
         $this->logger->info("Server running...");
+
+        try {
+            $this->socket = stream_socket_server(
+                "tcp://{$this->host}:{$this->port}",
+                $errno,
+                $errstr,
+                STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
+            );
+
+            if (!$this->socket) {
+                $errorMessage = is_string($errstr) ? $errstr : 'Unknown error';
+                $errorCode = is_int($errno) ? $errno : 0;
+                throw new RuntimeException("Socket creation failed: " . $errorMessage . " (" . $errorCode . ")");
+            }
+
+            stream_set_blocking($this->socket, false);
+            $this->logger->info("Server started on tcp://{$this->host}:{$this->port}");
+        } catch (Throwable $e) {
+            $this->logger->exception($e);
+            throw $e;
+        }
         
         while (is_resource($this->socket)) {
             try {

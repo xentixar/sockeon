@@ -1,5 +1,6 @@
 <?php
 
+use Sockeon\Sockeon\Core\Router;
 use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
@@ -9,17 +10,22 @@ use Sockeon\Sockeon\Http\Response;
 
 class TestController extends SocketController 
 {
+    /**
+     * @param int $clientId
+     * @param array<string, mixed> $data
+     * @return void
+     */
     #[SocketOn('message.send')]
-    public function handleMessage(int $clientId, array $data)
+    public function handleMessage(int $clientId, array $data): void
     {
-        return $this->broadcast('message.receive', [
+        $this->broadcast('message.receive', [
             'message' => $data['message'] ?? '',
             'from' => $clientId
         ]);
     }
 
     #[HttpRoute('GET', '/api/status')]
-    public function getStatus(Request $request)
+    public function getStatus(Request $request): Response
     {
         return Response::json([
             'status' => 'online',
@@ -29,25 +35,26 @@ class TestController extends SocketController
 }
 
 test('controller can handle websocket events', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
+
     $controller = new TestController();
     
     $server->registerController($controller);
     
-    expect($server->getRouter())->toBeInstanceOf(\Sockeon\Sockeon\Core\Router::class);
+    expect($server->getRouter())->toBeInstanceOf(Router::class);
 });
 
 test('controller routes are registered correctly', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
+
     $controller = new TestController();
     
     $server->registerController($controller);
     
     $router = $server->getRouter();
     
-    // Create a test HTTP request
     $request = new Request([
         'method' => 'GET',
         'path' => '/api/status',
@@ -59,6 +66,6 @@ test('controller routes are registered correctly', function () {
     $response = $router->dispatchHttp($request);
     
     expect($response)->toBeInstanceOf(Response::class)
-        ->and($response->getBody())->toHaveKey('status')
-        ->and($response->getBody())->toHaveKey('timestamp');
+        ->and($response->getBody())->toHaveKey('status') //@phpstan-ignore-line
+        ->and($response->getBody())->toHaveKey('timestamp'); //@phpstan-ignore-line
 });
