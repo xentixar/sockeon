@@ -50,9 +50,9 @@ class CorsConfig
      */
     public function __construct(array $config = [])
     {
-        if (isset($config['origins']) && is_array($config['origins'])) {
+        if (isset($config['allowed_origins']) && is_array($config['allowed_origins'])) {
             $origins = [];
-            foreach ($config['origins'] as $origin) {
+            foreach ($config['allowed_origins'] as $origin) {
                 if (is_string($origin)) {
                     $origins[] = $origin;
                 } elseif (is_scalar($origin) || (is_object($origin) && method_exists($origin, '__toString'))) {
@@ -64,9 +64,9 @@ class CorsConfig
             }
         }
         
-        if (isset($config['methods']) && is_array($config['methods'])) {
+        if (isset($config['allowed_methods']) && is_array($config['allowed_methods'])) {
             $methods = [];
-            foreach ($config['methods'] as $method) {
+            foreach ($config['allowed_methods'] as $method) {
                 if (is_string($method)) {
                     $methods[] = $method;
                 } elseif (is_scalar($method) || (is_object($method) && method_exists($method, '__toString'))) {
@@ -78,9 +78,9 @@ class CorsConfig
             }
         }
         
-        if (isset($config['headers']) && is_array($config['headers'])) {
+        if (isset($config['allowed_headers']) && is_array($config['allowed_headers'])) {
             $headers = [];
-            foreach ($config['headers'] as $header) {
+            foreach ($config['allowed_headers'] as $header) {
                 if (is_string($header)) {
                     $headers[] = $header;
                 } elseif (is_scalar($header) || (is_object($header) && method_exists($header, '__toString'))) {
@@ -92,11 +92,11 @@ class CorsConfig
             }
         }
         
-        if (isset($config['credentials'])) {
-            if (is_bool($config['credentials'])) {
-                $this->allowCredentials = $config['credentials'];
+        if (isset($config['allow_credentials'])) {
+            if (is_bool($config['allow_credentials'])) {
+                $this->allowCredentials = $config['allow_credentials'];
             } else {
-                $this->allowCredentials = !empty($config['credentials']);
+                $this->allowCredentials = !empty($config['allow_credentials']);
             }
         }
         
