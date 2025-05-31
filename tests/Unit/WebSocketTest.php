@@ -5,21 +5,34 @@ use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 test('websocket can handle multiple event handlers', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
     
     $controller = new class extends SocketController {
-        public $eventsCalled = [];
-        
+        /**
+         * @var array<string>
+         */
+        public array $eventsCalled = [];
+
+        /**
+         * @param int $clientId
+         * @param array<string, mixed> $data
+         * @return bool
+         */
         #[SocketOn('event.one')]
-        public function handleEventOne(int $clientId, array $data)
+        public function handleEventOne(int $clientId, array $data): bool
         {
             $this->eventsCalled[] = 'event.one';
             return true;
         }
-        
+
+        /**
+         * @param int $clientId
+         * @param array<string, mixed> $data
+         * @return bool
+         */
         #[SocketOn('event.two')]
-        public function handleEventTwo(int $clientId, array $data)
+        public function handleEventTwo(int $clientId, array $data): bool
         {
             $this->eventsCalled[] = 'event.two';
             return true;
@@ -28,7 +41,6 @@ test('websocket can handle multiple event handlers', function () {
     
     $server->registerController($controller);
     
-    // Simulate events
     $router = $server->getRouter();
     $router->dispatch(1, 'event.one', []);
     $router->dispatch(1, 'event.two', []);
@@ -37,12 +49,17 @@ test('websocket can handle multiple event handlers', function () {
 });
 
 test('websocket can broadcast to multiple clients', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
-    
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
+
     $controller = new class extends SocketController {
+        /**
+         * @param int $clientId
+         * @param array<string, mixed> $data
+         * @return bool
+         */
         #[SocketOn('broadcast.test')]
-        public function handleBroadcast(int $clientId, array $data)
+        public function handleBroadcast(int $clientId, array $data): bool
         {
             $this->broadcast('message', [
                 'data' => $data['message'] ?? ''
@@ -53,7 +70,6 @@ test('websocket can broadcast to multiple clients', function () {
     
     $server->registerController($controller);
     
-    // Set some test client data to verify broadcast
     $server->setClientData(1, 'connected', true);
     $server->setClientData(2, 'connected', true);
     $server->setClientData(3, 'connected', true);
@@ -64,12 +80,17 @@ test('websocket can broadcast to multiple clients', function () {
 });
 
 test('websocket client data persists', function () {
-    $port = get_test_port();
-    $server = new Server('127.0.0.1', $port);
-    
+    /** @var Server $server */
+    $server = $this->server; //@phpstan-ignore-line
+
     $controller = new class extends SocketController {
+        /**
+         * @param int $clientId
+         * @param array<string, mixed> $data
+         * @return bool
+         */
         #[SocketOn('user.login')]
-        public function handleLogin(int $clientId, array $data)
+        public function handleLogin(int $clientId, array $data): bool
         {
             $this->server->setClientData($clientId, 'user', [
                 'id' => $data['userId'] ?? null,
@@ -81,7 +102,6 @@ test('websocket client data persists', function () {
     
     $server->registerController($controller);
     
-    // Simulate login event
     $router = $server->getRouter();
     $router->dispatch(1, 'user.login', [
         'userId' => 123,

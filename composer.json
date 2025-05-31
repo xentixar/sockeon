@@ -38,7 +38,8 @@
     ],
     "require-dev": {
         "pestphp/pest": "^3.8",
-        "phpstan/phpstan": "^2.1"
+        "phpstan/phpstan": "^2.1",
+        "ext-sockets": "*"
     },
     "config": {
         "allow-plugins": {
