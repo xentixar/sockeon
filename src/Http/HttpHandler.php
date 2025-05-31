@@ -21,6 +21,7 @@ namespace Sockeon\Sockeon\Http;
 use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\Http\Response;
+use Throwable;
 
 class HttpHandler
 {
@@ -64,34 +65,38 @@ class HttpHandler
      */
     public function handle(int $clientId, $client, string $data): void
     {
-        $this->debug("Received HTTP request from client #{$clientId}");
-        
-        $requestData = $this->parseHttpRequest($data);
-        $request = new Request($requestData);
-        
-        $this->debug("Parsed request", [
-            'method' => $request->getMethod(),
-            'path' => $request->getPath(),
-            'headers' => $request->getHeaders()
-        ]);
-        
-        if ($request->getMethod() === 'OPTIONS') {
-            $this->debug("Handling preflight OPTIONS request");
-            $response = $this->handleCorsPreflightRequest($request);
-        } else {
-            $this->debug("Processing standard request");
-            $response = $this->processRequest($request);
+        try {
+            $this->debug("Received HTTP request from client #{$clientId}");
             
-            $this->debug("Applying CORS headers");
-            $response = $this->applyCorsHeaders($request, $response);
+            $requestData = $this->parseHttpRequest($data);
+            $request = new Request($requestData);
+            
+            if ($request->getMethod() === 'OPTIONS') {
+                $this->debug("Handling preflight OPTIONS request");
+                $response = $this->handleCorsPreflightRequest($request);
+            } else {
+                $this->debug("Processing standard request");
+                $response = $this->processRequest($request);
+                
+                $this->debug("Applying CORS headers");
+                $response = $this->applyCorsHeaders($request, $response);
+            }
+            
+            fwrite($client, $response);
+        } catch (Throwable $e) {
+            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'HttpHandler::handle']);
+            
+            try {
+                $errorResponse = "HTTP/1.1 500 Internal Server Error\r\n";
+                $errorResponse .= "Content-Type: text/plain\r\n";
+                $errorResponse .= "Connection: close\r\n\r\n";
+                $errorResponse .= "An error occurred while processing your request.";
+                
+                fwrite($client, $errorResponse);
+            } catch (Throwable $innerEx) {
+                $this->server->getLogger()->error("Failed to send error response: " . $innerEx->getMessage());
+            }
         }
-        
-        $this->debug("Sending response", [
-            'size' => strlen($response),
-            'preview' => substr($response, 0, 100) . (strlen($response) > 100 ? '...' : '')
-        ]);
-        
-        fwrite($client, $response);
     }
     
     /**
@@ -295,7 +300,11 @@ class HttpHandler
      */
     protected function debug(string $message, $data = null): void
     {
-        $dataString = $data !== null ? ' ' . json_encode($data) : '';
-        $this->server->log("[Sockeon HTTP Debug] {$message}{$dataString}");
+        try {
+            $dataString = $data !== null ? ' ' . json_encode($data) : '';
+            $this->server->getLogger()->debug("[Sockeon HTTP] {$message}{$dataString}");
+        } catch (Throwable $e) {
+            $this->server->getLogger()->error("Failed to log message: " . $e->getMessage());
+        }
     }
 }
