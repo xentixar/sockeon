@@ -17,7 +17,10 @@ Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library t
 - Room-based broadcasting for efficient message distribution
 - Automatic client connection management
 - WebSocket protocol features including ping/pong for connection health monitoring
+- Comprehensive CORS support with configurable allowed origins, methods, and headers
 - Secure origin validation for WebSocket connections and HTTP requests
+- PSR-3 compliant logging system with flexible configuration options
+- Exception handling with contextual logging and stack traces
 - JSON data handling and serialization
 - Cross-platform compatibility
 
