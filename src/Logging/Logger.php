@@ -33,19 +33,19 @@ class Logger implements LoggerInterface
      * Whether to output logs to the console
      * @var bool
      */
-    protected bool $logToConsole;
+    protected bool $logToConsole = true;
 
     /**
      * Whether to log to a file
      * @var bool
      */
-    protected bool $logToFile;
+    protected bool $logToFile = true;
 
     /**
      * Whether to create separate log files for each level
-     * @var bool|null
+     * @var bool
      */
-    protected bool|null $separateLogFiles;
+    protected bool $separateLogFiles = false;
 
     /**
      * ANSI color codes for console output
@@ -76,7 +76,7 @@ class Logger implements LoggerInterface
         bool $logToConsole = true,
         bool $logToFile = true,
         ?string $logDirectory = null,
-        ?bool $separateLogFiles = null
+        bool $separateLogFiles = false
     ) {
         $this->minLogLevel = $minLogLevel;
         $this->logToConsole = $logToConsole;
@@ -293,6 +293,7 @@ class Logger implements LoggerInterface
 
         $mainLogFile = "{$this->logDirectory}/sockeon-{$date}.log";
         file_put_contents($mainLogFile, $logEntry . PHP_EOL, FILE_APPEND);
+
 
         if ($this->separateLogFiles) {
             $levelDir = "{$this->logDirectory}/{$level}";
