@@ -71,12 +71,6 @@ class HttpHandler
             $requestData = $this->parseHttpRequest($data);
             $request = new Request($requestData);
             
-            $this->debug("Parsed request", [
-                'method' => $request->getMethod(),
-                'path' => $request->getPath(),
-                'headers' => $request->getHeaders()
-            ]);
-            
             if ($request->getMethod() === 'OPTIONS') {
                 $this->debug("Handling preflight OPTIONS request");
                 $response = $this->handleCorsPreflightRequest($request);
@@ -87,11 +81,6 @@ class HttpHandler
                 $this->debug("Applying CORS headers");
                 $response = $this->applyCorsHeaders($request, $response);
             }
-            
-            $this->debug("Sending response", [
-                'size' => strlen($response),
-                'preview' => substr($response, 0, 100) . (strlen($response) > 100 ? '...' : '')
-            ]);
             
             fwrite($client, $response);
         } catch (Throwable $e) {

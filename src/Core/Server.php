@@ -129,7 +129,7 @@ class Server
             logToConsole: true,
             logToFile: false,
             logDirectory: null,
-            separateLogFiles: null,
+            separateLogFiles: false,
         );
 
         $allowedOrigins = [];
@@ -259,7 +259,7 @@ class Server
      */
     public function run(): void
     {
-        $this->logger->info("Server running...");
+        $this->logger->info("[Sockeon Server] Server running...");
 
         try {
             $this->socket = stream_socket_server(
@@ -276,7 +276,7 @@ class Server
             }
 
             stream_set_blocking($this->socket, false);
-            $this->logger->info("Server started on tcp://{$this->host}:{$this->port}");
+            $this->logger->info("[Sockeon Server] Server started on tcp://{$this->host}:{$this->port}");
         } catch (Throwable $e) {
             $this->logger->exception($e);
             throw $e;
@@ -299,7 +299,7 @@ class Server
                                 $this->clientTypes[$clientId] = 'unknown';
                                 $this->namespaceManager->joinNamespace($clientId);
                                 unset($read[array_search($this->socket, $read)]);
-                                $this->logger->debug("Client connected: $clientId");
+                                $this->logger->debug("[Sockeon Connection] Client connected: $clientId");
                             }
                         } catch (Throwable $e) {
                             $this->logger->exception($e, ['context' => 'Connection acceptance']);
@@ -323,10 +323,10 @@ class Server
                                     str_starts_with($data, 'HEAD ')) {
                                     if (str_contains($data, 'Upgrade: websocket')) {
                                         $this->clientTypes[$clientId] = 'ws';
-                                        $this->logger->debug("WebSocket client identified: $clientId");
+                                        $this->logger->debug("[Sockeon Identification] WebSocket client identified: $clientId");
                                     } else {
                                         $this->clientTypes[$clientId] = 'http';
-                                        $this->logger->debug("HTTP client identified: $clientId");
+                                        $this->logger->debug("[Sockeon Identification] HTTP client identified: $clientId");
                                     }
                                 }
                             }
@@ -340,7 +340,7 @@ class Server
                                 $this->httpHandler->handle($clientId, $client, $data);
                                 $this->disconnectClient($clientId);
                             } else {
-                                $this->logger->warning("Unknown protocol, disconnecting client: $clientId");
+                                $this->logger->warning("[Sockeon Identification] Unknown protocol, disconnecting client: $clientId");
                                 $this->disconnectClient($clientId);
                             }
                         } catch (Throwable $e) {
@@ -377,7 +377,7 @@ class Server
                 unset($this->clientTypes[$clientId]);
                 unset($this->clientData[$clientId]);
                 $this->namespaceManager->leaveNamespace($clientId);
-                $this->logger->debug("Client disconnected: $clientId");
+                $this->logger->debug("[Sockeon Connection] Client disconnected: $clientId");
             }
         } catch (Throwable $e) {
             $this->logger->exception($e, ['context' => 'Client disconnection', 'clientId' => $clientId]);
