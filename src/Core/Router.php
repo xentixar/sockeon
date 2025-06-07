@@ -30,7 +30,7 @@ class Router
 {
     /**
      * WebSocket routes
-     * @var array<string, array{0: SocketController, 1: string}>
+     * @var array<string, array{0: SocketController, 1: string, 2: array<int, class-string>}>
      */
     protected array $wsRoutes = [];
 
@@ -154,7 +154,7 @@ class Router
     /**
      * Execute an HTTP route handler with middleware
      * 
-     * @param array{0: SocketController, 1: string} $handler The controller and method to call
+     * @param array{0: SocketController, 1: string, 2: array<int, class-string>} $handler The controller and method to call
      * @param Request $request The Request object
      * @return mixed The response from the handler
      */
