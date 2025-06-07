@@ -21,6 +21,7 @@ class SocketOn
      * Constructor
      * 
      * @param string $event The event name this handler responds to
+     * @param array<int, class-string> $middlewares List of middleware classes to apply to this event handler
      */
-    public function __construct(public string $event) {}
+    public function __construct(public string $event, public array $middlewares = []) {}
 }
