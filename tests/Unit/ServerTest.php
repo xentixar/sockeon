@@ -1,13 +1,14 @@
 <?php
 
+use Sockeon\Sockeon\Core\Contracts\HttpMiddleware;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Core\Contracts\WebsocketMiddleware;
 use Sockeon\Sockeon\Core\Middleware;
 use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Core\Router;
 use Sockeon\Sockeon\Http\HttpHandler;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
-use Sockeon\Sockeon\WebSocket\WebSocketHandler;
 
 test('server can be instantiated with default configuration', function () {
     /** @var Server $server */
@@ -60,8 +61,24 @@ test('server adds middleware correctly', function () {
         return $next();
     };
     
-    $server->addWebSocketMiddleware($middleware);
-    $server->addHttpMiddleware($httpMiddleware);
+    $server->addWebSocketMiddleware(TestWebSocketMiddleware::class);
+    $server->addHttpMiddleware(TestHttpMiddleware::class);
     
     expect($server->getMiddleware())->toBeInstanceOf(Middleware::class);
 });
+
+class TestHttpMiddleware implements HttpMiddleware
+{
+    public function handle(Request $request, callable $next, Server $server): mixed
+    {
+        return $next($request);
+    }
+}
+
+class TestWebSocketMiddleware implements WebSocketMiddleware
+{
+    public function handle(int $clientId, string $event, array $data, callable $next, Server $server): mixed
+    {
+        return $next();
+    }
+}
