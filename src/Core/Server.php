@@ -233,22 +233,22 @@ class Server
     /**
      * Add a WebSocket middleware
      * 
-     * @param Closure $middleware The middleware function
+     * @param string $middleware The WebSocket middleware class implementing WebsocketMiddleware
      * @return self This server instance for method chaining
      */
-    public function addWebSocketMiddleware(Closure $middleware): self
+    public function addWebSocketMiddleware(string $middleware): self
     {
         $this->middleware->addWebSocketMiddleware($middleware);
         return $this;
     }
-    
+
     /**
      * Add an HTTP middleware
-     * 
-     * @param Closure $middleware The middleware function
+     *
+     * @param class-string $middleware The HTTP middleware class implementing HttpMiddleware
      * @return self This server instance for method chaining
      */
-    public function addHttpMiddleware(Closure $middleware): self
+    public function addHttpMiddleware(string $middleware): self
     {
         $this->middleware->addHttpMiddleware($middleware);
         return $this;
