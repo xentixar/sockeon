@@ -28,8 +28,9 @@ class SocketOn
      * Constructor
      * 
      * @param string|Event|string $event  The event name, Event class instance, or Event class string
+     * @param array<int, class-string> $middlewares List of middleware classes to apply to this event handler
      */
-    public function __construct($event)
+    public function __construct(string $event, public array $middlewares = [])
     {
         $this->event = Event::resolveEventName($event);
     }
