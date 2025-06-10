@@ -147,6 +147,9 @@ class Server
         $this->httpHandler = new HttpHandler($this, $corsConfig);
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
+        $this->isDebug = $debug;
+        
+        Event::setServerInstance($this);
     }
 
     /**
