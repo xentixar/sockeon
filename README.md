@@ -23,6 +23,7 @@ Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library t
 - Exception handling with contextual logging and stack traces
 - JSON data handling and serialization
 - Cross-platform compatibility
+- PHP client implementation for connecting to Sockeon WebSocket servers
 
 ## Documentation
 
