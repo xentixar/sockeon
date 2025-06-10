@@ -45,6 +45,7 @@ class WebSocketClient
     /**
      * Socket resource
      * @var resource|null
+     * @phpstan-var resource|null
      */
     protected $socket = null;
 
@@ -88,17 +89,19 @@ class WebSocketClient
     {
         $this->disconnect();
 
-        $this->socket = @stream_socket_client(
+        $socket = @stream_socket_client(
             "tcp://{$this->host}:{$this->port}", 
             $errno, 
             $errstr, 
             $this->timeout,
             STREAM_CLIENT_CONNECT
         );
-
-        if (!$this->socket) {
-            throw new ConnectionException("Could not connect to WebSocket server: $errstr ($errno)");
+        
+        if ($socket === false) {
+            throw new ConnectionException("Could not connect to WebSocket server: " . (is_string($errstr) ? $errstr : 'Unknown error') . " (" . (is_int($errno) ? $errno : 'Unknown code') . ")");
         }
+        
+        $this->socket = $socket;
 
         stream_set_blocking($this->socket, false);
         stream_set_timeout($this->socket, $this->timeout);
@@ -178,7 +181,9 @@ class WebSocketClient
                 $this->sendCloseFrame();
             }
             
-            fclose($this->socket);
+            if (is_resource($this->socket)) {
+                fclose($this->socket);
+            }
             $this->socket = null;
             $this->connected = false;
         }
@@ -229,6 +234,11 @@ class WebSocketClient
         }
         
         $frame = $this->createWebSocketFrame($message);
+        
+        if (!is_resource($this->socket)) {
+            throw new ConnectionException("Invalid socket resource");
+        }
+        
         $bytesWritten = fwrite($this->socket, $frame);
         
         if ($bytesWritten === false || $bytesWritten < strlen($frame)) {
@@ -251,14 +261,21 @@ class WebSocketClient
             throw new ConnectionException("Not connected to WebSocket server");
         }
 
-        stream_set_timeout($this->socket, $timeout);
+        if (is_resource($this->socket)) {
+            stream_set_timeout($this->socket, $timeout);
+        }
         
-        $read = [$this->socket];
+        $read = is_resource($this->socket) ? [$this->socket] : [];
         $write = null;
         $except = null;
         
         if (stream_select($read, $write, $except, $timeout) > 0) {
             foreach ($read as $socket) {
+                if (!is_resource($socket)) {
+                    $this->disconnect();
+                    return;
+                }
+                
                 $data = fread($socket, 8192);
                 
                 if ($data === false || strlen($data) === 0) {
@@ -274,13 +291,15 @@ class WebSocketClient
                         return;
                     } elseif ($frame['opcode'] === 9) {
                         $pongFrame = $this->createWebSocketFrame('', 10);
-                        fwrite($this->socket, $pongFrame);
+                        if (is_resource($this->socket)) {
+                            fwrite($this->socket, $pongFrame);
+                        }
                         continue;
                     } elseif ($frame['opcode'] === 10) {
                         continue;
                     }
                     
-                    if (($frame['opcode'] === 1 || $frame['opcode'] === 2) && isset($frame['payload'])) {
+                    if (($frame['opcode'] === 1 || $frame['opcode'] === 2) && isset($frame['payload']) && is_string($frame['payload'])) {
                         $this->processMessage($frame['payload']);
                     }
                 }
@@ -398,7 +417,7 @@ class WebSocketClient
                 if (!$unpacked || !isset($unpacked[1])) {
                     break;
                 }
-                $payloadLength = $unpacked[1];
+                $payloadLength = (int)$unpacked[1]; //@phpstan-ignore-line
                 $offset += 2;
             }
             elseif ($payloadLength == 127) {
@@ -409,8 +428,12 @@ class WebSocketClient
                 if (!$unpacked || !isset($unpacked[1])) {
                     break;
                 }
-                $payloadLength = $unpacked[1];
-                $offset += 8;
+                if (is_int($unpacked[1])) {
+                    $payloadLength = $unpacked[1];
+                } else {
+                    $payloadLength = (int)$unpacked[1]; //@phpstan-ignore-line
+                }
+                $offset = $offset + 8;
             }
             
             $frameLength = $offset;
@@ -427,7 +450,7 @@ class WebSocketClient
                 $maskKey = substr($data, $offset, 4);
                 $offset += 4;
 
-                $payload = substr($data, $offset, $payloadLength);
+                $payload = substr($data, $offset, (int)$payloadLength);
                 $unmaskedPayload = '';
                 
                 $length = strlen($payload);
@@ -442,7 +465,7 @@ class WebSocketClient
                     'payload' => $unmaskedPayload
                 ];
             } else {
-                $payload = substr($data, $offset, $payloadLength);
+                $payload = substr($data, $offset, (int)$payloadLength);
                 $frames[] = [
                     'fin' => $fin,
                     'opcode' => $opcode,
@@ -473,7 +496,9 @@ class WebSocketClient
         $payload = pack('n', $code) . $reason;
         $frame = $this->createWebSocketFrame($payload, 8);
         
-        fwrite($this->socket, $frame);
+        if (is_resource($this->socket)) {
+            fwrite($this->socket, $frame);
+        }
     }
 
     /**
