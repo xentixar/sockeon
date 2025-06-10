@@ -12,7 +12,6 @@
 
 namespace Sockeon\Sockeon\Core;
 
-use Closure;
 use RuntimeException;
 use Throwable;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
@@ -21,6 +20,9 @@ use Sockeon\Sockeon\Http\HttpHandler;
 use Sockeon\Sockeon\Logging\Logger;
 use Sockeon\Sockeon\Logging\LoggerInterface;
 use Sockeon\Sockeon\Logging\LogLevel;
+use Sockeon\Sockeon\Core\Controllers\BroadcastController;
+use Sockeon\Sockeon\Core\ConnectionConfig;
+use Sockeon\Sockeon\Core\Environment;
 
 class Server
 {
@@ -105,22 +107,18 @@ class Server
     /**
      * Constructor
      *
-     * @param string $host Host address to bind server to
-     * @param int $port Port to bind server to
      * @param bool $debug Enable debug mode with verbose output
      * @param array<string, mixed> $corsConfig CORS configuration options
      * @param LoggerInterface|null $logger Custom logger implementation
      * @throws Throwable
      */
     public function __construct(
-        string $host = "0.0.0.0", 
-        int $port = 6001, 
         bool $debug = false,
         array $corsConfig = [],
         ?LoggerInterface $logger = null
-    ) {
-        $this->host = $host;
-        $this->port = $port;
+    ) {        
+        $this->host = ConnectionConfig::getServerHost();
+        $this->port = ConnectionConfig::getServerPort();
         $this->router = new Router();
         $this->isDebug = $debug;
         
@@ -148,8 +146,8 @@ class Server
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
         $this->isDebug = $debug;
-        
-        Event::setServerInstance($this);
+                
+        $this->registerController(new BroadcastController());
     }
 
     /**
@@ -422,6 +420,38 @@ class Server
         }
         
         return $this->clientData[$clientId][$key] ?? null;
+    }
+
+    /**
+     * Get info about a client
+     * 
+     * @param int $clientId The client ID
+     * @param string $key The info key to retrieve
+     * @return mixed The client info value or null if not found
+     */
+    public function getClientInfo(int $clientId, string $key): mixed
+    {
+        switch ($key) {
+            case 'ip':
+                if (isset($this->clients[$clientId])) {
+                    $clientSocket = $this->clients[$clientId];
+                    $peerName = stream_socket_get_name($clientSocket, true);
+                    if ($peerName !== false) {
+                        $ipParts = explode(':', $peerName);
+                        return $ipParts[0] ?? null;
+                    }
+                }
+                return null;
+
+            case 'connected':
+                return isset($this->clients[$clientId]);
+
+            case 'type':
+                return $this->clientTypes[$clientId] ?? null;
+
+            default:
+                return $this->getClientData($clientId, $key);
+        }
     }
 
     /**

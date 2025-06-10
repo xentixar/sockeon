@@ -96,6 +96,11 @@ class Router
         if (isset($this->wsRoutes[$event])) {
             [$controller, $method, $middlewares] = $this->wsRoutes[$event];
 
+            if($event === 'server:broadcast'){
+                $controller->$method($clientId, $data);
+                return;
+            }
+            
             $this->validateWebsocketMiddlewares($middlewares);
 
             if ($this->server) {

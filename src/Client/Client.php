@@ -5,7 +5,7 @@
  * Simplified wrapper for WebSocketClient to provide an easy-to-use
  * interface for connecting to Sockeon WebSocket servers.
  * 
- * @package     Sockeon\Sockeon\Client
+ * @package     Sockeon\Sockeon
  * @author      Xentixar
  * @copyright   Copyright (c) 2025
  */
@@ -13,6 +13,8 @@
 namespace Sockeon\Sockeon\Client;
 
 use Sockeon\Sockeon\Client\Exceptions\ConnectionException;
+use Sockeon\Sockeon\Core\ConnectionConfig;
+use Sockeon\Sockeon\Core\Security\BroadcastAuthenticator;
 
 class Client
 {
@@ -49,14 +51,17 @@ class Client
     /**
      * Constructor
      * 
-     * @param string $host     WebSocket server host
-     * @param int    $port     WebSocket server port
-     * @param string $path     WebSocket endpoint path
-     * @param int    $timeout  Connection timeout in seconds
+     * @param string|null $host     WebSocket server host
+     * @param int|null    $port     WebSocket server port
+     * @param string|null $path     WebSocket endpoint path
+     * @param int|null    $timeout  Connection timeout in seconds
      */
-    public function __construct(string $host, int $port, string $path = '/', int $timeout = 10)
+    public function __construct(?string $host = null, ?int $port = null, string $path = '/', int $timeout = 10)
     {
-        $this->client = new WebSocketClient($host, $port, $path, $timeout);
+        $configHost = $host ?? ConnectionConfig::getServerHost();
+        $configPort = $port ?? ConnectionConfig::getServerPort();
+        
+        $this->client = new WebSocketClient($configHost, $configPort, $path, $timeout);
     }
 
     /**
@@ -119,6 +124,57 @@ class Client
                     return $this->client->emit($event, $data);
                 } catch (\Exception $e) {
                     error_log("Failed to emit event after reconnection: " . $e->getMessage());
+                }
+            }
+            
+            return false;
+        }
+    }
+
+    /**
+     * Broadcast an event to other clients via the server
+     * 
+     * @param string $event Event name
+     * @param array<string, mixed> $data Event data
+     * @param string $namespace Optional namespace to broadcast to
+     * @param string $room Optional room name to broadcast to
+     * @return bool True on success
+     */
+    public function broadcast(string $event, array $data = [], string $namespace = '/', string $room = ''): bool
+    {
+        $timestamp = time();
+        $clientId = spl_object_hash($this);
+        
+        $broadcastData = [
+            'event' => $event,
+            'data' => $data,
+            '_auth' => [
+                'timestamp' => $timestamp,
+                'clientId' => $clientId,
+                'token' => BroadcastAuthenticator::generateToken($clientId, $timestamp)
+            ]
+        ];
+        
+        if ($namespace !== '/') {
+            $broadcastData['namespace'] = $namespace;
+        }
+        
+        if ($room !== '') {
+            $broadcastData['room'] = $room;
+        }
+        
+        try {
+            return $this->client->emit('server:broadcast', $broadcastData);
+        } catch (\Exception $e) {
+            error_log($e->getMessage());
+            
+            if ($this->autoReconnect && $this->reconnectAttempts < $this->maxReconnectAttempts) {
+                $this->reconnect();
+                
+                try {
+                    return $this->client->emit('server:broadcast', $broadcastData);
+                } catch (\Exception $e) {
+                    error_log("Failed to broadcast event after reconnection: " . $e->getMessage());
                 }
             }
             

@@ -12,22 +12,18 @@
 
 namespace Sockeon\Sockeon\Core;
 
-use Sockeon\Sockeon\Core\Traits\SocketEvent;
+use Sockeon\Sockeon\Core\Traits\EventBroadcast;
 
 abstract class Event
 {
-    /**
-     * Server instance for static event operations
-     * @var Server|null
-     */
-    protected static ?Server $serverInstance = null;
-    
+    use EventBroadcast;
+
     /**
      * The event name (used for event identification)
      * @var string
      */
     protected string $name;
-    
+
     /**
      * The human-readable event label
      * @var string
@@ -59,7 +55,7 @@ abstract class Event
      * @return string The label for the event
      */
     abstract public function label(): string;
-    
+
     /**
      * Get the event name
      * 
@@ -79,7 +75,7 @@ abstract class Event
     {
         return $this->label;
     }
-    
+
     /**
      * Convert the event to a string
      * 
@@ -89,7 +85,7 @@ abstract class Event
     {
         return $this->getName();
     }
-    
+
     /**
      * Resolves an event identifier to its name
      * 
@@ -104,65 +100,7 @@ abstract class Event
         } elseif ($event instanceof self) {
             return $event->getName();
         }
-        
-        return $event;
-    }
-    
-    /**
-     * Sets the server instance for static event operations
-     * 
-     * @param Server $server The server instance
-     * @return void
-     */
-    public static function setServerInstance(Server $server): void
-    {
-        self::$serverInstance = $server;
-    }
-    
-    /**
-     * Gets the server instance
-     * 
-     * @return Server|null The server instance
-     * @throws \RuntimeException If server instance is not set
-     */
-    public static function getServerInstance(): ?Server
-    {
-        if (self::$serverInstance === null) {
-            throw new \RuntimeException("Server instance not set in Event class");
-        }
-        return self::$serverInstance;
-    }
-    
-    /**
-     * Statically emit an event to a specific client
-     * 
-     * @param int $clientId   The ID of the client to send to
-     * @param string|self|string $event The event name, Event instance, or Event class string
-     * @param array<string, mixed> $data       The data to send
-     * @return void
-     * @throws \RuntimeException If server instance is not set
-     */
-    public static function emit(int $clientId, $event, array $data): void
-    {
-        $server = self::getServerInstance();
-        $eventName = self::resolveEventName($event);
-        $server->send($clientId, $eventName, $data); //@phpstan-ignore-line
-    }
 
-    /**
-     * Statically broadcast an event to multiple clients
-     *
-     * @param string|self|string $event The event name, Event instance, or Event class string
-     * @param array<string, mixed> $data The data to send
-     * @param string|null $namespace Optional namespace to broadcast within
-     * @param string|null $room Optional room to broadcast to
-     * @return void
-     * @throws \RuntimeException If server instance is not set
-     */
-    public static function broadcast($event, array $data, ?string $namespace = null, ?string $room = null): void
-    {
-        $server = self::getServerInstance();
-        $eventName = self::resolveEventName($event);
-        $server->broadcast($eventName, $data, $namespace, $room); //@phpstan-ignore-line
+        return $event;
     }
 }

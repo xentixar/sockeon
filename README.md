@@ -15,6 +15,9 @@ Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library t
 - Easy-to-use event-based architecture
 - Real-time bidirectional communication
 - Room-based broadcasting for efficient message distribution
+- Secure token-based broadcast authentication
+- External broadcasting from any PHP script
+- Environment-based configuration for flexibility
 - Automatic client connection management
 - WebSocket protocol features including ping/pong for connection health monitoring
 - Comprehensive CORS support with configurable allowed origins, methods, and headers
@@ -34,6 +37,24 @@ For complete documentation, examples, and API reference, please visit:
 ## Requirements
 
 - PHP >= 8.0
+
+## Configuration
+
+Sockeon can be configured using environment variables. Create a `.env` file in your project root with the following variables:
+
+```env
+# Server Configuration
+SOCKEON_SERVER_HOST=0.0.0.0   # Server bind address
+SOCKEON_SERVER_PORT=6001      # Server port
+
+# Security Configuration
+SOCKEON_BROADCAST_SALT=your-custom-salt-value    # Custom salt for broadcast authentication
+SOCKEON_TOKEN_EXPIRATION=30                      # Token expiration time in seconds
+```
+
+These settings allow you to customize connection parameters and security features without modifying the code.
+
+> **Security Note:** Always change the default broadcast salt in production environments.
 
 ## Contributing
 
