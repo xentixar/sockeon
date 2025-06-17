@@ -27,6 +27,12 @@ use Sockeon\Sockeon\Core\Environment;
 class Server
 {
     /**
+     * Singleton instance
+     * @var self|null
+     */
+    private static ?self $instance = null;
+
+    /**
      * Host address to bind server to
      * @var string
      */
@@ -121,6 +127,11 @@ class Server
         $this->port = ConnectionConfig::getServerPort();
         $this->router = new Router();
         $this->isDebug = $debug;
+        
+        // Set the singleton instance if not already set
+        if (self::$instance === null) {
+            self::$instance = $this;
+        }
         
         $this->logger = $logger ?? new Logger(
             minLogLevel: $debug ? LogLevel::DEBUG : LogLevel::INFO,
@@ -499,28 +510,22 @@ class Server
     }
     
     /**
-     * Add a client to a room
+     * Get the singleton instance of the server
      * 
-     * @param int $clientId The client ID to add
-     * @param string $room The room name
-     * @param string $namespace The namespace
-     * @return void
-     */
-    public function joinRoom(int $clientId, string $room, string $namespace = '/'): void
-    {
-        $this->namespaceManager->joinRoom($clientId, $room, $namespace);
-    }
-    
-    /**
-     * Remove a client from a room
-     * 
-     * @param int $clientId The client ID to remove
-     * @param string $room The room name
-     * @param string $namespace The namespace
-     * @return void
+     * @return self|null The server instance or null if not initialized
      */
     public function leaveRoom(int $clientId, string $room, string $namespace = '/'): void
     {
         $this->namespaceManager->leaveRoom($clientId, $room, $namespace);
+    }
+
+    /**
+     * Get the singleton instance of the server
+     * 
+     * @return self|null The server instance or null if not initialized
+     */
+    public static function getInstance(): ?self
+    {
+        return self::$instance;
     }
 }

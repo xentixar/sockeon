@@ -3,6 +3,7 @@
 namespace Sockeon\Sockeon\Core\Traits;
 
 use Sockeon\Sockeon\Client\Client;
+use Sockeon\Sockeon\Core\Server;
 
 trait EventBroadcast
 {
@@ -20,12 +21,17 @@ trait EventBroadcast
         $eventName = self::resolveEventName($event);
 
         try {
-            $client = new Client();
-            $client->connect();
-            $client->broadcast($eventName, $data, $namespace, $room);
-            $client->disconnect();
+            $server = Server::getInstance();
+            if ($server !== null) {
+                $server->broadcast($eventName, $data, $namespace, $room);
+            } else {
+                $client = new Client();
+                $client->connect();
+                $client->broadcast($eventName, $data, $namespace, $room);
+                $client->disconnect();
+            }
         } catch (\Throwable $e) {
-
+            // Silently handle errors (add logging if needed)
         }
     }
 }
