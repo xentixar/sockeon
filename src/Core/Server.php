@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server class for managing WebSocket and HTTP connections
  * 
@@ -21,6 +22,7 @@ use Sockeon\Sockeon\Http\HttpHandler;
 use Sockeon\Sockeon\Logging\Logger;
 use Sockeon\Sockeon\Logging\LoggerInterface;
 use Sockeon\Sockeon\Logging\LogLevel;
+use Sockeon\Sockeon\Core\Config;
 
 class Server
 {
@@ -41,61 +43,61 @@ class Server
      * @var resource|false
      */
     protected $socket;
-    
+
     /**
      * Active client connections
      * @var array<int, resource>
      */
     protected array $clients = [];
-    
+
     /**
      * Type of connections for each client (WebSocket or HTTP)
      * @var array<int, string>
      */
     protected array $clientTypes = [];
-    
+
     /**
      * Custom data associated with clients
      * @var array<int, array<string, mixed>>
      */
     protected array $clientData = [];
-    
+
     /**
      * Router instance
      * @var Router
      */
     protected Router $router;
-    
+
     /**
      * WebSocketHandler instance
      * @var WebSocketHandler
      */
     protected WebSocketHandler $wsHandler;
-    
+
     /**
      * HttpHandler instance
      * @var HttpHandler
      */
     protected HttpHandler $httpHandler;
-    
+
     /**
      * NamespaceManager instance
      * @var NamespaceManager
      */
     protected NamespaceManager $namespaceManager;
-    
+
     /**
      * Middleware instance
      * @var Middleware
      */
     protected Middleware $middleware;
-    
+
     /**
      * Whether debug mode is enabled
      * @var bool
      */
     protected bool $isDebug;
-    
+
     /**
      * Logger instance
      * @var LoggerInterface
@@ -110,20 +112,28 @@ class Server
      * @param bool $debug Enable debug mode with verbose output
      * @param array<string, mixed> $corsConfig CORS configuration options
      * @param LoggerInterface|null $logger Custom logger implementation
+     * @param string|null $queueFile Custom queue file path
      * @throws Throwable
      */
     public function __construct(
-        string $host = "0.0.0.0", 
-        int $port = 6001, 
+        string $host = "0.0.0.0",
+        int $port = 6001,
         bool $debug = false,
         array $corsConfig = [],
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?string $queueFile = null
     ) {
         $this->host = $host;
         $this->port = $port;
         $this->router = new Router();
         $this->isDebug = $debug;
+
+        Config::init();
         
+        if ($queueFile) {
+            Config::setQueueFile($queueFile);
+        }
+
         $this->logger = $logger ?? new Logger(
             minLogLevel: $debug ? LogLevel::DEBUG : LogLevel::INFO,
             logToConsole: true,
@@ -148,8 +158,6 @@ class Server
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
         $this->isDebug = $debug;
-        
-        Event::setServerInstance($this);
     }
 
     /**
@@ -168,7 +176,7 @@ class Server
             $this->logger->exception($e);
         }
     }
-    
+
     /**
      * Get the logger instance
      * 
@@ -178,7 +186,7 @@ class Server
     {
         return $this->logger;
     }
-    
+
     /**
      * Set a custom logger instance
      * 
@@ -209,7 +217,7 @@ class Server
     {
         return $this->namespaceManager;
     }
-    
+
     /**
      * Get the HTTP handler instance
      * 
@@ -219,7 +227,7 @@ class Server
     {
         return $this->httpHandler;
     }
-    
+
     /**
      * Get the middleware instance
      * 
@@ -229,7 +237,7 @@ class Server
     {
         return $this->middleware;
     }
-    
+
     /**
      * Add a WebSocket middleware
      * 
@@ -252,6 +260,28 @@ class Server
     {
         $this->middleware->addHttpMiddleware($middleware);
         return $this;
+    }
+
+    /**
+     * Set the queue file path
+     * 
+     * @param string $queueFile The queue file path
+     * @return self This server instance for method chaining
+     */
+    public function setQueueFile(string $queueFile): self
+    {
+        Config::setQueueFile($queueFile);
+        return $this;
+    }
+
+    /**
+     * Get the queue file path
+     * 
+     * @return string The queue file path
+     */
+    public function getQueueFile(): string
+    {
+        return Config::getQueueFile();
     }
 
     /**
@@ -284,18 +314,38 @@ class Server
             $this->logger->exception($e);
             throw $e;
         }
-        
+
+        $lastQueueCheck = microtime(true);
+
         while (is_resource($this->socket)) {
             try {
-                $read = $this->clients;
-                $read[] = $this->socket;
+                if ((microtime(true) - $lastQueueCheck) > 0.2) {
+                    $this->processQueue(Config::getQueueFile());
+                    $lastQueueCheck = microtime(true);
+                }
+
+
+                $read = [];
+                foreach ($this->clients as $key => $client) {
+                    if (is_resource($client)) {
+                        $read[$key] = $client;
+                    }
+                }
+                
+                if (is_resource($this->socket)) {
+                    $read[] = $this->socket;
+                } else {
+                    $this->logger->error("[Sockeon Server] Invalid server socket");
+                    break;
+                }
+                
                 $write = $except = null;
 
-                if (stream_select($read, $write, $except, 0, 200000)) {
+                if (@stream_select($read, $write, $except, 0, 200000)) {
                     if (in_array($this->socket, $read)) {
                         try {
-                            $client = stream_socket_accept($this->socket);
-                            if (is_resource($client)) {
+                            $client = @stream_socket_accept($this->socket);
+                            if ($client !== false && is_resource($client)) {
                                 stream_set_blocking($client, false);
                                 $clientId = (int)$client;
                                 $this->clients[$clientId] = $client;
@@ -311,19 +361,24 @@ class Server
 
                     foreach ($read as $client) {
                         try {
+                            if (!is_resource($client)) {
+                                continue;
+                            }
                             $clientId = (int)$client;
                             $data = fread($client, 8192);
-                            
+
                             if ($data === '' || $data === false) {
                                 $this->disconnectClient($clientId);
                                 continue;
                             }
 
                             if ($this->clientTypes[$clientId] === 'unknown') {
-                                if (str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') || 
+                                if (
+                                    str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') ||
                                     str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ') ||
                                     str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
-                                    str_starts_with($data, 'HEAD ')) {
+                                    str_starts_with($data, 'HEAD ')
+                                ) {
                                     if (str_contains($data, 'Upgrade: websocket')) {
                                         $this->clientTypes[$clientId] = 'ws';
                                         $this->logger->debug("[Sockeon Identification] WebSocket client identified: $clientId");
@@ -334,12 +389,12 @@ class Server
                                 }
                             }
 
-                            if ($this->clientTypes[$clientId] === 'ws') {
+                            if ($this->clientTypes[$clientId] === 'ws' && is_resource($client)) {
                                 $keepAlive = $this->wsHandler->handle($clientId, $client, $data);
                                 if (!$keepAlive) {
                                     $this->disconnectClient($clientId);
                                 }
-                            } elseif ($this->clientTypes[$clientId] === 'http') {
+                            } elseif ($this->clientTypes[$clientId] === 'http' && is_resource($client)) {
                                 $this->httpHandler->handle($clientId, $client, $data);
                                 $this->disconnectClient($clientId);
                             } else {
@@ -349,7 +404,7 @@ class Server
                         } catch (Throwable $e) {
                             $clientId = (int)$client;
                             $this->logger->exception($e, ['clientId' => $clientId]);
-                            
+
                             try {
                                 $this->disconnectClient($clientId);
                             } catch (Throwable $innerEx) {
@@ -400,10 +455,10 @@ class Server
         if (!isset($this->clientData[$clientId])) {
             $this->clientData[$clientId] = [];
         }
-        
+
         $this->clientData[$clientId][$key] = $value;
     }
-    
+
     /**
      * Get data for a specific client
      * 
@@ -416,11 +471,11 @@ class Server
         if (!isset($this->clientData[$clientId])) {
             return null;
         }
-        
+
         if ($key === null) {
             return $this->clientData[$clientId];
         }
-        
+
         return $this->clientData[$clientId][$key] ?? null;
     }
 
@@ -452,7 +507,7 @@ class Server
     public function broadcast(string $event, array $data, ?string $namespace = null, ?string $room = null): void
     {
         $frame = $this->wsHandler->prepareMessage($event, $data);
-        
+
         if ($room !== null && $namespace !== null) {
             $clients = $this->namespaceManager->getClientsInRoom($room, $namespace);
         } elseif ($namespace !== null) {
@@ -460,14 +515,14 @@ class Server
         } else {
             $clients = array_keys($this->clients);
         }
-        
+
         foreach ($clients as $clientId) {
             if (isset($this->clients[$clientId]) && $this->clientTypes[$clientId] === 'ws') {
                 fwrite($this->clients[$clientId], $frame);
             }
         }
     }
-    
+
     /**
      * Add a client to a room
      * 
@@ -480,7 +535,7 @@ class Server
     {
         $this->namespaceManager->joinRoom($clientId, $room, $namespace);
     }
-    
+
     /**
      * Remove a client from a room
      * 
@@ -492,5 +547,138 @@ class Server
     public function leaveRoom(int $clientId, string $room, string $namespace = '/'): void
     {
         $this->namespaceManager->leaveRoom($clientId, $room, $namespace);
+    }
+
+    /**
+     * Process queued broadcast or emit jobs from file
+     *
+     * @return void
+     */
+    protected function processQueue(string $queueFile): void
+    {
+        if (!file_exists($queueFile) || !is_readable($queueFile)) {
+            return;
+        }
+
+        $fp = fopen($queueFile, 'r+');
+
+        if ($fp === false) {
+            $this->logger->error("[Queue] Failed to open queue file.");
+            return;
+        }
+
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            return;
+        }
+
+        $lines = [];
+        while (($line = fgets($fp)) !== false) {
+            $lines[] = trim($line);
+        }
+
+        ftruncate($fp, 0);
+        fflush($fp);
+        flock($fp, LOCK_UN);
+        fclose($fp);
+
+        foreach ($lines as $line) {
+            if (empty($line)) continue;
+
+            $payload = json_decode($line, true);
+            if (!is_array($payload) || !isset($payload['type'])) {
+                continue;
+            }
+            
+            $type = '';
+            if (is_string($payload['type'])) {
+                $type = $payload['type'];
+            } elseif (is_int($payload['type']) || is_float($payload['type'])) {
+                $type = (string)$payload['type'];
+            } else {
+                $this->logger->warning("[Queue] Invalid message type format");
+                continue;
+            }
+            
+            switch ($type) {
+                case 'emit':
+                    if (!isset($payload['clientId'])) {
+                        $this->logger->warning("[Queue] Missing clientId for emit command");
+                        break;
+                    }
+                    
+                    $clientId = 0;
+                    if (is_int($payload['clientId'])) {
+                        $clientId = $payload['clientId'];
+                    } elseif (is_string($payload['clientId']) && is_numeric($payload['clientId'])) {
+                        $clientId = (int)$payload['clientId'];
+                    } else {
+                        $this->logger->warning("[Queue] Invalid clientId format");
+                        break;
+                    }
+                    
+                    $event = '';
+                    if (isset($payload['event'])) {
+                        if (is_string($payload['event'])) {
+                            $event = $payload['event'];
+                        } elseif (is_int($payload['event']) || is_float($payload['event'])) {
+                            $event = (string)$payload['event'];
+                        }
+                    }
+                    
+                    $data = [];
+                    if (isset($payload['data']) && is_array($payload['data'])) {
+                        $data = array_map(function($value, $key) {
+                            return [(string)$key => $value];
+                        }, $payload['data'], array_keys($payload['data']));
+                        $data = empty($data) ? [] : array_merge(...$data);
+                    }
+                    
+                    $this->send($clientId, $event, $data);
+                    break;
+
+                case 'broadcast':
+                    $event = '';
+                    if (isset($payload['event'])) {
+                        if (is_string($payload['event'])) {
+                            $event = $payload['event'];
+                        } elseif (is_int($payload['event']) || is_float($payload['event'])) {
+                            $event = (string)$payload['event'];
+                        }
+                    }
+                    
+                    $data = [];
+                    if (isset($payload['data']) && is_array($payload['data'])) {
+                        $data = array_map(function($value, $key) {
+                            return [(string)$key => $value];
+                        }, $payload['data'], array_keys($payload['data']));
+                        $data = empty($data) ? [] : array_merge(...$data);
+                    }
+                    
+                    $namespace = null;
+                    if (isset($payload['namespace'])) {
+                        if (is_string($payload['namespace'])) {
+                            $namespace = $payload['namespace'];
+                        } elseif (is_int($payload['namespace']) || is_float($payload['namespace'])) {
+                            $namespace = (string)$payload['namespace'];
+                        }
+                    }
+                    
+                    $room = null;
+                    if (isset($payload['room'])) {
+                        if (is_string($payload['room'])) {
+                            $room = $payload['room'];
+                        } elseif (is_int($payload['room']) || is_float($payload['room'])) {
+                            $room = (string)$payload['room'];
+                        }
+                    }
+                    
+                    $this->broadcast($event, $data, $namespace, $room);
+                    break;
+
+                default:
+                    $this->logger->warning("[Queue] Unknown message type: {$type}");
+            }
+        }
     }
 }
