@@ -322,15 +322,28 @@ class Server
                     $lastQueueCheck = microtime(true);
                 }
 
-                $read = $this->clients;
-                $read[] = $this->socket;
+
+                $read = [];
+                foreach ($this->clients as $key => $client) {
+                    if (is_resource($client)) {
+                        $read[$key] = $client;
+                    }
+                }
+                
+                if (is_resource($this->socket)) {
+                    $read[] = $this->socket;
+                } else {
+                    $this->logger->error("[Sockeon Server] Invalid server socket");
+                    break;
+                }
+                
                 $write = $except = null;
 
-                if (stream_select($read, $write, $except, 0, 200000)) {
+                if (@stream_select($read, $write, $except, 0, 200000)) {
                     if (in_array($this->socket, $read)) {
                         try {
-                            $client = stream_socket_accept($this->socket);
-                            if (is_resource($client)) {
+                            $client = @stream_socket_accept($this->socket);
+                            if ($client !== false && is_resource($client)) {
                                 stream_set_blocking($client, false);
                                 $clientId = (int)$client;
                                 $this->clients[$clientId] = $client;
@@ -346,6 +359,9 @@ class Server
 
                     foreach ($read as $client) {
                         try {
+                            if (!is_resource($client)) {
+                                continue;
+                            }
                             $clientId = (int)$client;
                             $data = fread($client, 8192);
 
@@ -371,12 +387,12 @@ class Server
                                 }
                             }
 
-                            if ($this->clientTypes[$clientId] === 'ws') {
+                            if ($this->clientTypes[$clientId] === 'ws' && is_resource($client)) {
                                 $keepAlive = $this->wsHandler->handle($clientId, $client, $data);
                                 if (!$keepAlive) {
                                     $this->disconnectClient($clientId);
                                 }
-                            } elseif ($this->clientTypes[$clientId] === 'http') {
+                            } elseif ($this->clientTypes[$clientId] === 'http' && is_resource($client)) {
                                 $this->httpHandler->handle($clientId, $client, $data);
                                 $this->disconnectClient($clientId);
                             } else {
@@ -571,27 +587,95 @@ class Server
             if (!is_array($payload) || !isset($payload['type'])) {
                 continue;
             }
-
-            switch ($payload['type']) {
+            
+            $type = '';
+            if (is_string($payload['type'])) {
+                $type = $payload['type'];
+            } elseif (is_int($payload['type']) || is_float($payload['type'])) {
+                $type = (string)$payload['type'];
+            } else {
+                $this->logger->warning("[Queue] Invalid message type format");
+                continue;
+            }
+            
+            switch ($type) {
                 case 'emit':
-                    $this->send(
-                        (int)$payload['clientId'],
-                        $payload['event'] ?? '',
-                        $payload['data'] ?? []
-                    );
+                    if (!isset($payload['clientId'])) {
+                        $this->logger->warning("[Queue] Missing clientId for emit command");
+                        break;
+                    }
+                    
+                    $clientId = 0;
+                    if (is_int($payload['clientId'])) {
+                        $clientId = $payload['clientId'];
+                    } elseif (is_string($payload['clientId']) && is_numeric($payload['clientId'])) {
+                        $clientId = (int)$payload['clientId'];
+                    } else {
+                        $this->logger->warning("[Queue] Invalid clientId format");
+                        break;
+                    }
+                    
+                    $event = '';
+                    if (isset($payload['event'])) {
+                        if (is_string($payload['event'])) {
+                            $event = $payload['event'];
+                        } elseif (is_int($payload['event']) || is_float($payload['event'])) {
+                            $event = (string)$payload['event'];
+                        }
+                    }
+                    
+                    $data = [];
+                    if (isset($payload['data']) && is_array($payload['data'])) {
+                        $data = array_map(function($value, $key) {
+                            return [(string)$key => $value];
+                        }, $payload['data'], array_keys($payload['data']));
+                        $data = empty($data) ? [] : array_merge(...$data);
+                    }
+                    
+                    $this->send($clientId, $event, $data);
                     break;
 
                 case 'broadcast':
-                    $this->broadcast(
-                        $payload['event'] ?? '',
-                        $payload['data'] ?? [],
-                        $payload['namespace'] ?? null,
-                        $payload['room'] ?? null
-                    );
+                    $event = '';
+                    if (isset($payload['event'])) {
+                        if (is_string($payload['event'])) {
+                            $event = $payload['event'];
+                        } elseif (is_int($payload['event']) || is_float($payload['event'])) {
+                            $event = (string)$payload['event'];
+                        }
+                    }
+                    
+                    $data = [];
+                    if (isset($payload['data']) && is_array($payload['data'])) {
+                        $data = array_map(function($value, $key) {
+                            return [(string)$key => $value];
+                        }, $payload['data'], array_keys($payload['data']));
+                        $data = empty($data) ? [] : array_merge(...$data);
+                    }
+                    
+                    $namespace = null;
+                    if (isset($payload['namespace'])) {
+                        if (is_string($payload['namespace'])) {
+                            $namespace = $payload['namespace'];
+                        } elseif (is_int($payload['namespace']) || is_float($payload['namespace'])) {
+                            $namespace = (string)$payload['namespace'];
+                        }
+                    }
+                    
+                    $room = null;
+                    if (isset($payload['room'])) {
+                        if (is_string($payload['room'])) {
+                            $room = $payload['room'];
+                        } elseif (is_int($payload['room']) || is_float($payload['room'])) {
+                            $room = (string)$payload['room'];
+                        }
+                    }
+                    
+                    $this->broadcast($event, $data, $namespace, $room);
                     break;
 
                 default:
-                    $this->logger->warning("[Queue] Unknown message type: {$payload['type']}");
+                    $this->logger->warning("[Queue] Unknown message type: {$type}");
             }
         }
     }
