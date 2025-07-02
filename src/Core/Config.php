@@ -18,9 +18,34 @@ class Config
      * Global configuration values
      * @var array<string, string>
      */
-    private static array $config = [
-        'queue_file' => '/tmp/sockeon.queue',
-    ];
+    private static array $config = [];
+
+    /**
+     * Initialize the configuration with default values
+     */
+    public static function init(): void
+    {
+        if (empty(self::$config)) {
+            self::$config = [
+                'queue_file' => self::getDefaultQueueFilePath(),
+            ];
+        }
+    }
+
+    /**
+     * Get the default queue file path based on the operating system
+     * 
+     * @return string The default queue file path
+     */
+    public static function getDefaultQueueFilePath(): string
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $tempDir = getenv('TEMP') ?: getenv('TMP') ?: sys_get_temp_dir();
+            return rtrim($tempDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'sockeon.queue';
+        } else {
+            return '/tmp/sockeon.queue';
+        }
+    }
 
     /**
      * Set a configuration value
@@ -31,6 +56,7 @@ class Config
      */
     public static function set(string $key, mixed $value): void
     {
+        self::init();
         self::$config[$key] = $value;
     }
 
@@ -43,6 +69,7 @@ class Config
      */
     public static function get(string $key, mixed $default = null): mixed
     {
+        self::init();
         return self::$config[$key] ?? $default;
     }
 
@@ -53,6 +80,7 @@ class Config
      */
     public static function getQueueFile(): string
     {
+        self::init();
         return self::$config['queue_file'];
     }
 
@@ -64,6 +92,7 @@ class Config
      */
     public static function setQueueFile(string $path): void
     {
+        self::init();
         self::$config['queue_file'] = $path;
     }
 
@@ -74,6 +103,7 @@ class Config
      */
     public static function all(): array
     {
+        self::init();
         return self::$config;
     }
 
@@ -85,7 +115,7 @@ class Config
     public static function reset(): void
     {
         self::$config = [
-            'queue_file' => '/tmp/sockeon.queue'
+            'queue_file' => self::getDefaultQueueFilePath()
         ];
     }
 
@@ -97,6 +127,7 @@ class Config
      */
     public static function load(array $config): void
     {
+        self::init();
         self::$config = array_merge(self::$config, $config);
     }
 }

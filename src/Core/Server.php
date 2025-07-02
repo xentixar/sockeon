@@ -128,8 +128,10 @@ class Server
         $this->router = new Router();
         $this->isDebug = $debug;
 
+        Config::init();
+        
         if ($queueFile) {
-            Config::set('queue_file', $queueFile);
+            Config::setQueueFile($queueFile);
         }
 
         $this->logger = $logger ?? new Logger(
