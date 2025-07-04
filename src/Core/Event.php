@@ -36,16 +36,18 @@ final class Event
         try {
             $eventName = $event->broadcastAs();
             $data = $event->broadcastWith();
-            $room = $event->broadcastRoom() ?? null;
+            $rooms = $event->broadcastOn() ?? [];
             $namespace = $event->broadcastNamespace() ?? '/';
 
-            self::writeToQueue([
-                'type' => 'broadcast',
-                'event' => $eventName,
-                'data' => $data,
-                'namespace' => $namespace,
-                'room' => $room,
-            ]);
+            foreach ($rooms as $room) {
+                self::writeToQueue([
+                    'type' => 'broadcast',
+                    'event' => $eventName,
+                    'data' => $data,
+                    'namespace' => $namespace,
+                    'room' => $room,
+                ]);
+            }
         } catch (Throwable $e) {
             error_log('Error broadcasting event: ' . $e->getMessage());
         }
