@@ -26,8 +26,9 @@ class Config
     public static function init(): void
     {
         if (empty(self::$config)) {
-            self::$config = [
+            self::$config = [ //@phpstan-ignore-line
                 'queue_file' => self::getDefaultQueueFilePath(),
+                'auth_key' => null,
             ];
         }
     }
@@ -101,10 +102,33 @@ class Config
      * 
      * @return array<string, mixed> All configuration values
      */
-    public static function all(): array
+    public static function getAll(): array
     {
         self::init();
         return self::$config;
+    }
+
+    /**
+     * Set the authentication key for WebSocket connections
+     * 
+     * @param string|null $key The authentication key (null to disable authentication)
+     * @return void
+     */
+    public static function setAuthKey(?string $key): void
+    {
+        self::init();
+        self::$config['auth_key'] = $key; //@phpstan-ignore-line
+    }
+
+    /**
+     * Get the authentication key for WebSocket connections
+     * 
+     * @return string|null The authentication key (null if authentication is disabled)
+     */
+    public static function getAuthKey(): ?string
+    {
+        self::init();
+        return self::$config['auth_key'] ?? null;
     }
 
     /**
@@ -114,8 +138,9 @@ class Config
      */
     public static function reset(): void
     {
-        self::$config = [
-            'queue_file' => self::getDefaultQueueFilePath()
+        self::$config = [ //@phpstan-ignore-line
+            'queue_file' => self::getDefaultQueueFilePath(),
+            'auth_key' => null,
         ];
     }
 
