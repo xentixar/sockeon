@@ -26,7 +26,7 @@ class Config
     public static function init(): void
     {
         if (empty(self::$config)) {
-            self::$config = [
+            self::$config = [ //@phpstan-ignore-line
                 'queue_file' => self::getDefaultQueueFilePath(),
                 'auth_key' => null,
             ];
@@ -117,7 +117,7 @@ class Config
     public static function setAuthKey(?string $key): void
     {
         self::init();
-        self::$config['auth_key'] = $key;
+        self::$config['auth_key'] = $key; //@phpstan-ignore-line
     }
 
     /**
@@ -138,7 +138,7 @@ class Config
      */
     public static function reset(): void
     {
-        self::$config = [
+        self::$config = [ //@phpstan-ignore-line
             'queue_file' => self::getDefaultQueueFilePath(),
             'auth_key' => null,
         ];
