@@ -7,22 +7,24 @@
  * and dispatches requests to appropriate handlers
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Core;
+namespace Sockeon\Sockeon\Connection;
 
-use Closure;
 use RuntimeException;
-use Throwable;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
-use Sockeon\Sockeon\WebSocket\WebSocketHandler;
-use Sockeon\Sockeon\Http\HttpHandler;
-use Sockeon\Sockeon\Logging\Logger;
-use Sockeon\Sockeon\Logging\LoggerInterface;
-use Sockeon\Sockeon\Logging\LogLevel;
+use Sockeon\Sockeon\Contracts\LoggerInterface;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\Core\Config;
+use Sockeon\Sockeon\Core\Middleware;
+use Sockeon\Sockeon\Core\NamespaceManager;
+use Sockeon\Sockeon\Core\Router;
+use Sockeon\Sockeon\Http\Handler as HttpHandler;
+use Sockeon\Sockeon\Logging\Logger;
+use Sockeon\Sockeon\Logging\LogLevel;
+use Sockeon\Sockeon\WebSocket\Handler as WebSocketHandler;
+use Throwable;
 
 class Server
 {
@@ -324,13 +326,9 @@ class Server
                     $lastQueueCheck = microtime(true);
                 }
 
-
-                $read = [];
-                foreach ($this->clients as $key => $client) {
-                    if (is_resource($client)) {
-                        $read[$key] = $client;
-                    }
-                }
+                $read = array_filter($this->clients, function ($client) {
+                    return is_resource($client);
+                });
                 
                 if (is_resource($this->socket)) {
                     $read[] = $this->socket;
@@ -552,6 +550,7 @@ class Server
     /**
      * Process queued broadcast or emit jobs from file
      *
+     * @param string $queueFile
      * @return void
      */
     protected function processQueue(string $queueFile): void

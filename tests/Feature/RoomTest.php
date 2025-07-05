@@ -1,8 +1,8 @@
 <?php
 
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\Core\NamespaceManager;
-use Sockeon\Sockeon\Core\Server;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 test('rooms can be joined and left', function () {

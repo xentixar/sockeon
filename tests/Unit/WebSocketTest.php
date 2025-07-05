@@ -1,7 +1,7 @@
 <?php
 
-use Sockeon\Sockeon\Core\Server;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 test('websocket can handle multiple event handlers', function () {

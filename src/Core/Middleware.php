@@ -5,7 +5,7 @@
  * Manages middleware chains for WebSocket and HTTP pipelines
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
@@ -13,8 +13,9 @@ namespace Sockeon\Sockeon\Core;
 
 use Closure;
 use InvalidArgumentException;
-use Sockeon\Sockeon\Core\Contracts\HttpMiddleware;
-use Sockeon\Sockeon\Core\Contracts\WebsocketMiddleware;
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Contracts\Http\HttpMiddleware;
+use Sockeon\Sockeon\Contracts\WebSocket\WebsocketMiddleware;
 use Sockeon\Sockeon\Http\Request;
 
 class Middleware

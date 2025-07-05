@@ -7,15 +7,13 @@
  * Provides standard methods for event identification and properties
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
 namespace Sockeon\Sockeon\Core;
 
-use Exception;
-use Sockeon\Sockeon\Core\Config;
-use Sockeon\Sockeon\Core\Contracts\EventableContract;
+use Sockeon\Sockeon\Contracts\WebSocket\EventableContract;
 use Throwable;
 
 final class Event

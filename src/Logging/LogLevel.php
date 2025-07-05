@@ -6,7 +6,7 @@
  * Provides methods to convert between level names and severity integers.
  *
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

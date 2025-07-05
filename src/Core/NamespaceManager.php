@@ -5,7 +5,7 @@
  * Manages namespaces and rooms for WebSocket connections
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

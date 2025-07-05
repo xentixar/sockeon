@@ -6,12 +6,13 @@
  * Provides methods for logging at different severity levels.
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Logging;
+namespace Sockeon\Sockeon\Contracts;
 
+use Sockeon\Sockeon\Logging\LogLevel;
 use Throwable;
 
 interface LoggerInterface

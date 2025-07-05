@@ -5,14 +5,14 @@
  * Implements PSR-3 logging standards
  *
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
 namespace Sockeon\Sockeon\Logging;
 
 use DateTime;
-use DateTimeInterface;
+use Sockeon\Sockeon\Contracts\LoggerInterface;
 use Throwable;
 
 class Logger implements LoggerInterface

@@ -1,11 +1,9 @@
 <?php
 
-use Sockeon\Sockeon\Core\Server;
-use Sockeon\Sockeon\Core\Router;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 use Sockeon\Sockeon\Http\Request;
-use Sockeon\Sockeon\Http\Response;
 
 test('router can handle http routes with parameters', function () {
     /** @var Server $server */
