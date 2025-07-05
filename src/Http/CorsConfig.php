@@ -5,7 +5,7 @@
  * Handles Cross-Origin Resource Sharing configurations
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

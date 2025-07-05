@@ -6,13 +6,13 @@
  * Middleware can be used to modify requests, perform checks, or handle responses.
  *
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Core\Contracts;
+namespace Sockeon\Sockeon\Contracts\WebSocket;
 
-use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Connection\Server;
 
 interface WebsocketMiddleware
 {

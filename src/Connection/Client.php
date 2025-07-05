@@ -6,13 +6,15 @@
  * interface for connecting to Sockeon WebSocket servers.
  * 
  * @package     Sockeon\Sockeon\Client
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Client;
+namespace Sockeon\Sockeon\Connection;
 
-use Sockeon\Sockeon\Client\Exceptions\ConnectionException;
+use Exception;
+use Sockeon\Sockeon\Exception\Client\ConnectionException;
+use Sockeon\Sockeon\Exception\Client\HandshakeException;
 
 class Client
 {
@@ -61,9 +63,10 @@ class Client
 
     /**
      * Connect to the WebSocket server
-     * 
+     *
      * @param array<string, string> $headers Additional HTTP headers for the WebSocket handshake
      * @return bool True on success
+     * @throws HandshakeException
      */
     public function connect(array $headers = []): bool
     {
@@ -109,7 +112,7 @@ class Client
     {
         try {
             return $this->client->emit($event, $data);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             error_log($e->getMessage());
             
             if ($this->autoReconnect && $this->reconnectAttempts < $this->maxReconnectAttempts) {
@@ -117,7 +120,7 @@ class Client
                 
                 try {
                     return $this->client->emit($event, $data);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     error_log("Failed to emit event after reconnection: " . $e->getMessage());
                 }
             }
@@ -128,10 +131,11 @@ class Client
 
     /**
      * Start event loop to continuously listen for messages
-     * 
+     *
      * @param callable|null $callback Optional callback to be called on each iteration
      * @param int $checkInterval How often to check for messages in milliseconds
      * @return void
+     * @throws ConnectionException
      */
     public function run(?callable $callback = null, int $checkInterval = 50): void
     {
@@ -188,7 +192,7 @@ class Client
         
         try {
             return $this->client->connect();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             error_log("Reconnection attempt {$this->reconnectAttempts} failed: " . $e->getMessage());
             return false;
         }

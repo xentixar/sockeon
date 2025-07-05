@@ -5,7 +5,7 @@
  * Handles HTTP response generation with status codes, headers, and body
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

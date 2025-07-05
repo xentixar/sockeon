@@ -1,12 +1,12 @@
 <?php
 
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\Core\Router;
-use Sockeon\Sockeon\Core\Server;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
-use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\Http\Response;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 class TestController extends SocketController 
 {

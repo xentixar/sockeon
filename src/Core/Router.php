@@ -11,7 +11,7 @@
  * - Automatic query parameter parsing
  *
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
@@ -19,12 +19,13 @@ namespace Sockeon\Sockeon\Core;
 
 use InvalidArgumentException;
 use ReflectionClass;
-use Sockeon\Sockeon\Core\Contracts\HttpMiddleware;
-use Sockeon\Sockeon\Core\Contracts\WebsocketMiddleware;
-use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Contracts\Http\HttpMiddleware;
+use Sockeon\Sockeon\Contracts\WebSocket\WebsocketMiddleware;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 use Sockeon\Sockeon\Http\Request;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
+use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
 class Router
 {

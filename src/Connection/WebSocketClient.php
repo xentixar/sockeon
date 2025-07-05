@@ -6,15 +6,15 @@
  * and emitting events.
  * 
  * @package     Sockeon\Sockeon\Client
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Client;
+namespace Sockeon\Sockeon\Connection;
 
-use Sockeon\Sockeon\Client\Exceptions\ConnectionException;
-use Sockeon\Sockeon\Client\Exceptions\HandshakeException;
-use Sockeon\Sockeon\Client\Exceptions\MessageException;
+use Sockeon\Sockeon\Exception\Client\ConnectionException;
+use Sockeon\Sockeon\Exception\Client\HandshakeException;
+use Sockeon\Sockeon\Exception\Client\MessageException;
 
 class WebSocketClient
 {
@@ -148,7 +148,7 @@ class WebSocketClient
             
             $response .= $buffer;
             
-            if (strpos($response, "\r\n\r\n") !== false) {
+            if (str_contains($response, "\r\n\r\n")) {
                 break;
             }
             
@@ -510,13 +510,14 @@ class WebSocketClient
     {
         return $this->connected && $this->socket !== null;
     }
-    
+
     /**
      * Start event loop to continuously listen for messages
      *
      * @param callable|null $callback Optional callback to be called on each iteration
      * @param int $checkInterval How often to check for messages in milliseconds
      * @return void
+     * @throws ConnectionException
      */
     public function run(?callable $callback = null, int $checkInterval = 50): void
     {

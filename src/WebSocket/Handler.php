@@ -5,16 +5,16 @@
  * Handles WebSocket protocol implementation, connections and message framing
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
 namespace Sockeon\Sockeon\WebSocket;
 
-use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Connection\Server;
 use Throwable;
 
-class WebSocketHandler
+class Handler
 {
     /**
      * Reference to the server instance

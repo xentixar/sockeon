@@ -6,7 +6,7 @@
  * Manages global configuration settings for the Sockeon server
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

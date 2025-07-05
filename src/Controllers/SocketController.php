@@ -6,13 +6,13 @@
  * Provides methods for emitting events, broadcasting messages, and managing rooms
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Core\Contracts;
+namespace Sockeon\Sockeon\Controllers;
 
-use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Connection\Server;
 
 abstract class SocketController
 {

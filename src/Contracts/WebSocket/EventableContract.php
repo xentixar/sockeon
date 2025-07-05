@@ -1,7 +1,17 @@
 <?php
 
-namespace Sockeon\Sockeon\Core\Contracts;
+namespace Sockeon\Sockeon\Contracts\WebSocket;
 
+/**
+ * EventableContract interface
+ * 
+ * This interface defines the methods required for broadcasting events in a WebSocket context.
+ * Classes implementing this interface should provide the necessary details for event broadcasting.
+ *
+ * @package     Sockeon\Sockeon
+ * @author      Sockeon
+ * @copyright   Copyright (c) 2025
+ */
 interface EventableContract
 {
     /**

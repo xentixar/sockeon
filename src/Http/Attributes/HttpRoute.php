@@ -10,7 +10,7 @@
  * - Query parameters are automatically extracted from the URL
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

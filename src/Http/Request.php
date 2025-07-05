@@ -6,7 +6,7 @@
  * methods to access request parameters, headers, and body
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

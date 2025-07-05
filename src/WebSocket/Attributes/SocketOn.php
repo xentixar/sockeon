@@ -6,7 +6,7 @@
  * Used to associate controller methods with specific WebSocket events
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 

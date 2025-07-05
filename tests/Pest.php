@@ -1,6 +1,6 @@
 <?php
 
-use Sockeon\Sockeon\Core\Server;
+use Sockeon\Sockeon\Connection\Server;
 use Sockeon\Sockeon\Logging\Logger;
 use Tests\TestCase;
 

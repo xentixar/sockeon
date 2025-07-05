@@ -20,7 +20,9 @@
         }
     ],
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.0",
+        "ext-openssl": "*",
+        "ext-sockets": "*"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -38,8 +40,7 @@
     ],
     "require-dev": {
         "pestphp/pest": "^3.8",
-        "phpstan/phpstan": "^2.1",
-        "ext-sockets": "*"
+        "phpstan/phpstan": "^2.1"
     },
     "config": {
         "allow-plugins": {

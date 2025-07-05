@@ -12,18 +12,16 @@
  * - Response generation
  * 
  * @package     Sockeon\Sockeon
- * @author      Xentixar
+ * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
 
 namespace Sockeon\Sockeon\Http;
 
-use Sockeon\Sockeon\Core\Server;
-use Sockeon\Sockeon\Http\Request;
-use Sockeon\Sockeon\Http\Response;
+use Sockeon\Sockeon\Connection\Server;
 use Throwable;
 
-class HttpHandler
+class Handler
 {
     /**
      * Reference to the server instance
@@ -295,10 +293,10 @@ class HttpHandler
      * Log debug information if debug mode is enabled
      * 
      * @param string $message The debug message
-     * @param mixed $data Additional data to log
+     * @param mixed|null $data Additional data to log
      * @return void
      */
-    protected function debug(string $message, $data = null): void
+    protected function debug(string $message, mixed $data = null): void
     {
         try {
             $dataString = $data !== null ? ' ' . json_encode($data) : '';

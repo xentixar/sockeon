@@ -1,12 +1,12 @@
 <?php
 
-use Sockeon\Sockeon\Core\Contracts\HttpMiddleware;
-use Sockeon\Sockeon\Core\Contracts\SocketController;
-use Sockeon\Sockeon\Core\Contracts\WebsocketMiddleware;
+use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Contracts\Http\HttpMiddleware;
+use Sockeon\Sockeon\Contracts\WebSocket\WebsocketMiddleware;
+use Sockeon\Sockeon\Controllers\SocketController;
 use Sockeon\Sockeon\Core\Middleware;
-use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Core\Router;
-use Sockeon\Sockeon\Http\HttpHandler;
+use Sockeon\Sockeon\Http\Handler;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
@@ -16,7 +16,7 @@ test('server can be instantiated with default configuration', function () {
     
     expect($server)->toBeInstanceOf(Server::class)
         ->and($server->getRouter())->toBeInstanceOf(Router::class)
-        ->and($server->getHttpHandler())->toBeInstanceOf(HttpHandler::class);
+        ->and($server->getHttpHandler())->toBeInstanceOf(Handler::class);
 });
 
 test('server can register controllers', function () {
