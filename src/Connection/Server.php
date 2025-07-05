@@ -115,6 +115,7 @@ class Server
      * @param array<string, mixed> $corsConfig CORS configuration options
      * @param LoggerInterface|null $logger Custom logger implementation
      * @param string|null $queueFile Custom queue file path
+     * @param string|null $authKey Authentication key for WebSocket connections (null to disable authentication)
      * @throws Throwable
      */
     public function __construct(
@@ -123,7 +124,8 @@ class Server
         bool $debug = false,
         array $corsConfig = [],
         ?LoggerInterface $logger = null,
-        ?string $queueFile = null
+        ?string $queueFile = null,
+        ?string $authKey = null
     ) {
         $this->host = $host;
         $this->port = $port;
@@ -134,6 +136,10 @@ class Server
         
         if ($queueFile) {
             Config::setQueueFile($queueFile);
+        }
+        
+        if ($authKey !== null) {
+            Config::setAuthKey($authKey);
         }
 
         $this->logger = $logger ?? new Logger(

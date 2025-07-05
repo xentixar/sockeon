@@ -12,6 +12,7 @@
 namespace Sockeon\Sockeon\WebSocket;
 
 use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Core\Config;
 use Throwable;
 
 class Handler
@@ -129,6 +130,30 @@ class Handler
             $response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nOrigin not allowed";
             fwrite($client, $response);
             return false;
+        }
+
+        $requestUri = null;
+        if (preg_match('/GET\s+(.*?)\s+HTTP/i', $data, $uriMatches)) {
+            $requestUri = trim($uriMatches[1]);
+        }
+
+        $authKey = Config::getAuthKey();
+        if ($authKey !== null) {
+            $queryString = '';
+            if ($requestUri !== null && strpos($requestUri, '?') !== false) {
+                $queryString = substr($requestUri, strpos($requestUri, '?') + 1);
+            }
+            
+            parse_str($queryString, $queryParams);
+            
+            if (!isset($queryParams['key']) || $queryParams['key'] !== $authKey) {
+                $response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid authentication key";
+                fwrite($client, $response);
+                $this->server->getLogger()->debug("[WebSocket Authentication] Authentication failed for client: $clientId");
+                return false;
+            }
+            
+            $this->server->getLogger()->debug("[WebSocket Authentication] Authentication successful for client: $clientId");
         }
 
         if (preg_match('/Sec-WebSocket-Key:\s(.+)\r\n/i', $data, $matches)) {
