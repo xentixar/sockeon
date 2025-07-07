@@ -176,6 +176,8 @@ class Handler
             fwrite($client, $response);
             $this->handshakes[$clientId] = true;
             
+            $this->server->getRouter()->dispatchSpecialEvent($clientId, 'connect');
+            
             return true;
         }
 
