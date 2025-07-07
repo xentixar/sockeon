@@ -434,6 +434,10 @@ class Server
     {
         try {
             if (isset($this->clients[$clientId])) {
+                if (isset($this->clientTypes[$clientId]) && $this->clientTypes[$clientId] === 'ws') {
+                    $this->router->dispatchSpecialEvent($clientId, 'disconnect');
+                }
+                
                 fclose($this->clients[$clientId]);
                 unset($this->clients[$clientId]);
                 unset($this->clientTypes[$clientId]);
