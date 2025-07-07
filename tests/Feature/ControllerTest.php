@@ -4,6 +4,8 @@ use Sockeon\Sockeon\Core\Router;
 use Sockeon\Sockeon\Core\Server;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\WebSocket\Attributes\OnConnect;
+use Sockeon\Sockeon\WebSocket\Attributes\OnDisconnect;
 use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\Http\Response;
@@ -21,6 +23,39 @@ class TestController extends SocketController
         $this->broadcast('message.receive', [
             'message' => $data['message'] ?? '',
             'from' => $clientId
+        ]);
+    }
+
+    /**
+     * Special event: called when a client connects
+     * @param int $clientId
+     * @return void
+     */
+    #[OnConnect]
+    public function onClientConnect(int $clientId): void
+    {
+        $this->emit($clientId, 'welcome', [
+            'message' => 'Welcome to the server!',
+            'clientId' => $clientId
+        ]);
+        
+        $this->broadcast('user.joined', [
+            'clientId' => $clientId,
+            'message' => "User $clientId joined the server"
+        ]);
+    }
+
+    /**
+     * Special event: called when a client disconnects
+     * @param int $clientId
+     * @return void
+     */
+    #[OnDisconnect]
+    public function onClientDisconnect(int $clientId): void
+    {
+        $this->broadcast('user.left', [
+            'clientId' => $clientId,
+            'message' => "User $clientId left the server"
         ]);
     }
 

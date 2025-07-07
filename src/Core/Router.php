@@ -18,7 +18,10 @@
 namespace Sockeon\Sockeon\Core;
 
 use ReflectionClass;
+use Throwable;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
+use Sockeon\Sockeon\WebSocket\Attributes\OnConnect;
+use Sockeon\Sockeon\WebSocket\Attributes\OnDisconnect;
 use Sockeon\Sockeon\Http\Attributes\HttpRoute;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\Core\Contracts\SocketController;
@@ -36,6 +39,15 @@ class Router
      * @var array<string, array{0: SocketController, 1: string}>
      */
     protected array $httpRoutes = [];
+    
+    /**
+     * Special event handlers for connection events
+     * @var array<string, array<int, array{0: SocketController, 1: string}>>
+     */
+    protected array $specialEventHandlers = [
+        'connect' => [],
+        'disconnect' => []
+    ];
     
     /**
      * Server instance
@@ -72,6 +84,14 @@ class Router
                 $this->wsRoutes[$event] = [$controller, $method->getName()];
             }
             
+            foreach ($method->getAttributes(OnConnect::class) as $attr) {
+                $this->specialEventHandlers['connect'][] = [$controller, $method->getName()];
+            }
+            
+            foreach ($method->getAttributes(OnDisconnect::class) as $attr) {
+                $this->specialEventHandlers['disconnect'][] = [$controller, $method->getName()];
+            }
+            
             foreach ($method->getAttributes(HttpRoute::class) as $attr) {
                 $httpAttr = $attr->newInstance();
                 $key = $httpAttr->method . ' ' . $httpAttr->path;
@@ -104,6 +124,46 @@ class Router
                 );
             } else {
                 $controller->$method($clientId, $data);
+            }
+        }
+    }
+    
+    /**
+     * Dispatch a special event (connect/disconnect) to all registered handlers
+     * 
+     * @param int $clientId The client identifier
+     * @param string $eventType The special event type ('connect' or 'disconnect')
+     * @return void
+     */
+    public function dispatchSpecialEvent(int $clientId, string $eventType): void
+    {
+        if (!isset($this->specialEventHandlers[$eventType])) {
+            return;
+        }
+        
+        foreach ($this->specialEventHandlers[$eventType] as [$controller, $method]) {
+            try {
+                if ($this->server) {
+                    $this->server->getMiddleware()->runWebSocketStack(
+                        $clientId, 
+                        $eventType, 
+                        [], 
+                        function ($clientId, $data) use ($controller, $method) {
+                            return $controller->$method($clientId);
+                        }
+                    );
+                } else {
+                    $controller->$method($clientId);
+                }
+            } catch (Throwable $e) {
+                if ($this->server) {
+                    $this->server->getLogger()->exception($e, [
+                        'context' => "Special event handler: $eventType",
+                        'clientId' => $clientId,
+                        'controller' => get_class($controller),
+                        'method' => $method
+                    ]);
+                }
             }
         }
     }
