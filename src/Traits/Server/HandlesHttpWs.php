@@ -2,8 +2,39 @@
 
 namespace Sockeon\Sockeon\Traits\Server;
 
+use Sockeon\Sockeon\Http\Handler as HttpHandler;
+use Sockeon\Sockeon\WebSocket\Handler as WebSocketHandler;
+
 trait HandlesHttpWs
 {
+    /**
+     * Get the HTTP handler.
+     *
+     * @return HttpHandler
+     */
+    public function getHttpHandler(): HttpHandler
+    {
+        return $this->httpHandler;
+    }
+
+    /**
+     * Get the WebSocket handler.
+     *
+     * @return WebSocketHandler
+     */
+    public function getWsHandler(): WebSocketHandler
+    {
+        return $this->wsHandler;
+    }
+
+    /**
+     * Handle incoming HTTP/WebSocket data.
+     *
+     * @param int $clientId
+     * @param mixed $client
+     * @param string $data
+     * @return void
+     */
     protected function handleHttpWs(
         int $clientId,
         mixed $client,

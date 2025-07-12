@@ -16,6 +16,7 @@ use Sockeon\Sockeon\Traits\Server\HandlesControllers;
 use Sockeon\Sockeon\Traits\Server\HandlesHttpWs;
 use Sockeon\Sockeon\Traits\Server\HandlesLogging;
 use Sockeon\Sockeon\Traits\Server\HandlesMiddlewares;
+use Sockeon\Sockeon\Traits\Server\HandlesNamespace;
 use Sockeon\Sockeon\Traits\Server\HandlesQueue;
 use Sockeon\Sockeon\Traits\Server\HandlesRooms;
 use Sockeon\Sockeon\Traits\Server\HandlesRouting;
@@ -23,7 +24,7 @@ use Sockeon\Sockeon\Traits\Server\HandlesSendBroadcast;
 
 class Server
 {
-    use HandlesConfiguration, HandlesClients, HandlesMiddlewares, HandlesControllers, HandlesHttpWs, HandlesQueue, HandlesRooms, HandlesSendBroadcast, HandlesLogging, HandlesRouting;
+    use HandlesConfiguration, HandlesClients, HandlesMiddlewares, HandlesControllers, HandlesHttpWs, HandlesQueue, HandlesRooms, HandlesSendBroadcast, HandlesLogging, HandlesRouting, HandlesNamespace;
 
     protected string $host;
     
