@@ -13,6 +13,9 @@
 namespace Sockeon\Sockeon\Controllers;
 
 use Sockeon\Sockeon\Connection\Server;
+use Sockeon\Sockeon\Contracts\LoggerInterface;
+use Sockeon\Sockeon\Core\NamespaceManager;
+use Sockeon\Sockeon\Core\Router;
 
 abstract class SocketController
 {
@@ -124,5 +127,208 @@ abstract class SocketController
     public function setClientData(int $clientId, string $key, mixed $value): void
     {
         $this->server->setClientData($clientId, $key, $value);
+    }
+
+    /**
+     * Gets all clients in a specific namespace
+     * 
+     * @param string $namespace The namespace to query (default: '/')
+     * @return array<int, int> Array of client IDs in the namespace
+     */
+    public function getClientsInNamespace(string $namespace = '/'): array
+    {
+        return $this->server->getNamespaceManager()->getClientsInNamespace($namespace);
+    }
+
+    /**
+     * Gets the namespace a client belongs to
+     * 
+     * @param int $clientId The client ID to query
+     * @return string The namespace the client belongs to
+     */
+    public function getClientNamespace(int $clientId): string
+    {
+        return $this->server->getNamespaceManager()->getClientNamespace($clientId);
+    }
+
+    /**
+     * Joins a client to a specific namespace
+     * 
+     * @param int $clientId The client ID to move
+     * @param string $namespace The namespace to join
+     * @return void
+     */
+    public function moveClientToNamespace(int $clientId, string $namespace = '/'): void
+    {
+        $this->server->getNamespaceManager()->joinNamespace($clientId, $namespace);
+    }
+
+    /**
+     * Gets all clients in a specific room
+     * 
+     * @param string $room The room name to query
+     * @param string $namespace The namespace containing the room (default: '/')
+     * @return array<int, int> Array of client IDs in the room
+     */
+    public function getClientsInRoom(string $room, string $namespace = '/'): array
+    {
+        return $this->server->getNamespaceManager()->getClientsInRoom($room, $namespace);
+    }
+
+    /**
+     * Gets all rooms in a namespace
+     * 
+     * @param string $namespace The namespace to query (default: '/')
+     * @return array<int, string> Array of room names
+     */
+    public function getRooms(string $namespace = '/'): array
+    {
+        return $this->server->getNamespaceManager()->getRooms($namespace);
+    }
+
+    /**
+     * Gets all rooms a client belongs to
+     * 
+     * @param int $clientId The client ID to query
+     * @return array<int, string> Array of room names the client belongs to
+     */
+    public function getClientRooms(int $clientId): array
+    {
+        return $this->server->getNamespaceManager()->getClientRooms($clientId);
+    }
+
+    /**
+     * Removes a client from all rooms they belong to
+     * 
+     * @param int $clientId The client ID to remove from all rooms
+     * @return void
+     */
+    public function leaveAllRooms(int $clientId): void
+    {
+        $this->server->getNamespaceManager()->leaveAllRooms($clientId);
+    }
+
+    /**
+     * Broadcasts an event to all clients in a specific namespace
+     * 
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @param string $namespace The namespace to broadcast to
+     * @return void
+     */
+    public function broadcastToNamespaceClients(string $event, array $data, string $namespace): void
+    {
+        $this->server->broadcast($event, $data, $namespace);
+    }
+
+    /**
+     * Broadcasts an event to all clients in a specific room
+     * 
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @param string $room The room to broadcast to
+     * @param string $namespace The namespace containing the room (default: '/')
+     * @return void
+     */
+    public function broadcastToRoomClients(string $event, array $data, string $room, string $namespace = '/'): void
+    {
+        $this->server->broadcast($event, $data, $namespace, $room);
+    }
+
+    /**
+     * Broadcasts an event to all connected clients
+     * 
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @return void
+     */
+    public function broadcastToAll(string $event, array $data): void
+    {
+        $this->server->broadcast($event, $data);
+    }
+
+    /**
+     * Gets all connected client IDs
+     * 
+     * @return array<int, int> Array of all connected client IDs
+     */
+    public function getAllClients(): array
+    {
+        return $this->server->getClientIds();
+    }
+
+    /**
+     * Gets the total number of connected clients
+     * 
+     * @return int The number of connected clients
+     */
+    public function getClientCount(): int
+    {
+        return $this->server->getClientCount();
+    }
+
+    /**
+     * Checks if a client is currently connected
+     * 
+     * @param int $clientId The client ID to check
+     * @return bool True if the client is connected, false otherwise
+     */
+    public function isClientConnected(int $clientId): bool
+    {
+        return $this->server->isClientConnected($clientId);
+    }
+
+    /**
+     * Gets the client connection type (e.g., 'ws', 'http', 'unknown')
+     * 
+     * @param int $clientId The client ID to check
+     * @return string|null The client type or null if not found
+     */
+    public function getClientType(int $clientId): ?string
+    {
+        return $this->server->getClientType($clientId);
+    }
+
+    /**
+     * Gets the server instance for advanced operations
+     * 
+     * This provides direct access to the server for operations not covered
+     * by the controller methods
+     * 
+     * @return Server The server instance
+     */
+    public function getServer(): Server
+    {
+        return $this->server;
+    }
+
+    /**
+     * Gets the namespace manager for advanced namespace operations
+     * 
+     * @return NamespaceManager The namespace manager instance
+     */
+    public function getNamespaceManager(): NamespaceManager
+    {
+        return $this->server->getNamespaceManager();
+    }
+
+    /**
+     * Gets the router for advanced routing operations
+     * 
+     * @return Router The router instance
+     */
+    public function getRouter(): Router
+    {
+        return $this->server->getRouter();
+    }
+
+    /**
+     * Gets the logger instance
+     * 
+     * @return LoggerInterface The logger instance
+     */
+    public function getLogger(): LoggerInterface
+    {
+        return $this->server->getLogger();
     }
 }

@@ -67,4 +67,66 @@ class Server
         $this->startSocket();
         $this->loop();
     }
+
+    /**
+     * Get all connected clients
+     * 
+     * @return array<int, resource> Array of client IDs and their resources
+     */
+    public function getClients(): array
+    {
+        return $this->clients;
+    }
+
+    /**
+     * Get client types
+     * 
+     * @return array<int, string> Array of client IDs and their types
+     */
+    public function getClientTypes(): array
+    {
+        return $this->clientTypes;
+    }
+
+    /**
+     * Get client IDs only
+     * 
+     * @return array<int, int> Array of client IDs
+     */
+    public function getClientIds(): array
+    {
+        return array_keys($this->clients);
+    }
+
+    /**
+     * Get the number of connected clients
+     * 
+     * @return int Number of connected clients
+     */
+    public function getClientCount(): int
+    {
+        return count($this->clients);
+    }
+
+    /**
+     * Check if a client is connected
+     * 
+     * @param int $clientId The client ID to check
+     * @return bool True if connected, false otherwise
+     */
+    public function isClientConnected(int $clientId): bool
+    {
+        return isset($this->clients[$clientId]);
+    }
+
+    /**
+     * Get the type of a specific client
+     * 
+     * @param int $clientId The client ID to check
+     * @return string|null The client type or null if not found
+     */
+    public function getClientType(int $clientId): ?string
+    {
+        return $this->clientTypes[$clientId] ?? null;
+    }
 }
