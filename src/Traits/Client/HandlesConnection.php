@@ -111,6 +111,10 @@ trait HandlesConnection
         
         $request .= "\r\n";
 
+        if (!is_resource($this->socket)) {
+            throw new ConnectionException("Invalid socket resource");
+        }
+
         $bytesWritten = fwrite($this->socket, $request);
         if ($bytesWritten === false || $bytesWritten < strlen($request)) {
             throw new ConnectionException("Failed to send WebSocket handshake request");
@@ -134,6 +138,10 @@ trait HandlesConnection
         while (true) {
             if (time() - $startTime > $this->timeout) {
                 throw new HandshakeException("Handshake timed out");
+            }
+            
+            if (!is_resource($this->socket)) {
+                throw new HandshakeException("Invalid socket resource during handshake");
             }
             
             $buffer = fread($this->socket, 8192);
