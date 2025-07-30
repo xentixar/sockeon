@@ -1,15 +1,16 @@
 <?php
 /**
- * HttpHandler class
+ * HTTP Protocol Handler for Sockeon Framework
  * 
- * Handles HTTP protocol implementation, request parsing and responses
+ * Routes HTTP requests to appropriate protocol handlers (HTTP/1.1 or HTTP/2)
+ * based on protocol detection and negotiation
  * 
  * Features:
- * - HTTP request parsing
- * - Query parameter extraction
- * - Path normalization
- * - JSON body parsing
- * - Response generation
+ * - Protocol detection and routing
+ * - HTTP/1.1 and HTTP/2 support
+ * - Connection preface parsing
+ * - Protocol negotiation
+ * - Handler delegation
  * 
  * @package     Sockeon\Sockeon
  * @author      Sockeon
@@ -19,31 +20,29 @@
 namespace Sockeon\Sockeon\Http;
 
 use Sockeon\Sockeon\Connection\Server;
-use Sockeon\Sockeon\Traits\Http\HandlesCors;
-use Sockeon\Sockeon\Traits\Http\HandlesHttpLogging;
-use Sockeon\Sockeon\Traits\Http\HandlesHttpRequests;
+use Sockeon\Sockeon\Http\Http1Handler;
+use Sockeon\Sockeon\Http\Http2Handler;
 use Throwable;
 
 class Handler
 {
-    use HandlesCors, HandlesHttpLogging, HandlesHttpRequests;
     /**
      * Reference to the server instance
      * @var Server
      */
     protected Server $server;
-
-    /**
-     * Registered HTTP routes
-     * @var array<string, array{0: object, 1: string}>
-     */
-    protected array $routes = [];
     
     /**
-     * CORS configuration
-     * @var CorsConfig
+     * HTTP/1.1 handler instance
+     * @var Http1Handler
      */
-    protected CorsConfig $corsConfig;
+    protected Http1Handler $http1Handler;
+    
+    /**
+     * HTTP/2 handler instance
+     * @var Http2Handler
+     */
+    protected Http2Handler $http2Handler;
 
     /**
      * Constructor
@@ -54,11 +53,12 @@ class Handler
     public function __construct(Server $server, array $corsConfig = [])
     {
         $this->server = $server;
-        $this->corsConfig = new CorsConfig($corsConfig);
+        $this->http1Handler = new Http1Handler($server, $corsConfig);
+        $this->http2Handler = new Http2Handler($server);
     }
 
     /**
-     * Handle an incoming HTTP request
+     * Handle an incoming HTTP request by routing to appropriate protocol handler
      * 
      * @param int $clientId The client identifier
      * @param resource $client The client socket resource
@@ -68,25 +68,17 @@ class Handler
     public function handle(int $clientId, $client, string $data): void
     {
         try {
-            $this->debug("Received HTTP request from client #{$clientId}");
-            
-            $requestData = $this->parseHttpRequest($data);
-            $request = new Request($requestData);
-            
-            if ($request->getMethod() === 'OPTIONS') {
-                $this->debug("Handling preflight OPTIONS request");
-                $response = $this->handleCorsPreflightRequest($request);
-            } else {
-                $this->debug("Processing standard request");
-                $response = $this->processRequest($request);
-                
-                $this->debug("Applying CORS headers");
-                $response = $this->applyCorsHeaders($request, $response);
+            if ($this->isHttp2Connection($data)) {
+                $this->debug("Detected HTTP/2 connection from client #{$clientId}");
+                $this->http2Handler->handle($clientId, $client, $data);
+                return;
             }
+
+            $this->debug("Routing to HTTP/1.1 handler for client #{$clientId}");
+            $this->http1Handler->handle($clientId, $client, $data);
             
-            fwrite($client, $response);
         } catch (Throwable $e) {
-            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'HttpHandler::handle']);
+            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'Handler::handle']);
             
             try {
                 $errorResponse = "HTTP/1.1 500 Internal Server Error\r\n";
@@ -98,6 +90,54 @@ class Handler
             } catch (Throwable $innerEx) {
                 $this->server->getLogger()->error("Failed to send error response: " . $innerEx->getMessage());
             }
+        }
+    }
+
+    /**
+     * Check if the incoming connection is HTTP/2
+     * 
+     * @param string $data The raw connection data
+     * @return bool True if HTTP/2 connection, false otherwise
+     */
+    protected function isHttp2Connection(string $data): bool
+    {
+        return str_starts_with($data, 'PRI * HTTP/2.0');
+    }
+
+    /**
+     * Get the HTTP/1.1 handler instance
+     * 
+     * @return Http1Handler
+     */
+    public function getHttp1Handler(): Http1Handler
+    {
+        return $this->http1Handler;
+    }
+
+    /**
+     * Get the HTTP/2 handler instance
+     * 
+     * @return Http2Handler
+     */
+    public function getHttp2Handler(): Http2Handler
+    {
+        return $this->http2Handler;
+    }
+
+    /**
+     * Log debug information if debug mode is enabled
+     * 
+     * @param string $message The debug message
+     * @param mixed|null $data Additional data to log
+     * @return void
+     */
+    protected function debug(string $message, mixed $data = null): void
+    {
+        try {
+            $dataString = $data !== null ? ' ' . json_encode($data) : '';
+            $this->server->getLogger()->debug("[Sockeon HTTP Handler] {$message}{$dataString}");
+        } catch (Throwable $e) {
+            $this->server->getLogger()->error("Failed to log message: " . $e->getMessage());
         }
     }
 }
