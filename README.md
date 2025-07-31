@@ -11,6 +11,7 @@ Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library t
 - RESTful API support with content negotiation
 - Namespaces and rooms support for WebSocket communication
 - Middleware support for authentication and request processing
+- WebSocket handshake middleware for custom connection validation
 - Key-based WebSocket authentication for secure connections
 - Zero dependencies - built with PHP core functionality only
 - Easy-to-use event-based architecture

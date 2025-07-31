@@ -15,8 +15,10 @@ use Closure;
 use InvalidArgumentException;
 use Sockeon\Sockeon\Connection\Server;
 use Sockeon\Sockeon\Contracts\Http\HttpMiddleware;
+use Sockeon\Sockeon\Contracts\WebSocket\HandshakeMiddleware;
 use Sockeon\Sockeon\Contracts\WebSocket\WebsocketMiddleware;
 use Sockeon\Sockeon\Http\Request;
+use Sockeon\Sockeon\WebSocket\HandshakeRequest;
 
 class Middleware
 {
@@ -31,6 +33,12 @@ class Middleware
      * @var array<int, class-string>
      */
     protected array $httpStack = [];
+    
+    /**
+     * Stack of WebSocket handshake middleware functions
+     * @var array<int, class-string>
+     */
+    protected array $handshakeStack = [];
     
     /**
      * Add a WebSocket middleware
@@ -58,6 +66,20 @@ class Middleware
             throw new InvalidArgumentException(sprintf("Middleware '%s' must implement the HttpMiddleware interface", $middleware));
         }
         $this->httpStack[] = $middleware;
+    }
+
+    /**
+     * Add a WebSocket handshake middleware
+     *
+     * @param class-string $middleware Middleware instance implementing the HandshakeMiddleware interface
+     * @return void
+     */
+    public function addHandshakeMiddleware(string $middleware): void
+    {
+        if (!is_subclass_of($middleware, HandshakeMiddleware::class)) {
+            throw new InvalidArgumentException(sprintf("Middleware '%s' must implement the HandshakeMiddleware interface", $middleware));
+        }
+        $this->handshakeStack[] = $middleware;
     }
     
     /**
@@ -123,6 +145,40 @@ class Middleware
             $object = new $middleware();
             
             return $object->handle($request, $next, $server);
+        };
+        
+        return $run(0);
+    }
+
+    /**
+     * Execute the WebSocket handshake middleware stack
+     * 
+     * @param int $clientId Client ID
+     * @param HandshakeRequest $request Handshake request object
+     * @param Closure $target Target function to execute at the end of the middleware chain
+     * @param Server $server Server instance handling the WebSocket handshake
+     * @param array<int, class-string> $additionalMiddlewares Optional additional middlewares to include in the stack
+     * @return bool|array Result of the target function or middleware if chain is interrupted
+     */
+    public function runHandshakeStack(int $clientId, HandshakeRequest $request, Closure $target, Server $server, array $additionalMiddlewares = []): bool|array
+    {
+        $stack = array_merge($this->handshakeStack, $additionalMiddlewares);
+        
+        $run = function (int $index) use (&$run, $stack, $clientId, $request, $target, $server) {
+            if ($index >= count($stack)) {
+                return $target($clientId, $request);
+            }
+            
+            $middleware = $stack[$index];
+            
+            $next = function () use ($index, $run) {
+                return $run($index + 1);
+            };
+
+            /** @var HandshakeMiddleware $object */
+            $object = new $middleware();
+            
+            return $object->handle($clientId, $request, $next, $server);
         };
         
         return $run(0);
