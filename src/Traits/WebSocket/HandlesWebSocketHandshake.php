@@ -120,16 +120,18 @@ trait HandlesWebSocketHandshake
      */
     protected function sendCustomResponse($client, array $responseData): void
     {
-        $statusCode = $responseData['status'] ?? 403;
-        $statusText = $responseData['statusText'] ?? 'Forbidden';
-        $headers = $responseData['headers'] ?? [];
-        $body = $responseData['body'] ?? 'Access denied';
+        $statusCode = is_int($responseData['status'] ?? null) ? $responseData['status'] : 403;
+        $statusText = is_string($responseData['statusText'] ?? null) ? $responseData['statusText'] : 'Forbidden';
+        $headers = is_array($responseData['headers'] ?? null) ? $responseData['headers'] : [];
+        $body = is_string($responseData['body'] ?? null) ? $responseData['body'] : 'Access denied';
         
         $response = "HTTP/1.1 $statusCode $statusText\r\n";
         $response .= "Content-Type: text/plain\r\n";
         
         foreach ($headers as $name => $value) {
-            $response .= "$name: $value\r\n";
+            if (is_string($name) && (is_string($value) || is_numeric($value))) {
+                $response .= $name . ": " . (string) $value . "\r\n";
+            }
         }
         
         $response .= "\r\n$body";

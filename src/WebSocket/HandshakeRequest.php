@@ -34,7 +34,7 @@ class HandshakeRequest
 
     /**
      * Parsed query parameters
-     * @var array<string, string>
+     * @var array<int|string, mixed>
      */
     protected array $queryParams = [];
 
@@ -127,7 +127,7 @@ class HandshakeRequest
     /**
      * Get all query parameters
      *
-     * @return array<string, string>
+     * @return array<int|string, mixed>
      */
     public function getQueryParams(): array
     {
@@ -138,9 +138,9 @@ class HandshakeRequest
      * Get a specific query parameter
      *
      * @param string $name Parameter name
-     * @return string|null Parameter value or null if not found
+     * @return mixed Parameter value or null if not found
      */
-    public function getQueryParam(string $name): ?string
+    public function getQueryParam(string $name): mixed
     {
         return $this->queryParams[$name] ?? null;
     }
@@ -172,9 +172,10 @@ class HandshakeRequest
      */
     public function isValidWebSocketRequest(): bool
     {
+        $connection = $this->getHeader('Connection');
         return $this->getHeader('Upgrade') === 'websocket' &&
-               $this->getHeader('Connection') !== null &&
-               str_contains(strtolower($this->getHeader('Connection') ?? ''), 'upgrade') &&
+               $connection !== null &&
+               str_contains(strtolower($connection), 'upgrade') &&
                $this->webSocketKey !== null;
     }
 
