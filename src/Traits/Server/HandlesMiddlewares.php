@@ -35,4 +35,16 @@ trait HandlesMiddlewares
         $this->middleware->addHttpMiddleware($middleware);
         return $this;
     }
+
+    /**
+     * Add a WebSocket handshake middleware
+     *
+     * @param class-string $middleware The handshake middleware class implementing HandshakeMiddleware
+     * @return self This server instance for method chaining
+     */
+    public function addHandshakeMiddleware(string $middleware): self
+    {
+        $this->middleware->addHandshakeMiddleware($middleware);
+        return $this;
+    }
 }

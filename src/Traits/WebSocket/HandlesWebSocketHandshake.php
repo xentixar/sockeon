@@ -12,6 +12,7 @@
 namespace Sockeon\Sockeon\Traits\WebSocket;
 
 use Sockeon\Sockeon\Core\Config;
+use Sockeon\Sockeon\WebSocket\HandshakeRequest;
 
 trait HandlesWebSocketHandshake
 {
@@ -25,32 +26,48 @@ trait HandlesWebSocketHandshake
      */
     protected function performHandshake(int $clientId, $client, string $data): bool
     {
-        $origin = null;
-        if (preg_match('/Origin:\s(.+)\r\n/i', $data, $originMatches)) {
-            $origin = trim($originMatches[1]);
+        $handshakeRequest = new HandshakeRequest($data);
+        
+        $result = $this->server->getMiddleware()->runHandshakeStack(
+            $clientId,
+            $handshakeRequest,
+            function (int $clientId, HandshakeRequest $request) use ($client) {
+                return $this->executeHandshake($clientId, $client, $request);
+            },
+            $this->server
+        );
+        
+        if (is_array($result)) {
+            $this->sendCustomResponse($client, $result);
+            return false;
         }
+        
+        return $result;
+    }
 
+    /**
+     * Execute the actual handshake process (after middleware)
+     * 
+     * @param int $clientId The client identifier
+     * @param resource $client The client socket resource
+     * @param HandshakeRequest $request The handshake request
+     * @return bool Whether the handshake was successful
+     */
+    protected function executeHandshake(int $clientId, $client, HandshakeRequest $request): bool
+    {
+        // Check origin
+        $origin = $request->getOrigin();
         if ($origin !== null && !$this->isOriginAllowed($origin)) {
             $response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nOrigin not allowed";
             fwrite($client, $response);
             return false;
         }
 
-        $requestUri = null;
-        if (preg_match('/GET\s+(.*?)\s+HTTP/i', $data, $uriMatches)) {
-            $requestUri = trim($uriMatches[1]);
-        }
-
         $authKey = Config::getAuthKey();
         if ($authKey !== null) {
-            $queryString = '';
-            if ($requestUri !== null && strpos($requestUri, '?') !== false) {
-                $queryString = substr($requestUri, strpos($requestUri, '?') + 1);
-            }
+            $keyParam = $request->getQueryParam('key');
             
-            parse_str($queryString, $queryParams);
-            
-            if (!isset($queryParams['key']) || $queryParams['key'] !== $authKey) {
+            if ($keyParam === null || $keyParam !== $authKey) {
                 $response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid authentication key";
                 fwrite($client, $response);
                 $this->server->getLogger()->debug("[WebSocket Authentication] Authentication failed for client: $clientId");
@@ -60,32 +77,66 @@ trait HandlesWebSocketHandshake
             $this->server->getLogger()->debug("[WebSocket Authentication] Authentication successful for client: $clientId");
         }
 
-        if (preg_match('/Sec-WebSocket-Key:\s(.+)\r\n/i', $data, $matches)) {
-            $secKey = trim($matches[1]);
-            $acceptKey = base64_encode(sha1($secKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
-
-            $headers = [
-                "HTTP/1.1 101 Switching Protocols",
-                "Upgrade: websocket",
-                "Connection: Upgrade",
-                "Sec-WebSocket-Accept: $acceptKey",
-                "Sec-WebSocket-Version: 13",
-            ];
-
-            if ($origin !== null && $this->isOriginAllowed($origin)) {
-                $headers[] = "Access-Control-Allow-Origin: $origin";
-            }
-
-            $response = implode("\r\n", $headers) . "\r\n\r\n";
+        if (!$request->isValidWebSocketRequest()) {
+            $response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nInvalid WebSocket request";
             fwrite($client, $response);
-            $this->handshakes[$clientId] = true;
-            
-            $this->server->getRouter()->dispatchSpecialEvent($clientId, 'connect');
-            
-            return true;
+            return false;
         }
 
-        return false;
+        $webSocketKey = $request->getWebSocketKey();
+        if ($webSocketKey === null) {
+            return false;
+        }
+
+        $acceptKey = base64_encode(sha1($webSocketKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
+
+        $headers = [
+            "HTTP/1.1 101 Switching Protocols",
+            "Upgrade: websocket",
+            "Connection: Upgrade",
+            "Sec-WebSocket-Accept: $acceptKey",
+            "Sec-WebSocket-Version: 13",
+        ];
+
+        if ($origin !== null && $this->isOriginAllowed($origin)) {
+            $headers[] = "Access-Control-Allow-Origin: $origin";
+        }
+
+        $response = implode("\r\n", $headers) . "\r\n\r\n";
+        fwrite($client, $response);
+        $this->handshakes[$clientId] = true;
+        
+        $this->server->getRouter()->dispatchSpecialEvent($clientId, 'connect');
+        
+        return true;
+    }
+
+    /**
+     * Send a custom response to the client
+     * 
+     * @param resource $client The client socket resource
+     * @param array<string, mixed> $responseData Response data from middleware
+     * @return void
+     */
+    protected function sendCustomResponse($client, array $responseData): void
+    {
+        $statusCode = is_int($responseData['status'] ?? null) ? $responseData['status'] : 403;
+        $statusText = is_string($responseData['statusText'] ?? null) ? $responseData['statusText'] : 'Forbidden';
+        $headers = is_array($responseData['headers'] ?? null) ? $responseData['headers'] : [];
+        $body = is_string($responseData['body'] ?? null) ? $responseData['body'] : 'Access denied';
+        
+        $response = "HTTP/1.1 $statusCode $statusText\r\n";
+        $response .= "Content-Type: text/plain\r\n";
+        
+        foreach ($headers as $name => $value) {
+            if (is_string($name) && (is_string($value) || is_numeric($value))) {
+                $response .= $name . ": " . (string) $value . "\r\n";
+            }
+        }
+        
+        $response .= "\r\n$body";
+        
+        fwrite($client, $response);
     }
 
     /**
