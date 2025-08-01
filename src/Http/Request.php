@@ -244,6 +244,27 @@ class Request
     }
 
     /**
+     * Get request body as array (similar to Laravel's all() method)
+     * 
+     * @return array<mixed, mixed> The request body as an array
+     */
+    public function all(): array
+    {
+        if (is_array($this->body)) {
+            return $this->body;
+        }
+        
+        if (is_string($this->body) && !empty($this->body)) {
+            $decoded = json_decode($this->body, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        
+        return [];
+    }
+
+    /**
      * Check if the request has a JSON content type
      * 
      * @return bool True if request has JSON content type
@@ -357,7 +378,7 @@ class Request
      * @param mixed $value The data value
      * @return self For method chaining
      */
-    public function setData(string $key, mixed $value): self
+    public function setAttribute(string $key, mixed $value): self
     {
         $this->rawData[$key] = $value;
         return $this;
@@ -370,8 +391,70 @@ class Request
      * @param mixed $default Default value if key doesn't exist
      * @return mixed The data value or default
      */
-    public function getData(string $key, mixed $default = null): mixed
+    public function getAttribute(string $key, mixed $default = null): mixed
     {
         return $this->rawData[$key] ?? $default;
+    }
+
+    /**
+     * Magic method to access request data as properties
+     * Checks body data first, then query parameters
+     * 
+     * @param string $name The property name
+     * @return mixed The property value or null
+     */
+    public function __get(string $name): mixed
+    {
+        $bodyData = $this->all();
+        if (array_key_exists($name, $bodyData)) {
+            return $bodyData[$name];
+        }
+        
+        if (array_key_exists($name, $this->query)) {
+            return $this->query[$name];
+        }
+        
+        if (array_key_exists($name, $this->params)) {
+            return $this->params[$name];
+        }
+        
+        return null;
+    }
+
+    /**
+     * Magic method to check if a property exists
+     * 
+     * @param string $name The property name
+     * @return bool True if the property exists
+     */
+    public function __isset(string $name): bool
+    {
+        $bodyData = $this->all();
+        return array_key_exists($name, $bodyData) || 
+               array_key_exists($name, $this->query) || 
+               array_key_exists($name, $this->params);
+    }
+
+    /**
+     * Get a specific input value (body, query, or path parameter)
+     * 
+     * @param string $key The input key
+     * @param mixed $default Default value if key doesn't exist
+     * @return mixed The input value or default
+     */
+    public function input(string $key, mixed $default = null): mixed
+    {
+        return $this->__get($key) ?? $default;
+    }
+
+    /**
+     * Check if a specific input exists
+     * 
+     * @param string $key The input key
+     * @return bool True if the input exists
+     */
+    public function has(string $key): bool
+    {
+        return $this->__isset($key);
     }
 }
