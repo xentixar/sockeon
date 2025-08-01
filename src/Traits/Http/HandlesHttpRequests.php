@@ -71,9 +71,13 @@ trait HandlesHttpRequests
             parse_str($url['query'], $query);
         }
 
-        $parsedBody = json_decode($body, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            $body = $parsedBody;
+        if (empty($body)) {
+            $body = [];
+        } else {
+            $parsedBody = json_decode($body, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $body = $parsedBody;
+            }
         }
         
         return [
