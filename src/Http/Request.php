@@ -378,7 +378,7 @@ class Request
      * @param mixed $value The data value
      * @return self For method chaining
      */
-    public function setData(string $key, mixed $value): self
+    public function setAttribute(string $key, mixed $value): self
     {
         $this->rawData[$key] = $value;
         return $this;
@@ -391,7 +391,7 @@ class Request
      * @param mixed $default Default value if key doesn't exist
      * @return mixed The data value or default
      */
-    public function getData(string $key, mixed $default = null): mixed
+    public function getAttribute(string $key, mixed $default = null): mixed
     {
         return $this->rawData[$key] ?? $default;
     }
