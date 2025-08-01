@@ -70,15 +70,6 @@ trait HandlesHttpRequests
         if (isset($url['query'])) {
             parse_str($url['query'], $query);
         }
-
-        if (empty($body)) {
-            $body = [];
-        } else {
-            $parsedBody = json_decode($body, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $body = $parsedBody;
-            }
-        }
         
         return [
             'method' => $method,
