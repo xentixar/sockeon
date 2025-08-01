@@ -54,13 +54,13 @@ trait HandlesHttpDispatching
     /**
      * Execute an HTTP route handler with middleware
      * 
-     * @param array{0: \Sockeon\Sockeon\Controllers\SocketController, 1: string, 2: array<int, class-string>} $handler The controller and method to call
+     * @param array{0: \Sockeon\Sockeon\Controllers\SocketController, 1: string, 2: array<int, class-string>, 3: array<int, class-string>} $handler The controller and method to call
      * @param Request $request The Request object
      * @return mixed The response from the handler
      */
     private function executeHttpRoute(array $handler, Request $request): mixed
     {
-        [$controller, $method, $middlewares] = $handler;
+        [$controller, $method, $middlewares, $excludeGlobalMiddlewares] = $handler;
 
         $this->validateHttpMiddlewares($middlewares);
 
@@ -71,7 +71,8 @@ trait HandlesHttpDispatching
                     return $controller->$method($request);
                 },
                 $this->server,
-                $middlewares
+                $middlewares,
+                $excludeGlobalMiddlewares
             );
         } else {
             return $controller->$method($request);
@@ -108,7 +109,7 @@ trait HandlesHttpDispatching
     /**
      * Get all registered HTTP routes
      * 
-     * @return array<string, array{0: \Sockeon\Sockeon\Controllers\SocketController, 1: string}> The registered HTTP routes
+     * @return array<string, array{0: \Sockeon\Sockeon\Controllers\SocketController, 1: string, 2: array<int, class-string>, 3: array<int, class-string>}> The registered HTTP routes
      */
     public function getHttpRoutes(): array
     {

@@ -34,8 +34,9 @@ trait HandlesRouteRegistration
 
         foreach ($ref->getMethods() as $method) {
             foreach ($method->getAttributes(SocketOn::class) as $attr) {
-                $event = $attr->newInstance()->event;
-                $this->wsRoutes[$event] = [$controller, $method->getName(), $attr->newInstance()->middlewares];
+                $attrInstance = $attr->newInstance();
+                $event = $attrInstance->event;
+                $this->wsRoutes[$event] = [$controller, $method->getName(), $attrInstance->middlewares, $attrInstance->excludeGlobalMiddlewares];
             }
             
             foreach ($method->getAttributes(OnConnect::class) as $attr) {
@@ -49,7 +50,7 @@ trait HandlesRouteRegistration
             foreach ($method->getAttributes(HttpRoute::class) as $attr) {
                 $httpAttr = $attr->newInstance();
                 $key = $httpAttr->method . ' ' . $httpAttr->path;
-                $this->httpRoutes[$key] = [$controller, $method->getName(), $httpAttr->middlewares];
+                $this->httpRoutes[$key] = [$controller, $method->getName(), $httpAttr->middlewares, $httpAttr->excludeGlobalMiddlewares];
             }
         }
     }

@@ -23,9 +23,13 @@ class SocketOn
      * 
      * @param string $event  The event name
      * @param array<int, class-string> $middlewares List of middleware classes to apply to this event handler
+     * @param array<int, class-string> $excludeGlobalMiddlewares List of global middleware classes to exclude for this event handler
      */
-    public function __construct(public string $event, public array $middlewares = [])
-    {
+    public function __construct(
+        public string $event, 
+        public array $middlewares = [], 
+        public array $excludeGlobalMiddlewares = []
+    ) {
         //
     }
 }

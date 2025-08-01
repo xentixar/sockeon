@@ -26,7 +26,7 @@ trait HandlesWebSocketDispatching
     public function dispatch(int $clientId, string $event, array $data): void
     {
         if (isset($this->wsRoutes[$event])) {
-            [$controller, $method, $middlewares] = $this->wsRoutes[$event];
+            [$controller, $method, $middlewares, $excludeGlobalMiddlewares] = $this->wsRoutes[$event];
 
             $this->validateWebsocketMiddlewares($middlewares);
 
@@ -39,7 +39,8 @@ trait HandlesWebSocketDispatching
                         return $controller->$method($clientId, $data);
                     },
                     $this->server,
-                    $middlewares
+                    $middlewares,
+                    $excludeGlobalMiddlewares
                 );
             } else {
                 $controller->$method($clientId, $data);

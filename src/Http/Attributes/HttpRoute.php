@@ -27,10 +27,12 @@ class HttpRoute
      * @param string $method The HTTP method (GET, POST, PUT, DELETE, etc.)
      * @param string $path The URL path to handle, can include path parameters like {id}
      * @param array<int, class-string> $middlewares Optional array of middleware class names to apply to this route
+     * @param array<int, class-string> $excludeGlobalMiddlewares Optional array of global middleware class names to exclude for this route
      */
     public function __construct(
         public string $method,
         public string $path,
         public array $middlewares = [],
+        public array $excludeGlobalMiddlewares = [],
     ) {}
 }

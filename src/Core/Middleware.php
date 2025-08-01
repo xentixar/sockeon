@@ -91,11 +91,13 @@ class Middleware
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @param Server $server Server instance handling the WebSocket connection
      * @param array<int, class-string> $additionalMiddlewares Optional additional middlewares to include in the stack
+     * @param array<int, class-string> $excludeGlobalMiddlewares Optional array of global middlewares to exclude
      * @return mixed Result of the target function or middleware if chain is interrupted
      */
-    public function runWebSocketStack(int $clientId, string $event, array $data, Closure $target, Server $server, array $additionalMiddlewares = []): mixed
+    public function runWebSocketStack(int $clientId, string $event, array $data, Closure $target, Server $server, array $additionalMiddlewares = [], array $excludeGlobalMiddlewares = []): mixed
     {
-        $stack = array_merge($this->wsStack, $additionalMiddlewares);
+        $globalStack = $this->filterExcludedMiddlewares($this->wsStack, $excludeGlobalMiddlewares);
+        $stack = array_merge($globalStack, $additionalMiddlewares);
         
         $run = function (int $index) use (&$run, $stack, $clientId, $event, $data, $target, $server) {
             if ($index >= count($stack)) {
@@ -124,11 +126,13 @@ class Middleware
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @param Server $server Server instance handling the HTTP request
      * @param array<int, class-string> $additionalMiddlewares Optional additional middlewares to include in the stack
+     * @param array<int, class-string> $excludeGlobalMiddlewares Optional array of global middlewares to exclude
      * @return mixed Result of the target function or middleware if chain is interrupted
      */
-    public function runHttpStack(Request $request, Closure $target, Server $server, array $additionalMiddlewares = []): mixed
+    public function runHttpStack(Request $request, Closure $target, Server $server, array $additionalMiddlewares = [], array $excludeGlobalMiddlewares = []): mixed
     {
-        $stack = array_merge($this->httpStack, $additionalMiddlewares);
+        $globalStack = $this->filterExcludedMiddlewares($this->httpStack, $excludeGlobalMiddlewares);
+        $stack = array_merge($globalStack, $additionalMiddlewares);
         
         $run = function (int $index) use (&$run, $stack, $request, $target, $server) {
             if ($index >= count($stack)) {
@@ -183,5 +187,23 @@ class Middleware
         };
         
         return $run(0);
+    }
+
+    /**
+     * Filter out excluded middlewares from the global stack
+     * 
+     * @param array<int, class-string> $globalStack The global middleware stack
+     * @param array<int, class-string> $excludeMiddlewares Array of middleware class names to exclude
+     * @return array<int, class-string> Filtered middleware stack
+     */
+    private function filterExcludedMiddlewares(array $globalStack, array $excludeMiddlewares): array
+    {
+        if (empty($excludeMiddlewares)) {
+            return $globalStack;
+        }
+
+        return array_filter($globalStack, function ($middleware) use ($excludeMiddlewares) {
+            return !in_array($middleware, $excludeMiddlewares, true);
+        });
     }
 }

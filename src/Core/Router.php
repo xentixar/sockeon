@@ -39,13 +39,13 @@ class Router
     use HandlesHttpDispatching, HandlesMiddlewareValidation, HandlesRouteRegistration, HandlesWebSocketDispatching;
     /**
      * WebSocket routes
-     * @var array<string, array{0: SocketController, 1: string, 2: array<int, class-string>}>
+     * @var array<string, array{0: SocketController, 1: string, 2: array<int, class-string>, 3: array<int, class-string>}>
      */
     protected array $wsRoutes = [];
 
     /**
      * HTTP routes
-     * @var array<string, array{0: SocketController, 1: string, 2: array<int, class-string>}>
+     * @var array<string, array{0: SocketController, 1: string, 2: array<int, class-string>, 3: array<int, class-string>}>
      */
     protected array $httpRoutes = [];
 
