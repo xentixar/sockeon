@@ -246,7 +246,7 @@ class Request
     /**
      * Get request body as array (similar to Laravel's all() method)
      * 
-     * @return array<string, mixed> The request body as an array
+     * @return array<mixed, mixed> The request body as an array
      */
     public function all(): array
     {
