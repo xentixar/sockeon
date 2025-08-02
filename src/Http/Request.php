@@ -125,8 +125,27 @@ class Request
                 $this->body = $decodedBody;
                 return;
             }
+        } elseif (is_string($body) && $this->isFormData()) {
+            $formData = [];
+            parse_str($body, $formData);
+            $this->body = $formData;
+            return;
         }
         $this->body = $body;
+    }
+
+    /**
+     * Check if the request has form data content type
+     * 
+     * @return bool True if request has form data content type
+     */
+    public function isFormData(): bool
+    {
+        $contentType = $this->getHeader('Content-Type');
+        if (!is_string($contentType)) {
+            return false;
+        }
+        return str_contains($contentType, 'application/x-www-form-urlencoded');
     }
 
     /**
