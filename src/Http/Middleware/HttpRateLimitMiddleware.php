@@ -75,7 +75,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
         if ($useRouteConfig) {
             $server->getLogger()->debug("[Sockeon Rate Limit] Processing route-specific rate limiting");
-            if ($routeRateLimit->isWhitelisted($clientIp)) {
+            if ($clientIp !== null && $routeRateLimit->isWhitelisted($clientIp)) {
                 $server->getLogger()->debug("[Sockeon Rate Limit] IP is whitelisted for route", ['client_ip' => $clientIp]);
                 if ($routeRateLimit->shouldBypassGlobal()) {
                     $server->getLogger()->debug("[Sockeon Rate Limit] Bypassing global rate limiting due to route config");
@@ -84,7 +84,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             } else {
                 $this->cleanupExpiredEntries($globalRateLimitConfig);
 
-                if ($this->isRateLimitedForRoute($clientIp, $routeRateLimit, $request)) {
+                if ($clientIp !== null && $this->isRateLimitedForRoute($clientIp, $routeRateLimit, $request)) {
                     $server->getLogger()->info("[Sockeon Rate Limit] Route rate limit exceeded", [
                         'client_ip' => $clientIp,
                         'route' => $request->getMethod() . ' ' . $request->getPath(),
@@ -93,8 +93,10 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                     return $this->createRouteRateLimitResponse($clientIp, $routeRateLimit);
                 }
 
-                $this->recordRouteRequest($clientIp, $request);
-                $server->getLogger()->debug("[Sockeon Rate Limit] Route request recorded", ['client_ip' => $clientIp]);
+                if ($clientIp !== null) {
+                    $this->recordRouteRequest($clientIp, $request);
+                    $server->getLogger()->debug("[Sockeon Rate Limit] Route request recorded", ['client_ip' => $clientIp]);
+                }
 
                 if ($routeRateLimit->shouldBypassGlobal()) {
                     $server->getLogger()->debug("[Sockeon Rate Limit] Bypassing global rate limiting after route processing");
@@ -103,16 +105,16 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             }
         }
 
-        if ($useGlobalConfig) {
+        if ($useGlobalConfig && $globalRateLimitConfig !== null) {
             $server->getLogger()->debug("[Sockeon Rate Limit] Processing global rate limiting");
-            if ($globalRateLimitConfig->isWhitelisted($clientIp)) {
+            if ($clientIp !== null && $globalRateLimitConfig->isWhitelisted($clientIp)) {
                 $server->getLogger()->debug("[Sockeon Rate Limit] IP is whitelisted globally", ['client_ip' => $clientIp]);
                 return $next($request);
             }
 
             $this->cleanupExpiredEntries($globalRateLimitConfig);
 
-            if ($this->isRateLimited($clientIp, $globalRateLimitConfig)) {
+            if ($clientIp !== null && $this->isRateLimited($clientIp, $globalRateLimitConfig)) {
                 $server->getLogger()->info("[Sockeon Rate Limit] Global rate limit exceeded", [
                     'client_ip' => $clientIp,
                     'limit' => $globalRateLimitConfig->getMaxHttpRequestsPerIp(),
@@ -121,8 +123,10 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                 return $this->createRateLimitResponse($clientIp, $globalRateLimitConfig);
             }
 
-            $this->recordRequest($clientIp);
-            $server->getLogger()->debug("[Sockeon Rate Limit] Global request recorded", ['client_ip' => $clientIp]);
+            if ($clientIp !== null) {
+                $this->recordRequest($clientIp);
+                $server->getLogger()->debug("[Sockeon Rate Limit] Global request recorded", ['client_ip' => $clientIp]);
+            }
         }
 
         return $next($request);
@@ -315,10 +319,6 @@ class HttpRateLimitMiddleware implements HttpMiddleware
     protected function getRouteRateLimit(Request $request, Server $server): ?RateLimit
     {
         $router = $server->getRouter();
-        if (!$router) {
-            $server->getLogger()->debug("[Sockeon Rate Limit] No router found for rate limit attribute lookup");
-            return null;
-        }
 
         $method = $request->getMethod();
         $path = $request->getPath();

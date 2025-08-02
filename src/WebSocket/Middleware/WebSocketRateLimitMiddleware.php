@@ -4,7 +4,23 @@
  * 
  * Implements rate limiting for WebSocket messages to prevent abuse and ensure fair usage.
  * Tracks messages per client within configurable time windows with support for both 
- * global and event-specific rate limits.
+ * global and event-spe        $message = [
+            'event' => 'rate_limit_exceeded',
+            'data' => [
+                'error' => 'Rate limit exceeded',
+                'message' => 'You have exceeded the event-specific rate limit. Please try again later.',
+                'original_event' => $event,
+                'retry_after' => $rateLimitConfig->getTimeWindow(),
+                'limit' => $rateLimitConfig->getMaxMessages(),
+                'window' => $rateLimitConfig->getTimeWindow(),
+                'type' => $type
+            ]
+        ];
+
+        $jsonMessage = json_encode($message);
+        if ($jsonMessage !== false) {
+            $server->sendToClient($clientId, $jsonMessage);
+        }its.
  * 
  * @package     Sockeon\Sockeon
  * @author      Sockeon
@@ -120,7 +136,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             }
         }
 
-        if ($useGlobalConfig) {
+        if ($useGlobalConfig && $globalRateLimitConfig !== null) {
             $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Processing global rate limiting");
             if ($globalRateLimitConfig->isWhitelisted($clientIp)) {
                 $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] IP is whitelisted globally", [
@@ -263,7 +279,10 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             ]
         ];
 
-        $server->sendToClient($clientId, json_encode($message));
+        $jsonMessage = json_encode($message);
+        if ($jsonMessage !== false) {
+            $server->sendToClient($clientId, $jsonMessage);
+        }
     }
 
     /**
@@ -290,7 +309,10 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             ]
         ];
 
-        $server->sendToClient($clientId, json_encode($message));
+        $jsonMessage = json_encode($message);
+        if ($jsonMessage !== false) {
+            $server->sendToClient($clientId, $jsonMessage);
+        }
     }
 
     /**
@@ -356,10 +378,6 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
     protected function getEventRateLimit(string $event, Server $server): ?RateLimit
     {
         $router = $server->getRouter();
-        if (!$router) {
-            $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] No router found for rate limit attribute lookup");
-            return null;
-        }
 
         $wsRoutes = $router->getWebSocketRoutes();
 

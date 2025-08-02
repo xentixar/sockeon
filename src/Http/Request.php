@@ -361,7 +361,7 @@ class Request
 
         foreach ($ipHeaders as $header) {
             $ip = $this->getHeader($header);
-            if ($ip && $ip !== 'unknown') {
+            if (is_string($ip) && $ip !== '' && $ip !== 'unknown') {
                 if (str_contains($ip, ',')) {
                     $ip = trim(explode(',', $ip)[0]);
                 }
@@ -379,7 +379,7 @@ class Request
         foreach ($ipHeaders as $header) {
             if (isset($_SERVER[$header])) {
                 $ip = $_SERVER[$header];
-                if ($ip && $ip !== 'unknown') {
+                if (is_string($ip) && $ip !== '' && $ip !== 'unknown') {
                     if (str_contains($ip, ',')) {
                         $ip = trim(explode(',', $ip)[0]);
                     }

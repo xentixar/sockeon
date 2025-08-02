@@ -274,6 +274,6 @@ trait HandlesClients
 
         // Extract IP from the peer name (format: "ip:port")
         $parts = explode(':', $peerName);
-        return $parts[0] ?? null;
+        return $parts[0];
     }
 }
