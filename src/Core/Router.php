@@ -74,4 +74,14 @@ class Router
     {
         $this->server = $server;
     }
+
+    /**
+     * Get HTTP routes
+     *
+     * @return array<string, array{0: SocketController, 1: string, 2: array<int, class-string>, 3: array<int, class-string>}>
+     */
+    public function getHttpRoutes(): array
+    {
+        return $this->httpRoutes;
+    }
 }
