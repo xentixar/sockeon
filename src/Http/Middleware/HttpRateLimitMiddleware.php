@@ -15,7 +15,7 @@ namespace Sockeon\Sockeon\Http\Middleware;
 
 use Sockeon\Sockeon\Connection\Server;
 use Sockeon\Sockeon\Contracts\Http\HttpMiddleware;
-use Sockeon\Sockeon\Http\Attributes\RateLimit;
+use Sockeon\Sockeon\Core\Attributes\RateLimit;
 use Sockeon\Sockeon\Http\Request;
 use Sockeon\Sockeon\Http\Response;
 

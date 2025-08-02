@@ -51,6 +51,7 @@ trait HandlesConfiguration
 
         if ($this->rateLimitConfig && $this->rateLimitConfig->isEnabled()) {
             $this->middleware->addHttpMiddleware(\Sockeon\Sockeon\Http\Middleware\HttpRateLimitMiddleware::class);
+            $this->middleware->addWebSocketMiddleware(\Sockeon\Sockeon\WebSocket\Middleware\WebSocketRateLimitMiddleware::class);
         }
     }
 
