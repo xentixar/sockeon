@@ -4,7 +4,7 @@
  * 
  * Manages HTTP request parsing and processing
  * 
- * @package     Sockeon\Sockeon\Traits\Http
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
@@ -36,19 +36,34 @@ trait HandlesHttpRequests
         $headersDone = false;
         $body = '';
         
-        foreach ($lines as $line) {
-            if (!$headersDone) {
-                if (empty(trim($line))) {
-                    $headersDone = true;
-                    continue;
-                }
-                
+        $bodyStartPos = strpos($data, "\r\n\r\n");
+        if ($bodyStartPos !== false) {
+            $headerSection = substr($data, 0, $bodyStartPos);
+            $body = substr($data, $bodyStartPos + 4);
+            
+            $headerLines = explode("\r\n", $headerSection);
+            for ($i = 1; $i < count($headerLines); $i++) {
+                $line = $headerLines[$i];
                 if (str_contains($line, ':')) {
                     list($key, $value) = explode(':', $line, 2);
                     $headers[trim($key)] = trim($value);
                 }
-            } else {
-                $body .= $line;
+            }
+        } else {
+            foreach ($lines as $line) {
+                if (!$headersDone) {
+                    if (empty(trim($line))) {
+                        $headersDone = true;
+                        continue;
+                    }
+                    
+                    if (str_contains($line, ':')) {
+                        list($key, $value) = explode(':', $line, 2);
+                        $headers[trim($key)] = trim($value);
+                    }
+                } else {
+                    $body .= $line;
+                }
             }
         }
         
