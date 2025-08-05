@@ -51,7 +51,8 @@ trait HandlesHttpWs
                 str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
                 str_starts_with($data, 'HEAD ')
             ) {
-                if (str_contains($data, 'Upgrade: websocket')) {
+                if (stripos($data, 'Upgrade: websocket') !== false || 
+                    stripos($data, 'upgrade: websocket') !== false) {
                     $this->clientTypes[$clientId] = 'ws';
                     $this->logger->debug("[Sockeon Identification] WebSocket client identified: $clientId");
                 } else {
