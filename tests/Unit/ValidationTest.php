@@ -1,13 +1,11 @@
 <?php
 
 use Sockeon\Sockeon\Validation\Validator;
-use Sockeon\Sockeon\Validation\SchemaValidator;
 use Sockeon\Sockeon\Validation\Sanitizer;
 use Sockeon\Sockeon\Exception\Validation\ValidationException;
 
 beforeEach(function () {
     $this->validator = new Validator();
-    $this->schemaValidator = new SchemaValidator();
 });
 
 test('basic validation', function () {
@@ -41,56 +39,6 @@ test('validation with errors', function () {
     ];
 
     expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
-});
-
-test('schema validation', function () {
-    $this->schemaValidator->registerSchema('user_registration', [
-        'username' => [
-            'type' => 'string',
-            'required' => true,
-            'min' => 3,
-            'max' => 20
-        ],
-        'email' => [
-            'type' => 'email',
-            'required' => true
-        ],
-        'age' => [
-            'type' => 'integer',
-            'required' => false,
-            'min' => 18
-        ]
-    ]);
-
-    $data = [
-        'username' => 'john_doe',
-        'email' => 'john@example.com',
-        'age' => 25
-    ];
-
-    $validated = $this->schemaValidator->validateEvent('user_registration', $data);
-    expect($validated)->toBe($data);
-});
-
-test('schema validation with errors', function () {
-    $this->schemaValidator->registerSchema('user_registration', [
-        'username' => [
-            'type' => 'string',
-            'required' => true,
-            'min' => 3
-        ],
-        'email' => [
-            'type' => 'email',
-            'required' => true
-        ]
-    ]);
-
-    $data = [
-        'username' => 'jo', // Too short
-        'email' => 'invalid-email' // Invalid email
-    ];
-
-    expect(fn() => $this->schemaValidator->validateEvent('user_registration', $data))->toThrow(ValidationException::class);
 });
 
 test('string sanitization', function () {
@@ -213,36 +161,72 @@ test('sanitized data', function () {
     expect($sanitized['age'])->toBe(25);
 });
 
-test('no schema validation', function () {
-    $data = ['test' => 'value'];
-    $result = $this->schemaValidator->validateEvent('unknown_event', $data);
-    expect($result)->toBe($data);
+test('alpha rule', function () {
+    $data = ['name' => 'John123'];
+    $rules = ['name' => 'alpha'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
 });
 
-test('complex schema validation', function () {
-    $this->schemaValidator->registerSchema('complex_event', [
-        'user' => [
-            'type' => 'string',
-            'required' => true,
-            'min' => 3
-        ],
-        'data' => [
-            'type' => 'array',
-            'required' => true,
-            'max' => 10
-        ],
-        'timestamp' => [
-            'type' => 'integer',
-            'required' => false
-        ]
-    ]);
+test('alpha_num rule', function () {
+    $data = ['username' => 'john_doe'];
+    $rules = ['username' => 'alpha_num'];
 
-    $data = [
-        'user' => 'john_doe',
-        'data' => ['item1', 'item2'],
-        'timestamp' => time()
-    ];
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
 
-    $validated = $this->schemaValidator->validateEvent('complex_event', $data);
-    expect($validated)->toBe($data);
+test('numeric rule', function () {
+    $data = ['code' => 'ABC123'];
+    $rules = ['code' => 'numeric'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('regex rule', function () {
+    $data = ['phone' => 'invalid-phone'];
+    $rules = ['phone' => 'regex:/^\+?[1-9]\d{1,14}$/'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('json rule', function () {
+    $data = ['config' => 'invalid json'];
+    $rules = ['config' => 'json'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('float rule', function () {
+    $data = ['price' => 'not a number'];
+    $rules = ['price' => 'float'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('boolean rule', function () {
+    $data = ['active' => 'not boolean'];
+    $rules = ['active' => 'boolean'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('array rule', function () {
+    $data = ['tags' => 'not an array'];
+    $rules = ['tags' => 'array'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('url rule', function () {
+    $data = ['website' => 'not a url'];
+    $rules = ['website' => 'url'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
+});
+
+test('not_in rule', function () {
+    $data = ['role' => 'admin'];
+    $rules = ['role' => 'not_in:admin,super_admin'];
+
+    expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
 }); 
