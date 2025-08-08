@@ -3,7 +3,6 @@
     "description": "Framework-agnostic PHP WebSocket and HTTP server library with attribute-based routing and support for namespaces and rooms.",
     "type": "library",
     "license": "MIT",
-    "version": "2.0.0",
     "autoload": {
         "psr-4": {
             "Sockeon\\Sockeon\\": "src/"
