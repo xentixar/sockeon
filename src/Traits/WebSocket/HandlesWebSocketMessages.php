@@ -22,32 +22,236 @@ trait HandlesWebSocketMessages
      * @param string $payload The message payload
      * @return void
      */
-    protected function handleMessage(int $clientId, string $payload): void
+    public function handleMessage(int $clientId, string $payload): void
     {
         try {
+            // Validate payload is not empty
+            if (empty($payload)) {
+                $this->sendErrorMessage($clientId, 'Empty message payload');
+                return;
+            }
+
+            // Validate payload length
+            if (strlen($payload) > 65536) { // 64KB limit
+                $this->sendErrorMessage($clientId, 'Message payload too large');
+                return;
+            }
+
             $message = json_decode($payload, true);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
+                $errorMsg = 'Invalid JSON format: ' . json_last_error_msg();
                 $this->server->getLogger()->warning("Invalid JSON received from client: $clientId", [
                     'error' => json_last_error_msg(),
-                    'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : '')
+                    'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : ''),
+                    'client_id' => $clientId
                 ]);
+                $this->sendErrorMessage($clientId, $errorMsg);
                 return;
             }
             
-            if (!is_array($message) || !isset($message['event']) || !is_string($message['event'])) {
-                $this->server->getLogger()->warning("Invalid message format from client: $clientId", [
-                    'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : '')
-                ]);
+            if (!is_array($message)) {
+                $this->sendErrorMessage($clientId, 'Message must be a JSON object');
                 return;
             }
-            
+
+            $validationErrors = $this->validateMessageStructure($message);
+            if (!empty($validationErrors)) {
+                $errorMsg = 'Message validation failed: ' . implode(', ', $validationErrors);
+                $this->server->getLogger()->warning("Message validation failed for client: $clientId", [
+                    'errors' => $validationErrors,
+                    'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : ''),
+                    'client_id' => $clientId
+                ]);
+                $this->sendErrorMessage($clientId, $errorMsg);
+                return;
+            }
+
             $event = $message['event'];
-            $data = isset($message['data']) && is_array($message['data']) ? $message['data'] : [];
+            $data = $message['data'] ?? [];
+
+            if (!is_array($data)) {
+                $this->sendErrorMessage($clientId, 'Data field must be an object/array');
+                return;
+            }
+
+            $this->server->getLogger()->debug("Processing WebSocket message", [
+                'client_id' => $clientId,
+                'event' => $event,
+                'data_size' => count($data),
+                'data_keys' => array_keys($data)
+            ]);
 
             $this->server->getRouter()->dispatch($clientId, $event, $data); //@phpstan-ignore-line
         } catch (Throwable $e) {
-            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'WebSocketHandler::handleMessage']);
+            $this->server->getLogger()->exception($e, [
+                'clientId' => $clientId, 
+                'context' => 'WebSocketHandler::handleMessage',
+                'payload_preview' => substr($payload, 0, 100)
+            ]);
+            
+            $this->sendErrorMessage($clientId, 'Internal server error processing message');
+        }
+    }
+
+    /**
+     * Send an error message to a specific client
+     * 
+     * @param int $clientId The client ID
+     * @param string $errorMessage The error message
+     * @return void
+     */
+    public function sendErrorMessage(int $clientId, string $errorMessage): void
+    {
+        try {
+            $errorResponse = [
+                'event' => 'error',
+                'data' => [
+                    'message' => $errorMessage,
+                    'timestamp' => time()
+                ]
+            ];
+
+            $encodedMessage = json_encode($errorResponse);
+            if ($encodedMessage === false) {
+                $encodedMessage = '{"event":"error","data":{"message":"JSON encoding error","timestamp":' . time() . '}}';
+            }
+
+            $frame = $this->encodeWebSocketFrame($encodedMessage);
+            
+            $clients = $this->server->getClients();
+            if (isset($clients[$clientId]) && is_resource($clients[$clientId])) {
+                $bytesWritten = fwrite($clients[$clientId], $frame);
+                
+                if ($bytesWritten === false || $bytesWritten < strlen($frame)) {
+                    $this->server->getLogger()->warning("Failed to send error message to client: $clientId", [
+                        'error_message' => $errorMessage,
+                        'bytes_written' => $bytesWritten,
+                        'frame_length' => strlen($frame)
+                    ]);
+                } else {
+                    $this->server->getLogger()->debug("Sent error message to client: $clientId", [
+                        'error_message' => $errorMessage
+                    ]);
+                }
+            } else {
+                $this->server->getLogger()->warning("Client not found or invalid resource: $clientId");
+            }
+        } catch (Throwable $e) {
+            $this->server->getLogger()->exception($e, [
+                'clientId' => $clientId,
+                'context' => 'sendErrorMessage',
+                'error_message' => $errorMessage
+            ]);
+        }
+    }
+
+    /**
+     * Validate WebSocket message structure
+     * 
+     * @param array<string, mixed> $message The decoded message
+     * @return array<string, string> Array of validation errors (empty if valid)
+     */
+    protected function validateMessageStructure(array $message): array
+    {
+        $errors = [];
+
+        // Validate event field
+        if (!isset($message['event'])) {
+            $errors[] = 'Missing required field: event';
+        } elseif (!is_string($message['event'])) {
+            $errors[] = 'Event field must be a string';
+        } elseif (empty($message['event'])) {
+            $errors[] = 'Event field cannot be empty';
+        } elseif (!preg_match('/^[a-zA-Z0-9._-]+$/', $message['event'])) {
+            $errors[] = 'Invalid event name format (only alphanumeric, dots, underscores, hyphens allowed)';
+        }
+
+        // Validate data field
+        if (!isset($message['data'])) {
+            $errors[] = 'Missing required field: data';
+        } elseif (!is_array($message['data'])) {
+            $errors[] = 'Data field must be an object/array';
+        }
+
+        // Validate no extra fields (optional - can be removed if you want to allow extra fields)
+        $allowedFields = ['event', 'data'];
+        $extraFields = array_diff(array_keys($message), $allowedFields);
+        if (!empty($extraFields)) {
+            $errors[] = 'Message contains unsupported fields: ' . implode(', ', $extraFields);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Create a properly formatted WebSocket message
+     * 
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @return array<string, mixed> The formatted message
+     */
+    protected function createMessage(string $event, array $data = []): array
+    {
+        return [
+            'event' => $event,
+            'data' => $data
+        ];
+    }
+
+    /**
+     * Send a message to a specific client
+     * 
+     * @param int $clientId The client ID
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @return bool True if message was sent successfully
+     */
+    public function sendMessage(int $clientId, string $event, array $data = []): bool
+    {
+        try {
+            $message = $this->createMessage($event, $data);
+            $encodedMessage = json_encode($message);
+            
+            if ($encodedMessage === false) {
+                $this->server->getLogger()->error("Failed to encode message for client: $clientId", [
+                    'event' => $event,
+                    'data' => $data
+                ]);
+                return false;
+            }
+
+            $frame = $this->encodeWebSocketFrame($encodedMessage);
+            
+            $clients = $this->server->getClients();
+            if (isset($clients[$clientId]) && is_resource($clients[$clientId])) {
+                $bytesWritten = fwrite($clients[$clientId], $frame);
+                
+                if ($bytesWritten === false || $bytesWritten < strlen($frame)) {
+                    $this->server->getLogger()->warning("Failed to send message to client: $clientId", [
+                        'event' => $event,
+                        'bytes_written' => $bytesWritten,
+                        'frame_length' => strlen($frame)
+                    ]);
+                    return false;
+                } else {
+                    $this->server->getLogger()->debug("Sent message to client: $clientId", [
+                        'event' => $event,
+                        'data_size' => count($data)
+                    ]);
+                    return true;
+                }
+            } else {
+                $this->server->getLogger()->warning("Client not found or invalid resource: $clientId");
+                return false;
+            }
+        } catch (Throwable $e) {
+            $this->server->getLogger()->exception($e, [
+                'clientId' => $clientId,
+                'context' => 'sendMessage',
+                'event' => $event
+            ]);
+            return false;
         }
     }
 }
