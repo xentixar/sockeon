@@ -4,7 +4,7 @@
  * 
  * Manages registration of controllers and their routes using reflection
  * 
- * @package     Sockeon\Sockeon\Traits\Router
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

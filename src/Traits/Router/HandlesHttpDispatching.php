@@ -4,7 +4,7 @@
  * 
  * Manages HTTP request dispatching and route matching
  * 
- * @package     Sockeon\Sockeon\Traits\Router
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

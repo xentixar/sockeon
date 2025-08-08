@@ -4,7 +4,7 @@
  * 
  * Manages message listening and event loop for WebSocket client
  * 
- * @package     Sockeon\Sockeon\Traits\Client
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

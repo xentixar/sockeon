@@ -4,7 +4,7 @@
  * 
  * Manages WebSocket connection establishment and management
  * 
- * @package     Sockeon\Sockeon\Traits\Client
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

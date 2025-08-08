@@ -5,7 +5,7 @@
  * Represents a WebSocket handshake request with parsed headers and request information.
  * This class provides easy access to handshake request data for middleware processing.
  *
- * @package     Sockeon\Sockeon\WebSocket
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

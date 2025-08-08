@@ -4,7 +4,7 @@
  * 
  * Manages middleware validation for HTTP and WebSocket routes
  * 
- * @package     Sockeon\Sockeon\Traits\Router
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

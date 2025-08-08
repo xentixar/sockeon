@@ -12,6 +12,9 @@
 
 namespace Sockeon\Sockeon\Http;
 
+use Sockeon\Sockeon\Validation\Validator;
+use Sockeon\Sockeon\Exception\Validation\ValidationException;
+
 class Request
 {
     /**
@@ -67,6 +70,30 @@ class Request
      * @var array<string, string>|null
      */
     protected ?array $normalizedHeaders = null;
+
+    /**
+     * Validator instance
+     * @var Validator|null
+     */
+    protected ?Validator $validator = null;
+
+    /**
+     * Validation rules
+     * @var array<string, string|array<int, string>>
+     */
+    protected array $validationRules = [];
+
+    /**
+     * Custom error messages
+     * @var array<string, string>
+     */
+    protected array $validationMessages = [];
+
+    /**
+     * Custom field names
+     * @var array<string, string>
+     */
+    protected array $validationFieldNames = [];
 
     /**
      * Constructor
@@ -500,5 +527,208 @@ class Request
     public function has(string $key): bool
     {
         return $this->__isset($key);
+    }
+
+    /**
+     * Validate the request data
+     * 
+     * @param array<string, string|array<int, string>> $rules The validation rules
+     * @param array<string, string> $messages Custom error messages
+     * @param array<string, string> $fieldNames Custom field names
+     * @return bool True if validation passes
+     * @throws ValidationException
+     */
+    public function validate(array $rules, array $messages = [], array $fieldNames = []): bool
+    {
+        $this->validationRules = $rules;
+        $this->validationMessages = $messages;
+        $this->validationFieldNames = $fieldNames;
+
+        if ($this->validator === null) {
+            $this->validator = new Validator();
+        }
+
+        $data = $this->all();
+        $data = array_merge($data, $this->query, $this->params);
+
+        return $this->validator->validate($data, $rules, $messages, $fieldNames);
+    }
+
+    /**
+     * Validate the request data and return validated data
+     * 
+     * @param array<string, string|array<int, string>> $rules The validation rules
+     * @param array<string, string> $messages Custom error messages
+     * @param array<string, string> $fieldNames Custom field names
+     * @return array<string, mixed> The validated and sanitized data
+     * @throws ValidationException
+     */
+    public function validated(array $rules, array $messages = [], array $fieldNames = []): array
+    {
+        $this->validate($rules, $messages, $fieldNames);
+        return $this->validator?->getSanitized() ?? [];
+    }
+
+    /**
+     * Get validation errors
+     * 
+     * @return array<string, array<int, string>> The validation errors
+     */
+    public function getValidationErrors(): array
+    {
+        return $this->validator?->getErrors() ?? [];
+    }
+
+    /**
+     * Check if validation has errors
+     * 
+     * @return bool True if there are errors
+     */
+    public function hasValidationErrors(): bool
+    {
+        return $this->validator?->hasErrors() ?? false;
+    }
+
+    /**
+     * Get first validation error for a field
+     * 
+     * @param string $field The field name
+     * @return string|null The first error message or null
+     */
+    public function getFirstValidationError(string $field): ?string
+    {
+        return $this->validator?->getFirstError($field);
+    }
+
+    /**
+     * Get all validation errors for a field
+     * 
+     * @param string $field The field name
+     * @return array<int, string> The error messages
+     */
+    public function getFieldValidationErrors(string $field): array
+    {
+        return $this->validator?->getFieldErrors($field) ?? [];
+    }
+
+    /**
+     * Get validated data
+     * 
+     * @return array<string, mixed> The validated and sanitized data
+     */
+    public function getValidatedData(): array
+    {
+        return $this->validator?->getSanitized() ?? [];
+    }
+
+    /**
+     * Set validation rules
+     * 
+     * @param array<string, string|array<int, string>> $rules The validation rules
+     * @return self For method chaining
+     */
+    public function setValidationRules(array $rules): self
+    {
+        $this->validationRules = $rules;
+        return $this;
+    }
+
+    /**
+     * Set custom error messages
+     * 
+     * @param array<string, string> $messages The custom error messages
+     * @return self For method chaining
+     */
+    public function setValidationMessages(array $messages): self
+    {
+        $this->validationMessages = $messages;
+        return $this;
+    }
+
+    /**
+     * Set custom field names
+     * 
+     * @param array<string, string> $fieldNames The custom field names
+     * @return self For method chaining
+     */
+    public function setValidationFieldNames(array $fieldNames): self
+    {
+        $this->validationFieldNames = $fieldNames;
+        return $this;
+    }
+
+    /**
+     * Get validation rules
+     * 
+     * @return array<string, string|array<int, string>> The validation rules
+     */
+    public function getValidationRules(): array
+    {
+        return $this->validationRules;
+    }
+
+    /**
+     * Get custom error messages
+     * 
+     * @return array<string, string> The custom error messages
+     */
+    public function getValidationMessages(): array
+    {
+        return $this->validationMessages;
+    }
+
+    /**
+     * Get custom field names
+     * 
+     * @return array<string, string> The custom field names
+     */
+    public function getValidationFieldNames(): array
+    {
+        return $this->validationFieldNames;
+    }
+
+    /**
+     * Validate a single field
+     * 
+     * @param string $field The field name
+     * @param string|array<int, string> $rules The validation rules
+     * @param array<string, string> $messages Custom error messages
+     * @param array<string, string> $fieldNames Custom field names
+     * @return bool True if validation passes
+     * @throws ValidationException
+     */
+    public function validateField(string $field, string|array $rules, array $messages = [], array $fieldNames = []): bool
+    {
+        if ($this->validator === null) {
+            $this->validator = new Validator();
+        }
+
+        $data = [$field => $this->input($field)];
+        $validationRules = [$field => $rules];
+
+        return $this->validator->validate($data, $validationRules, $messages, $fieldNames);
+    }
+
+    /**
+     * Validate multiple fields
+     * 
+     * @param array<string, string|array<int, string>> $rules The validation rules
+     * @param array<string, string> $messages Custom error messages
+     * @param array<string, string> $fieldNames Custom field names
+     * @return bool True if validation passes
+     * @throws ValidationException
+     */
+    public function validateFields(array $rules, array $messages = [], array $fieldNames = []): bool
+    {
+        if ($this->validator === null) {
+            $this->validator = new Validator();
+        }
+
+        $data = [];
+        foreach (array_keys($rules) as $field) {
+            $data[$field] = $this->input($field);
+        }
+
+        return $this->validator->validate($data, $rules, $messages, $fieldNames);
     }
 }

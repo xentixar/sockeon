@@ -4,7 +4,7 @@
  * 
  * Manages WebSocket message processing and routing
  * 
- * @package     Sockeon\Sockeon\Traits\WebSocket
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
