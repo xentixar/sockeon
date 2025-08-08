@@ -4,7 +4,7 @@
  * 
  * Manages WebSocket frame encoding and decoding for server
  * 
- * @package     Sockeon\Sockeon\Traits\WebSocket
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

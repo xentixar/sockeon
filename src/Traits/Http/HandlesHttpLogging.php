@@ -4,7 +4,7 @@
  * 
  * Manages HTTP request logging and debugging
  * 
- * @package     Sockeon\Sockeon\Traits\Http
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

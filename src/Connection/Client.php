@@ -5,7 +5,7 @@
  * Simplified wrapper for WebSocketClient to provide an easy-to-use
  * interface for connecting to Sockeon WebSocket servers.
  * 
- * @package     Sockeon\Sockeon\Client
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

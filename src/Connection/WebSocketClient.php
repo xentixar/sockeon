@@ -5,7 +5,7 @@
  * PHP client for connecting to Sockeon WebSocket server, listening to events,
  * and emitting events.
  * 
- * @package     Sockeon\Sockeon\Client
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

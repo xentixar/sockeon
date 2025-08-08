@@ -4,7 +4,7 @@
  * 
  * Manages CORS (Cross-Origin Resource Sharing) functionality
  * 
- * @package     Sockeon\Sockeon\Traits\Http
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */

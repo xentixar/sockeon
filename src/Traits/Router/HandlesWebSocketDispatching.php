@@ -4,7 +4,7 @@
  * 
  * Manages WebSocket event dispatching and special events
  * 
- * @package     Sockeon\Sockeon\Traits\Router
+ * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
  */
