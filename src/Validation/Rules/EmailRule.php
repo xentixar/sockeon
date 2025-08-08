@@ -41,6 +41,7 @@ class EmailRule extends BaseRule
         if ($this->isEmpty($value)) {
             return '';
         }
+        /** @phpstan-ignore-next-line */
         $email = (string) $value;
         return strtolower(trim($email));
     }

@@ -566,7 +566,7 @@ class Request
     public function validated(array $rules, array $messages = [], array $fieldNames = []): array
     {
         $this->validate($rules, $messages, $fieldNames);
-        return $this->validator->getSanitized();
+        return $this->validator?->getSanitized() ?? [];
     }
 
     /**

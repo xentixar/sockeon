@@ -69,7 +69,7 @@ class Validator
     /**
      * Validate data against rules
      * 
-     * @param array<string, mixed> $data The data to validate
+     * @param array<mixed, mixed> $data The data to validate
      * @param array<string, string|array<int, string>> $rules The validation rules
      * @param array<string, string> $messages Custom error messages
      * @param array<string, string> $fieldNames Custom field names
@@ -245,9 +245,12 @@ class Validator
     {
         $className = get_class($rule);
         $parts = explode('\\', $className);
-        $className = end($parts);
+        /** @var string|false $lastPart */
+        $lastPart = end($parts);
+        $className = $lastPart !== false ? $lastPart : 'unknown';
         
-        $ruleName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $className));
+        $result = preg_replace('/(?<!^)[A-Z]/', '_$0', $className);
+        $ruleName = strtolower($result !== null ? $result : $className);
         $ruleName = str_replace('_rule', '', $ruleName);
         
         return $ruleName;

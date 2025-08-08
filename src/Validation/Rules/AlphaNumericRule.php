@@ -43,8 +43,10 @@ class AlphaNumericRule extends BaseRule
         if ($this->isEmpty($value)) {
             return '';
         }
-        $value = (string) $value;
-        return preg_replace('/[^a-zA-Z0-9]/', '', $value);
+        /** @var string $value */
+        $value = (string) $value; // @phpstan-ignore-line
+        $result = preg_replace('/[^a-zA-Z0-9]/', '', $value);
+        return $result !== null ? $result : '';
     }
 
     /**

@@ -39,7 +39,7 @@ class NumericRule extends BaseRule
         if ($this->isEmpty($value)) {
             return 0.0;
         }
-        return (float) $value;
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 
     /**

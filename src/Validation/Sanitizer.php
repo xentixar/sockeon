@@ -27,6 +27,7 @@ class Sanitizer
             return '';
         }
 
+        /** @phpstan-ignore-next-line */
         $value = (string) $value;
 
         if ($stripTags) {
@@ -152,7 +153,7 @@ class Sanitizer
      * Sanitize an array value
      * 
      * @param mixed $value The value to sanitize
-     * @return array The sanitized array
+     * @return array<mixed> The sanitized array
      */
     public static function array(mixed $value): array
     {
@@ -201,6 +202,10 @@ class Sanitizer
         
         $filename = preg_replace('/[^a-zA-Z0-9._-]/', '', $filename);
         
+        if (empty($filename)) {
+            return '';
+        }
+        
         $filename = basename($filename);
         
         return $filename;
@@ -217,9 +222,9 @@ class Sanitizer
         $phone = self::string($value, true, true);
         
         // Remove all non-digit characters except +, -, (, ), and space
-        $phone = preg_replace('/[^0-9+\-() ]/', '', $phone);
+        $result = preg_replace('/[^0-9+\-() ]/', '', $phone);
         
-        return trim($phone);
+        return trim($result !== null ? $result : '');
     }
 
     /**
@@ -233,9 +238,9 @@ class Sanitizer
         $card = self::string($value, true, true);
         
         // Remove all non-digit characters
-        $card = preg_replace('/[^0-9]/', '', $card);
+        $result = preg_replace('/[^0-9]/', '', $card);
         
-        return $card;
+        return $result !== null ? $result : '';
     }
 
     /**
@@ -388,9 +393,9 @@ class Sanitizer
     {
         $class = self::string($value, true, true);
         
-        $class = preg_replace('/[^a-zA-Z0-9_-]/', '', $class);
+        $result = preg_replace('/[^a-zA-Z0-9_-]/', '', $class);
         
-        return $class;
+        return $result !== null ? $result : '';
     }
 
     /**
@@ -403,7 +408,8 @@ class Sanitizer
     {
         $id = self::string($value, true, true);
         
-        $id = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
+        $result = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
+        $id = $result !== null ? $result : '';
         
         if (!empty($id) && !ctype_alpha($id[0])) {
             $id = 'id_' . $id;

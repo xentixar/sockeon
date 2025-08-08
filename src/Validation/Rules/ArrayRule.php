@@ -31,7 +31,7 @@ class ArrayRule extends BaseRule
      * Sanitize a value to array
      * 
      * @param mixed $value The value to sanitize
-     * @return array The sanitized array value
+     * @return array<mixed> The sanitized array value
      */
     public function sanitize(mixed $value): mixed
     {

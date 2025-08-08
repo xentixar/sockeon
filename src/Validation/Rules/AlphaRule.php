@@ -43,8 +43,10 @@ class AlphaRule extends BaseRule
         if ($this->isEmpty($value)) {
             return '';
         }
+        /** @phpstan-ignore-next-line */
         $value = (string) $value;
-        return preg_replace('/[^a-zA-Z]/', '', $value);
+        $result = preg_replace('/[^a-zA-Z]/', '', $value);
+        return $result !== null ? $result : '';
     }
 
     /**

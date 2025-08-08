@@ -38,7 +38,7 @@ class IntegerRule extends BaseRule
         if ($this->isEmpty($value)) {
             return 0;
         }
-        return (int) $value;
+        return is_numeric($value) ? (int) $value : 0;
     }
 
     /**

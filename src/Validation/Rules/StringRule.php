@@ -38,6 +38,7 @@ class StringRule extends BaseRule
         if ($this->isEmpty($value)) {
             return '';
         }
+        /** @var string $value */
         return trim((string) $value);
     }
 

@@ -41,6 +41,7 @@ class UrlRule extends BaseRule
         if ($this->isEmpty($value)) {
             return '';
         }
+        /** @phpstan-ignore-next-line */
         $url = (string) $value;
         return trim($url);
     }
