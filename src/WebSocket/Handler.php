@@ -96,6 +96,10 @@ class Handler
                 $opcode = $frame['opcode'] ?? 0;
                 $payload = $frame['payload'] ?? '';
                 
+                if (!is_string($payload)) {
+                    $payload = is_scalar($payload) ? (string) $payload : '';
+                }
+                
                 switch ($opcode) {
                     case 8:
                         $this->server->getLogger()->debug("Received close frame from client: $clientId");

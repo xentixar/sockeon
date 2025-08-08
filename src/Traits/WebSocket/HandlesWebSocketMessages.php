@@ -55,9 +55,11 @@ trait HandlesWebSocketMessages
                 return;
             }
 
-            $validationErrors = $this->validateMessageStructure($message);
+            /** @var array<string, mixed> $typedMessage */
+            $typedMessage = $message;
+            $validationErrors = $this->validateMessageStructure($typedMessage);
             if (!empty($validationErrors)) {
-                $errorMsg = 'Message validation failed: ' . implode(', ', $validationErrors);
+                $errorMsg = 'Message validation failed: ' . implode(', ', array_values($validationErrors));
                 $this->server->getLogger()->warning("Message validation failed for client: $clientId", [
                     'errors' => $validationErrors,
                     'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : ''),
@@ -147,38 +149,39 @@ trait HandlesWebSocketMessages
     }
 
     /**
-     * Validate WebSocket message structure
+     * Validate the structure of a WebSocket message
      * 
-     * @param array<string, mixed> $message The decoded message
-     * @return array<string, string> Array of validation errors (empty if valid)
+     * @param array<string, mixed> $message The message to validate
+     * @return array<string, string> Array of validation errors
      */
     protected function validateMessageStructure(array $message): array
     {
+        /** @var array<string, string> $errors */
         $errors = [];
 
         // Validate event field
         if (!isset($message['event'])) {
-            $errors[] = 'Missing required field: event';
+            $errors['event'] = 'Missing required field: event';
         } elseif (!is_string($message['event'])) {
-            $errors[] = 'Event field must be a string';
+            $errors['event'] = 'Event field must be a string';
         } elseif (empty($message['event'])) {
-            $errors[] = 'Event field cannot be empty';
+            $errors['event'] = 'Event field cannot be empty';
         } elseif (!preg_match('/^[a-zA-Z0-9._-]+$/', $message['event'])) {
-            $errors[] = 'Invalid event name format (only alphanumeric, dots, underscores, hyphens allowed)';
+            $errors['event'] = 'Invalid event name format (only alphanumeric, dots, underscores, hyphens allowed)';
         }
 
         // Validate data field
         if (!isset($message['data'])) {
-            $errors[] = 'Missing required field: data';
+            $errors['data'] = 'Missing required field: data';
         } elseif (!is_array($message['data'])) {
-            $errors[] = 'Data field must be an object/array';
+            $errors['data'] = 'Data field must be an object/array';
         }
 
         // Validate no extra fields (optional - can be removed if you want to allow extra fields)
         $allowedFields = ['event', 'data'];
         $extraFields = array_diff(array_keys($message), $allowedFields);
         if (!empty($extraFields)) {
-            $errors[] = 'Message contains unsupported fields: ' . implode(', ', $extraFields);
+            $errors['extra_fields'] = 'Message contains unsupported fields: ' . implode(', ', $extraFields);
         }
 
         return $errors;
