@@ -81,37 +81,89 @@ class Handler
                 return $this->performHandshake($clientId, $client, $data);
             }
 
+            if (empty($data)) {
+                $this->server->getLogger()->debug("Empty data received from client: $clientId");
+                return true;
+            }
+
             $frames = $this->decodeWebSocketFrame($data);
             if (empty($frames)) {
+                $this->server->getLogger()->debug("No valid frames decoded from client: $clientId");
                 return true;
             }
 
             foreach ($frames as $frame) {
-                if ($frame['opcode'] === 8) {
-                    $this->server->getLogger()->debug("Received close frame from client: $clientId");
-                    return false;
-                } elseif ($frame['opcode'] === 9) {
-                    $this->server->getLogger()->debug("Received ping from client: $clientId");
-                    $payload = isset($frame['payload']) ? (is_string($frame['payload']) ? $frame['payload'] : '') : '';
-                    $pongFrame = $this->encodeWebSocketFrame($payload, 10);
-                    fwrite($client, $pongFrame);
-                } elseif ($frame['opcode'] === 10) {
-                    $this->server->getLogger()->debug("Received pong from client: $clientId");
-                } elseif ($frame['opcode'] === 1 || $frame['opcode'] === 2) {
-                    if ($frame['payload'] ?? false) {
-                        $payload = is_string($frame['payload']) ? $frame['payload'] : '';
+                $opcode = $frame['opcode'] ?? 0;
+                $payload = $frame['payload'] ?? '';
+                
+                if (!is_string($payload)) {
+                    $payload = is_scalar($payload) ? (string) $payload : '';
+                }
+                
+                switch ($opcode) {
+                    case 8:
+                        $this->server->getLogger()->debug("Received close frame from client: $clientId");
+                        return false;
+                        
+                    case 9:
+                        $this->server->getLogger()->debug("Received ping from client: $clientId");
+                        $this->sendPong($client, $payload);
+                        break;
+                        
+                    case 10:
+                        $this->server->getLogger()->debug("Received pong from client: $clientId");
+                        break;
+                        
+                    case 1:
+                    case 2:
                         if (!empty($payload)) {
                             $this->handleMessage($clientId, $payload);
+                        } else {
+                            $this->server->getLogger()->debug("Empty payload in text/binary frame from client: $clientId");
                         }
-                    }
+                        break;
+                        
+                    case 0:
+                        $this->server->getLogger()->debug("Received continuation frame from client: $clientId");
+                        // TODO: Implement fragmented message handling
+                        break;
+                        
+                    default:
+                        $this->server->getLogger()->warning("Unknown opcode received from client: $clientId", [
+                            'opcode' => $opcode
+                        ]);
+                        break;
                 }
             }
 
             return true;
         } catch (Throwable $e) {
-            $this->server->getLogger()->exception($e, ['clientId' => $clientId, 'context' => 'WebSocketHandler::handle']);
+            $this->server->getLogger()->exception($e, [
+                'clientId' => $clientId, 
+                'context' => 'WebSocketHandler::handle',
+                'data_length' => strlen($data)
+            ]);
+            
+            try {
+                $this->sendErrorMessage($clientId, 'Internal server error processing WebSocket frame');
+            } catch (Throwable $sendError) {
+                $this->server->getLogger()->warning("Failed to send error message to client: $clientId", [
+                    'error' => $sendError->getMessage()
+                ]);
+            }
             
             return true;
         }
+    }
+
+    /**
+     * Public method for testing - check if opcode is valid
+     * 
+     * @param int $opcode The opcode to validate
+     * @return bool True if the opcode is valid
+     */
+    public function isValidOpcode(int $opcode): bool
+    {
+        return in_array($opcode, [0, 1, 2, 8, 9, 10], true);
     }
 }
