@@ -19,9 +19,9 @@ pest()
         $logger->setLogToConsole(false);
 
         $serverConfig = new ServerConfig();
-        $serverConfig->port = $port;
-        $serverConfig->host = '127.0.0.1';
-        $serverConfig->logger = $logger;
+        $serverConfig->setPort($port);
+        $serverConfig->setHost('127.0.0.1');
+        $serverConfig->setLogger($logger);
 
         $this->server = new Server($serverConfig); //@phpstan-ignore-line
     })
