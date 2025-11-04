@@ -309,4 +309,151 @@ class RateLimitConfig
 
         return false;
     }
+
+    /**
+     * Set enabled status
+     * 
+     * @param bool $enabled
+     * @return void
+     */
+    public function setEnabled(bool $enabled): void
+    {
+        $this->enabled = $enabled;
+    }
+
+    /**
+     * Set maximum HTTP requests per IP
+     * 
+     * @param int $maxHttpRequestsPerIp
+     * @return void
+     */
+    public function setMaxHttpRequestsPerIp(int $maxHttpRequestsPerIp): void
+    {
+        $this->maxHttpRequestsPerIp = $maxHttpRequestsPerIp;
+    }
+
+    /**
+     * Set HTTP time window
+     * 
+     * @param int $httpTimeWindow
+     * @return void
+     */
+    public function setHttpTimeWindow(int $httpTimeWindow): void
+    {
+        $this->httpTimeWindow = $httpTimeWindow;
+    }
+
+    /**
+     * Set maximum WebSocket messages per client
+     * 
+     * @param int $maxWebSocketMessagesPerClient
+     * @return void
+     */
+    public function setMaxWebSocketMessagesPerClient(int $maxWebSocketMessagesPerClient): void
+    {
+        $this->maxWebSocketMessagesPerClient = $maxWebSocketMessagesPerClient;
+    }
+
+    /**
+     * Set WebSocket time window
+     * 
+     * @param int $webSocketTimeWindow
+     * @return void
+     */
+    public function setWebSocketTimeWindow(int $webSocketTimeWindow): void
+    {
+        $this->webSocketTimeWindow = $webSocketTimeWindow;
+    }
+
+    /**
+     * Set maximum connections per IP
+     * 
+     * @param int $maxConnectionsPerIp
+     * @return void
+     */
+    public function setMaxConnectionsPerIp(int $maxConnectionsPerIp): void
+    {
+        $this->maxConnectionsPerIp = $maxConnectionsPerIp;
+    }
+
+    /**
+     * Set connection time window
+     * 
+     * @param int $connectionTimeWindow
+     * @return void
+     */
+    public function setConnectionTimeWindow(int $connectionTimeWindow): void
+    {
+        $this->connectionTimeWindow = $connectionTimeWindow;
+    }
+
+    /**
+     * Set maximum global connections
+     * 
+     * @param int $maxGlobalConnections
+     * @return void
+     */
+    public function setMaxGlobalConnections(int $maxGlobalConnections): void
+    {
+        $this->maxGlobalConnections = $maxGlobalConnections;
+    }
+
+    /**
+     * Set burst allowance
+     * 
+     * @param int $burstAllowance
+     * @return void
+     */
+    public function setBurstAllowance(int $burstAllowance): void
+    {
+        $this->burstAllowance = $burstAllowance;
+    }
+
+    /**
+     * Set cleanup interval
+     * 
+     * @param int $cleanupInterval
+     * @return void
+     */
+    public function setCleanupInterval(int $cleanupInterval): void
+    {
+        $this->cleanupInterval = $cleanupInterval;
+    }
+
+    /**
+     * Set whitelist
+     * 
+     * @param array<int, string> $whitelist
+     * @return void
+     */
+    public function setWhitelist(array $whitelist): void
+    {
+        $this->whitelist = $whitelist;
+    }
+
+    /**
+     * Add IP to whitelist
+     * 
+     * @param string $ip
+     * @return void
+     */
+    public function addToWhitelist(string $ip): void
+    {
+        if (!in_array($ip, $this->whitelist)) {
+            $this->whitelist[] = $ip;
+        }
+    }
+
+    /**
+     * Remove IP from whitelist
+     * 
+     * @param string $ip
+     * @return void
+     */
+    public function removeFromWhitelist(string $ip): void
+    {
+        $this->whitelist = array_values(array_filter($this->whitelist, function ($whitelistedIp) use ($ip) {
+            return $whitelistedIp !== $ip;
+        }));
+    }
 }
