@@ -393,14 +393,24 @@ class Request
         }
 
         // Trust proxy headers - check in order of preference
+        // Note: Headers are normalized to lowercase, so check both formats
         $ipHeaders = [
-            'HTTP_CF_CONNECTING_IP',     // Cloudflare
-            'HTTP_CLIENT_IP',            // Proxy
-            'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
-            'HTTP_X_FORWARDED',          // Proxy
-            'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
-            'HTTP_FORWARDED_FOR',        // Proxy
-            'HTTP_FORWARDED',            // Proxy (RFC 7239)
+            'cf-connecting-ip',          // Cloudflare (normalized)
+            'http_cf_connecting_ip',     // Cloudflare (from $_SERVER)
+            'x-real-ip',                 // Nginx X-Real-IP (normalized)
+            'http_x_real_ip',            // Nginx X-Real-IP (from $_SERVER)
+            'client-ip',                 // Proxy (normalized)
+            'http_client_ip',            // Proxy (from $_SERVER)
+            'x-forwarded-for',           // Load balancer/proxy (normalized)
+            'http_x_forwarded_for',      // Load balancer/proxy (from $_SERVER)
+            'x-forwarded',               // Proxy (normalized)
+            'http_x_forwarded',          // Proxy (from $_SERVER)
+            'x-cluster-client-ip',       // Cluster (normalized)
+            'http_x_cluster_client_ip',  // Cluster (from $_SERVER)
+            'forwarded-for',             // Proxy (normalized)
+            'http_forwarded_for',        // Proxy (from $_SERVER)
+            'forwarded',                 // Proxy RFC 7239 (normalized)
+            'http_forwarded',            // Proxy RFC 7239 (from $_SERVER)
         ];
 
         foreach ($ipHeaders as $header) {
