@@ -382,7 +382,40 @@ class Request
      */
     public function getIpAddress(bool $fallbackToDefault = false): ?string
     {
-        // Check if we should trust proxy headers
+        // First, try to get IP from proxy headers (if they exist)
+        // This works even if trust_proxy is not fully configured
+        $ipHeaders = [
+            'cf-connecting-ip',          // Cloudflare (normalized)
+            'x-real-ip',                 // Nginx X-Real-IP (normalized)
+            'x-forwarded-for',           // Load balancer/proxy (normalized)
+            'client-ip',                 // Proxy (normalized)
+            'x-forwarded',               // Proxy (normalized)
+            'x-cluster-client-ip',       // Cluster (normalized)
+            'forwarded-for',             // Proxy (normalized)
+            'forwarded',                 // Proxy RFC 7239 (normalized)
+        ];
+
+        foreach ($ipHeaders as $header) {
+            $ip = $this->getHeader($header);
+            if (is_string($ip) && $ip !== '' && $ip !== 'unknown') {
+                // Handle comma-separated IPs (take the first one, which is the original client)
+                if (str_contains($ip, ',')) {
+                    $ip = trim(explode(',', $ip)[0]);
+                }
+                
+                // Validate IP
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    // Prefer public IPs, but return any valid IP if found
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                        return $ip;
+                    }
+                    // Return private IPs too (they're still valid client IPs)
+                    return $ip;
+                }
+            }
+        }
+
+        // Check if we should trust proxy headers (for additional validation)
         if (!$this->shouldTrustProxy()) {
             // Don't trust proxies, use direct connection IP
             $directIp = $this->getDirectConnectionIp();
@@ -392,7 +425,7 @@ class Request
             return $fallbackToDefault ? '127.0.0.1' : null;
         }
 
-        // Trust proxy headers - check in order of preference
+        // Trust proxy headers - check in order of preference (redundant check, but kept for compatibility)
         // Note: Headers are normalized to lowercase, so check both formats
         $ipHeaders = [
             'cf-connecting-ip',          // Cloudflare (normalized)
@@ -548,21 +581,23 @@ class Request
 
     /**
      * Get the request scheme (http or https)
-     * Respects X-Forwarded-Proto header when proxy is trusted
+     * Respects X-Forwarded-Proto header when present (even if proxy not fully trusted)
      * 
      * @return string The request scheme
      */
     public function getScheme(): string
     {
+        // First, check proxy headers (they're present even if trust_proxy isn't fully configured)
+        $proxyHeaders = Config::getProxyHeaders();
+        $protoHeader = $proxyHeaders['proto'] ?? 'X-Forwarded-Proto';
+        
+        $proto = $this->getHeader($protoHeader);
+        if (is_string($proto) && in_array(strtolower($proto), ['http', 'https'], true)) {
+            return strtolower($proto);
+        }
+        
+        // Also check Forwarded header (RFC 7239) if trust_proxy is enabled
         if ($this->shouldTrustProxy()) {
-            $proxyHeaders = Config::getProxyHeaders();
-            $protoHeader = $proxyHeaders['proto'] ?? 'X-Forwarded-Proto';
-            
-            $proto = $this->getHeader($protoHeader);
-            if (is_string($proto) && in_array(strtolower($proto), ['http', 'https'], true)) {
-                return strtolower($proto);
-            }
-            
             // Also check Forwarded header (RFC 7239)
             $forwarded = $this->getHeader('Forwarded');
             if (is_string($forwarded)) {
