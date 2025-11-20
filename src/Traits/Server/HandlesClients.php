@@ -12,6 +12,9 @@ trait HandlesClients
     {
         $this->logger->info("[Sockeon Server] Starting server...");
 
+        // Record server start time
+        $this->startTime = microtime(true);
+
         $this->socket = stream_socket_server(
             "tcp://{$this->host}:{$this->port}",
             $errno,

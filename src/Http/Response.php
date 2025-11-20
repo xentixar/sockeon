@@ -346,6 +346,21 @@ class Response
         }
         return self::json($data, 401, $headers);
     }
+
+    /**
+     * Create a 405 Method Not Allowed response
+     * 
+     * @param mixed $data The error message or data
+     * @param array<string, string> $headers Additional headers
+     * @return self
+     */
+    public static function methodNotAllowed(mixed $data = 'Method Not Allowed', array $headers = []): self
+    {
+        if (is_string($data)) {
+            $data = ['error' => $data];
+        }
+        return self::json($data, 405, $headers);
+    }
     
     /**
      * Create a 403 Forbidden response

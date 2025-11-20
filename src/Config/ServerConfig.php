@@ -49,6 +49,33 @@ class ServerConfig
     protected ?RateLimitConfig $rateLimitConfig = null;
 
     /**
+     * Trust proxy settings for reverse proxy/load balancer support.
+     * Can be:
+     * - true: Trust all proxies
+     * - false: Don't trust any proxies (default)
+     * - array: List of trusted proxy IPs/CIDR ranges
+     * 
+     * @var bool|array<int, string>
+     */
+    protected bool|array $trustProxy = false;
+
+    /**
+     * Custom proxy header names for X-Forwarded-* headers.
+     * Useful when using non-standard proxy headers.
+     * 
+     * @var array<string, string>|null
+     */
+    protected ?array $proxyHeaders = null;
+
+    /**
+     * Health check endpoint path. If set, enables health check endpoint.
+     * Default: null (disabled)
+     * 
+     * @var string|null
+     */
+    protected ?string $healthCheckPath = null;
+
+    /**
      * Create a new server configuration instance
      *
      * @param array<string, mixed> $config
@@ -103,6 +130,29 @@ class ServerConfig
             /** @var array<string, mixed> $rateLimitConfig */
             $rateLimitConfig = $config['rate_limit'];
             $this->rateLimitConfig = new RateLimitConfig($rateLimitConfig);
+        }
+
+        // Initialize trust proxy settings
+        if (isset($config['trust_proxy'])) {
+            if (is_bool($config['trust_proxy'])) {
+                $this->trustProxy = $config['trust_proxy'];
+            } elseif (is_array($config['trust_proxy'])) {
+                /** @var array<int, string> $trustProxyArray */
+                $trustProxyArray = $config['trust_proxy'];
+                $this->trustProxy = $trustProxyArray;
+            }
+        }
+
+        // Initialize custom proxy headers
+        if (isset($config['proxy_headers']) && is_array($config['proxy_headers'])) {
+            /** @var array<string, string> $proxyHeadersArray */
+            $proxyHeadersArray = $config['proxy_headers'];
+            $this->proxyHeaders = $proxyHeadersArray;
+        }
+
+        // Initialize health check path
+        if (isset($config['health_check_path']) && is_string($config['health_check_path'])) {
+            $this->healthCheckPath = $config['health_check_path'];
         }
     }
 
@@ -272,5 +322,68 @@ class ServerConfig
     public function setRateLimitConfig(?RateLimitConfig $rateLimitConfig): void
     {
         $this->rateLimitConfig = $rateLimitConfig;
+    }
+
+    /**
+     * Get trust proxy settings
+     *
+     * @return bool|array<int, string>
+     */
+    public function getTrustProxy(): bool|array
+    {
+        return $this->trustProxy;
+    }
+
+    /**
+     * Set trust proxy settings
+     *
+     * @param bool|array<int, string> $trustProxy
+     * @return void
+     */
+    public function setTrustProxy(bool|array $trustProxy): void
+    {
+        $this->trustProxy = $trustProxy;
+    }
+
+    /**
+     * Get custom proxy headers
+     *
+     * @return array<string, string>|null
+     */
+    public function getProxyHeaders(): ?array
+    {
+        return $this->proxyHeaders;
+    }
+
+    /**
+     * Set custom proxy headers
+     *
+     * @param array<string, string>|null $proxyHeaders
+     * @return void
+     */
+    public function setProxyHeaders(?array $proxyHeaders): void
+    {
+        $this->proxyHeaders = $proxyHeaders;
+    }
+
+    /**
+     * Get health check endpoint path
+     *
+     * @return string|null
+     */
+    public function getHealthCheckPath(): ?string
+    {
+        return $this->healthCheckPath;
+    }
+
+    /**
+     * Set health check endpoint path
+     *
+     * @param string|null $healthCheckPath
+     * @return void
+     */
+    public function setHealthCheckPath(?string $healthCheckPath): void
+    {
+        $this->healthCheckPath = $healthCheckPath;
     }
 }

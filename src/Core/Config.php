@@ -16,7 +16,7 @@ class Config
 {
     /**
      * Global configuration values
-     * @var array<string, string>
+     * @var array<string, string|array<int|string, string>|bool|null>
      */
     private static array $config = [];
 
@@ -26,9 +26,11 @@ class Config
     public static function init(): void
     {
         if (empty(self::$config)) {
-            self::$config = [ //@phpstan-ignore-line
+            self::$config = [
                 'queue_file' => self::getDefaultQueueFilePath(),
                 'auth_key' => null,
+                'trust_proxy' => false,
+                'proxy_headers' => null,
             ];
         }
     }
@@ -82,7 +84,8 @@ class Config
     public static function getQueueFile(): string
     {
         self::init();
-        return self::$config['queue_file'];
+        $queueFile = self::$config['queue_file'];
+        return is_string($queueFile) ? $queueFile : self::getDefaultQueueFilePath();
     }
 
     /**
@@ -117,7 +120,7 @@ class Config
     public static function setAuthKey(?string $key): void
     {
         self::init();
-        self::$config['auth_key'] = $key; //@phpstan-ignore-line
+        self::$config['auth_key'] = $key;
     }
 
     /**
@@ -128,7 +131,8 @@ class Config
     public static function getAuthKey(): ?string
     {
         self::init();
-        return self::$config['auth_key'] ?? null;
+        $authKey = self::$config['auth_key'] ?? null;
+        return is_string($authKey) ? $authKey : null;
     }
 
     /**
@@ -138,10 +142,74 @@ class Config
      */
     public static function reset(): void
     {
-        self::$config = [ //@phpstan-ignore-line
+        self::$config = [
             'queue_file' => self::getDefaultQueueFilePath(),
             'auth_key' => null,
+            'trust_proxy' => false,
+            'proxy_headers' => null,
         ];
+    }
+
+    /**
+     * Set trust proxy settings
+     * 
+     * @param bool|array<int, string> $trustProxy Trust proxy settings
+     * @return void
+     */
+    public static function setTrustProxy(bool|array $trustProxy): void
+    {
+        self::init();
+        self::$config['trust_proxy'] = $trustProxy;
+    }
+
+    /**
+     * Get trust proxy settings
+     * 
+     * @return bool|array<int, string> Trust proxy settings
+     */
+    public static function getTrustProxy(): bool|array
+    {
+        self::init();
+        $trustProxy = self::$config['trust_proxy'] ?? false;
+        if (is_bool($trustProxy)) {
+            return $trustProxy;
+        }
+        if (is_array($trustProxy)) {
+            /** @var array<int, string> $trustProxy */
+            return $trustProxy;
+        }
+        return false;
+    }
+
+    /**
+     * Set custom proxy headers
+     * 
+     * @param array<string, string>|null $proxyHeaders Custom proxy headers
+     * @return void
+     */
+    public static function setProxyHeaders(?array $proxyHeaders): void
+    {
+        self::init();
+        self::$config['proxy_headers'] = $proxyHeaders;
+    }
+
+    /**
+     * Get custom proxy headers
+     * 
+     * @return array<string, string>|null Custom proxy headers
+     */
+    public static function getProxyHeaders(): ?array
+    {
+        self::init();
+        $proxyHeaders = self::$config['proxy_headers'] ?? null;
+        if ($proxyHeaders === null) {
+            return null;
+        }
+        if (is_array($proxyHeaders)) {
+            /** @var array<string, string> $proxyHeaders */
+            return $proxyHeaders;
+        }
+        return null;
     }
 
     /**

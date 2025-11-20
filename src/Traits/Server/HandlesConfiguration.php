@@ -31,6 +31,15 @@ trait HandlesConfiguration
             Config::setAuthKey($config->getAuthKey());
         }
 
+        // Apply proxy configuration
+        Config::setTrustProxy($config->getTrustProxy());
+        if ($config->getProxyHeaders() !== null) {
+            Config::setProxyHeaders($config->getProxyHeaders());
+        }
+
+        // Store health check path
+        $this->healthCheckPath = $config->getHealthCheckPath();
+
         $this->rateLimitConfig = $config->getRateLimitConfig();
 
         $this->logger = $config->getLogger() ?? new Logger(

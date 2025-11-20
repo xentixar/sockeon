@@ -59,6 +59,15 @@ class Server
 
     protected ?RateLimitConfig $rateLimitConfig = null;
 
+    protected ?string $healthCheckPath = null;
+
+    /**
+     * Server start time (Unix timestamp with microseconds)
+     * 
+     * @var float|null
+     */
+    protected ?float $startTime = null;
+
     public function __construct(ServerConfig $config)
     {
         $this->applyServerConfig($config);
@@ -151,5 +160,73 @@ class Server
     public function isRateLimitingEnabled(): bool
     {
         return $this->rateLimitConfig !== null && $this->rateLimitConfig->isEnabled();
+    }
+
+    /**
+     * Get the health check endpoint path
+     * 
+     * @return string|null The health check path or null if disabled
+     */
+    public function getHealthCheckPath(): ?string
+    {
+        return $this->healthCheckPath;
+    }
+
+    /**
+     * Get server start time
+     * 
+     * @return float|null Unix timestamp with microseconds when server started, or null if not started
+     */
+    public function getStartTime(): ?float
+    {
+        return $this->startTime;
+    }
+
+    /**
+     * Get server uptime in seconds
+     * 
+     * @return int|null Server uptime in seconds, or null if server hasn't started
+     */
+    public function getUptime(): ?int
+    {
+        if ($this->startTime === null) {
+            return null;
+        }
+
+        return (int) (microtime(true) - $this->startTime);
+    }
+
+    /**
+     * Get server uptime as a human-readable string
+     * 
+     * @return string|null Human-readable uptime string (e.g., "2h 30m 15s"), or null if not started
+     */
+    public function getUptimeString(): ?string
+    {
+        $uptime = $this->getUptime();
+        if ($uptime === null) {
+            return null;
+        }
+
+        $seconds = $uptime % 60;
+        $minutes = (int) (($uptime / 60) % 60);
+        $hours = (int) (($uptime / 3600) % 24);
+        $days = (int) ($uptime / 86400);
+
+        $parts = [];
+        if ($days > 0) {
+            $parts[] = $days . 'd';
+        }
+        if ($hours > 0) {
+            $parts[] = $hours . 'h';
+        }
+        if ($minutes > 0) {
+            $parts[] = $minutes . 'm';
+        }
+        if ($seconds > 0 || empty($parts)) {
+            $parts[] = $seconds . 's';
+        }
+
+        return implode(' ', $parts);
     }
 }
