@@ -107,6 +107,11 @@ trait HandlesHttpRequests
         $path = $request->getPath();
         $method = $request->getMethod();
         
+        // Check for health check endpoint
+        if ($this->server->getHealthCheckPath() !== null && $path === $this->server->getHealthCheckPath()) {
+            return $this->handleHealthCheck($request);
+        }
+        
         $result = $this->server->getRouter()->dispatchHttp($request);
         
         if ($result instanceof Response) {
@@ -121,6 +126,36 @@ trait HandlesHttpRequests
             $response = Response::notFound();
         }
         
+        return $response->toString();
+    }
+
+    /**
+     * Handle health check endpoint
+     * 
+     * @param Request $request The Request object
+     * @return string The HTTP response string
+     */
+    protected function handleHealthCheck(Request $request): string
+    {
+        // Only allow GET and HEAD methods for health check
+        if (!in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
+            return Response::methodNotAllowed()->toString();
+        }
+
+        $uptime = $this->server->getUptime();
+        $uptimeString = $this->server->getUptimeString();
+
+        $healthData = [
+            'status' => 'healthy',
+            'timestamp' => time(),
+            'server' => [
+                'clients' => $this->server->getClientCount(),
+                'uptime' => $uptime,
+                'uptime_human' => $uptimeString,
+            ]
+        ];
+
+        $response = Response::json($healthData, 200);
         return $response->toString();
     }
 }

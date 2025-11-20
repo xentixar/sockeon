@@ -331,4 +331,34 @@ abstract class SocketController
     {
         return $this->server->getLogger();
     }
+
+    /**
+     * Get server uptime in seconds
+     * 
+     * @return int|null Server uptime in seconds, or null if server hasn't started
+     */
+    public function getUptime(): ?int
+    {
+        return $this->server->getUptime();
+    }
+
+    /**
+     * Get server uptime as a human-readable string
+     * 
+     * @return string|null Human-readable uptime string (e.g., "2h 30m 15s"), or null if not started
+     */
+    public function getUptimeString(): ?string
+    {
+        return $this->server->getUptimeString();
+    }
+
+    /**
+     * Get server start time
+     * 
+     * @return float|null Unix timestamp with microseconds when server started, or null if not started
+     */
+    public function getStartTime(): ?float
+    {
+        return $this->server->getStartTime();
+    }
 }

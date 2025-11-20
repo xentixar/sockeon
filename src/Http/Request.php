@@ -12,6 +12,7 @@
 
 namespace Sockeon\Sockeon\Http;
 
+use Sockeon\Sockeon\Core\Config;
 use Sockeon\Sockeon\Validation\Validator;
 use Sockeon\Sockeon\Exception\Validation\ValidationException;
 
@@ -353,12 +354,18 @@ class Request
      */
     public function getUrl(bool $includeQuery = true): string
     {
-        $host = $this->getHeader('Host');
-        if (!is_string($host)) {
-            $host = '';
+        $host = $this->getHost();
+        $protocol = $this->getScheme();
+        $port = $this->getPort();
+        
+        $url = "{$protocol}://{$host}";
+        
+        // Only include port if it's not the default port for the scheme
+        if (($protocol === 'https' && $port !== 443) || ($protocol === 'http' && $port !== 80)) {
+            $url .= ":{$port}";
         }
-        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-        $url = "{$protocol}://{$host}{$this->path}";
+        
+        $url .= $this->path;
         
         if ($includeQuery && !empty($this->query)) {
             $url .= '?' . http_build_query($this->query);
@@ -375,6 +382,17 @@ class Request
      */
     public function getIpAddress(bool $fallbackToDefault = false): ?string
     {
+        // Check if we should trust proxy headers
+        if (!$this->shouldTrustProxy()) {
+            // Don't trust proxies, use direct connection IP
+            $directIp = $this->getDirectConnectionIp();
+            if ($directIp !== null) {
+                return $directIp;
+            }
+            return $fallbackToDefault ? '127.0.0.1' : null;
+        }
+
+        // Trust proxy headers - check in order of preference
         $ipHeaders = [
             'HTTP_CF_CONNECTING_IP',     // Cloudflare
             'HTTP_CLIENT_IP',            // Proxy
@@ -382,43 +400,275 @@ class Request
             'HTTP_X_FORWARDED',          // Proxy
             'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
             'HTTP_FORWARDED_FOR',        // Proxy
-            'HTTP_FORWARDED',            // Proxy
-            'REMOTE_ADDR'                // Standard
+            'HTTP_FORWARDED',            // Proxy (RFC 7239)
         ];
 
         foreach ($ipHeaders as $header) {
             $ip = $this->getHeader($header);
             if (is_string($ip) && $ip !== '' && $ip !== 'unknown') {
+                // Handle comma-separated IPs (take the first one, which is the original client)
                 if (str_contains($ip, ',')) {
                     $ip = trim(explode(',', $ip)[0]);
                 }
                 
+                // Prefer public IPs
                 if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                     return $ip;
                 }
                 
+                // Fallback to any valid IP
                 if (filter_var($ip, FILTER_VALIDATE_IP)) {
                     return $ip;
                 }
             }
         }
 
-        foreach ($ipHeaders as $header) {
-            if (isset($_SERVER[$header])) {
-                $ip = $_SERVER[$header];
-                if (is_string($ip) && $ip !== '' && $ip !== 'unknown') {
-                    if (str_contains($ip, ',')) {
-                        $ip = trim(explode(',', $ip)[0]);
-                    }
-                    
-                    if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                        return $ip;
+        // Fallback to direct connection IP
+        $directIp = $this->getDirectConnectionIp();
+        if ($directIp !== null) {
+            return $directIp;
+        }
+        
+        return $fallbackToDefault ? '127.0.0.1' : null;
+    }
+
+    /**
+     * Get the direct connection IP (without proxy headers)
+     * 
+     * @return string|null The direct connection IP or null
+     */
+    protected function getDirectConnectionIp(): ?string
+    {
+        // Try REMOTE_ADDR from headers first
+        $remoteAddr = $this->getHeader('REMOTE_ADDR');
+        if (is_string($remoteAddr) && filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
+            return $remoteAddr;
+        }
+
+        // Fallback to $_SERVER
+        if (isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if we should trust proxy headers
+     * 
+     * @return bool True if proxy headers should be trusted
+     */
+    protected function shouldTrustProxy(): bool
+    {
+        $trustProxy = Config::getTrustProxy();
+        
+        if ($trustProxy === false) {
+            return false;
+        }
+        
+        if ($trustProxy === true) {
+            return true;
+        }
+        
+        // Check if the direct connection IP is in the trusted proxy list
+        // At this point, $trustProxy must be an array since we've checked for false and true
+        /** @var array<int, string> $trustProxy */
+        $directIp = $this->getDirectConnectionIp();
+        if ($directIp === null) {
+            return false;
+        }
+        
+        foreach ($trustProxy as $trustedProxy) {
+            if ($this->ipMatches($directIp, $trustedProxy)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if an IP matches a trusted proxy pattern (IP or CIDR)
+     * 
+     * @param string $ip The IP address to check
+     * @param string $pattern The pattern (IP or CIDR notation)
+     * @return bool True if the IP matches
+     */
+    protected function ipMatches(string $ip, string $pattern): bool
+    {
+        // Exact match
+        if ($ip === $pattern) {
+            return true;
+        }
+        
+        // CIDR notation match
+        if (str_contains($pattern, '/')) {
+            list($subnet, $mask) = explode('/', $pattern, 2);
+            $mask = (int) $mask;
+            
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $ipLong = ip2long($ip);
+                $subnetLong = ip2long($subnet);
+                if ($ipLong === false || $subnetLong === false) {
+                    return false;
+                }
+                $maskLong = -1 << (32 - $mask);
+                return ($ipLong & $maskLong) === ($subnetLong & $maskLong);
+            }
+            
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                // IPv6 CIDR matching (simplified)
+                $ipBin = inet_pton($ip);
+                $subnetBin = inet_pton($subnet);
+                if ($ipBin === false || $subnetBin === false) {
+                    return false;
+                }
+                $bytes = (int) ($mask / 8);
+                $bits = $mask % 8;
+                return substr($ipBin, 0, $bytes) === substr($subnetBin, 0, $bytes) &&
+                       ($bits === 0 || (ord($ipBin[$bytes]) >> (8 - $bits)) === (ord($subnetBin[$bytes]) >> (8 - $bits)));
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get the request scheme (http or https)
+     * Respects X-Forwarded-Proto header when proxy is trusted
+     * 
+     * @return string The request scheme
+     */
+    public function getScheme(): string
+    {
+        if ($this->shouldTrustProxy()) {
+            $proxyHeaders = Config::getProxyHeaders();
+            $protoHeader = $proxyHeaders['proto'] ?? 'X-Forwarded-Proto';
+            
+            $proto = $this->getHeader($protoHeader);
+            if (is_string($proto) && in_array(strtolower($proto), ['http', 'https'], true)) {
+                return strtolower($proto);
+            }
+            
+            // Also check Forwarded header (RFC 7239)
+            $forwarded = $this->getHeader('Forwarded');
+            if (is_string($forwarded)) {
+                if (preg_match('/proto=([^;,\s]+)/i', $forwarded, $matches)) {
+                    $proto = strtolower(trim($matches[1], '"'));
+                    if (in_array($proto, ['http', 'https'], true)) {
+                        return $proto;
                     }
                 }
             }
         }
         
-        return $fallbackToDefault ? '127.0.0.1' : null;
+        // Fallback to checking connection or default to http
+        return 'http';
+    }
+
+    /**
+     * Get the request host
+     * Respects X-Forwarded-Host header when proxy is trusted
+     * 
+     * @return string The request host
+     */
+    public function getHost(): string
+    {
+        if ($this->shouldTrustProxy()) {
+            $proxyHeaders = Config::getProxyHeaders();
+            $hostHeader = $proxyHeaders['host'] ?? 'X-Forwarded-Host';
+            
+            $host = $this->getHeader($hostHeader);
+            if (is_string($host) && $host !== '') {
+                // Remove port if present (we'll handle it separately)
+                if (str_contains($host, ':')) {
+                    $host = explode(':', $host)[0];
+                }
+                return $host;
+            }
+            
+            // Also check Forwarded header (RFC 7239)
+            $forwarded = $this->getHeader('Forwarded');
+            if (is_string($forwarded)) {
+                if (preg_match('/host=([^;,\s]+)/i', $forwarded, $matches)) {
+                    $host = trim($matches[1], '"');
+                    if (str_contains($host, ':')) {
+                        $host = explode(':', $host)[0];
+                    }
+                    return $host;
+                }
+            }
+        }
+        
+        // Fallback to Host header
+        $host = $this->getHeader('Host');
+        if (is_string($host) && $host !== '') {
+            if (str_contains($host, ':')) {
+                $host = explode(':', $host)[0];
+            }
+            return $host;
+        }
+        
+        return 'localhost';
+    }
+
+    /**
+     * Get the request port
+     * Respects X-Forwarded-Port header when proxy is trusted
+     * 
+     * @return int The request port
+     */
+    public function getPort(): int
+    {
+        if ($this->shouldTrustProxy()) {
+            $proxyHeaders = Config::getProxyHeaders();
+            $portHeader = $proxyHeaders['port'] ?? 'X-Forwarded-Port';
+            
+            $port = $this->getHeader($portHeader);
+            if (is_string($port) && is_numeric($port)) {
+                $portInt = (int) $port;
+                if ($portInt > 0 && $portInt <= 65535) {
+                    return $portInt;
+                }
+            }
+            
+            // Also check Forwarded header (RFC 7239)
+            $forwarded = $this->getHeader('Forwarded');
+            if (is_string($forwarded)) {
+                if (preg_match('/host=([^;,\s]+)/i', $forwarded, $matches)) {
+                    $host = trim($matches[1], '"');
+                    if (str_contains($host, ':')) {
+                        $parts = explode(':', $host);
+                        $port = end($parts);
+                        if (is_numeric($port)) {
+                            $portInt = (int) $port;
+                            if ($portInt > 0 && $portInt <= 65535) {
+                                return $portInt;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Fallback to Host header port
+        $host = $this->getHeader('Host');
+        if (is_string($host) && str_contains($host, ':')) {
+            $parts = explode(':', $host);
+            $port = end($parts);
+            if (is_numeric($port)) {
+                $portInt = (int) $port;
+                if ($portInt > 0 && $portInt <= 65535) {
+                    return $portInt;
+                }
+            }
+        }
+        
+        // Default port based on scheme
+        return $this->getScheme() === 'https' ? 443 : 80;
     }
 
     /**
