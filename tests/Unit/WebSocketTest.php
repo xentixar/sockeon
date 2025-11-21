@@ -109,18 +109,18 @@ test('handles malformed frames gracefully', function () {
     ];
     
     foreach ($malformedFrames as $testName => $frame) {
-        $decoded = $this->handler->decodeWebSocketFrame($frame);
-        expect($decoded)->toBe([]); // Should return empty array for malformed frames
+        [$frames, $remaining] = $this->handler->decodeWebSocketFrame($frame);
+        expect($frames)->toBe([]); // Should return empty array for malformed frames
     }
 });
 
 test('logs frame processing correctly', function () {
     $validFrame = $this->handler->encodeWebSocketFrame('test payload', 1);
-    $decoded = $this->handler->decodeWebSocketFrame($validFrame);
+    [$frames, $remaining] = $this->handler->decodeWebSocketFrame($validFrame);
     
-    expect($decoded)->toHaveCount(1);
-    expect($decoded[0]['opcode'])->toBe(1);
-    expect($decoded[0]['payload'])->toBe('test payload');
+    expect($frames)->toHaveCount(1);
+    expect($frames[0]['opcode'])->toBe(1);
+    expect($frames[0]['payload'])->toBe('test payload');
 });
 
 test('handles WebSocket protocol correctly', function () {
@@ -130,23 +130,23 @@ test('handles WebSocket protocol correctly', function () {
     ]);
     
     $frame = $this->handler->encodeWebSocketFrame($validMessage);
-    $decoded = $this->handler->decodeWebSocketFrame($frame);
+    [$frames, $remaining] = $this->handler->decodeWebSocketFrame($frame);
     
-    expect($decoded)->toHaveCount(1);
-    expect($decoded[0]['opcode'])->toBe(1);
-    expect($decoded[0]['fin'])->toBeTrue();
-    expect($decoded[0]['payload'])->toBe($validMessage);
+    expect($frames)->toHaveCount(1);
+    expect($frames[0]['opcode'])->toBe(1);
+    expect($frames[0]['fin'])->toBeTrue();
+    expect($frames[0]['payload'])->toBe($validMessage);
 });
 
 test('handles binary frames correctly', function () {
     $binaryData = "\x00\x01\x02\x03\x04";
     $frame = $this->handler->encodeWebSocketFrame($binaryData, 2); // Binary opcode
     
-    $decoded = $this->handler->decodeWebSocketFrame($frame);
+    [$frames, $remaining] = $this->handler->decodeWebSocketFrame($frame);
     
-    expect($decoded)->toHaveCount(1);
-    expect($decoded[0]['opcode'])->toBe(2);
-    expect($decoded[0]['payload'])->toBe($binaryData);
+    expect($frames)->toHaveCount(1);
+    expect($frames[0]['opcode'])->toBe(2);
+    expect($frames[0]['payload'])->toBe($binaryData);
 });
 
 test('handles close frames correctly', function () {

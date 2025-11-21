@@ -48,19 +48,8 @@ trait HandlesWebSocketFrames
             $masked = ($secondByte & 0x80) == 0x80;
             $payloadLength = $secondByte & 0x7F;
             
-            // Validate opcode - but only if we have enough data to be sure
-            // If we don't have enough data, it might be an incomplete frame header
+            // Validate opcode
             if (!$this->isValidOpcode($opcode)) {
-                // Check if we might have incomplete data that's causing false opcode detection
-                // This can happen when we're in the middle of a frame
-                if (strlen($data) < 2) {
-                    // Not enough data, will buffer
-                    $this->logFrameDebug("Invalid opcode detected but insufficient data (will buffer)", [
-                        'opcode' => $opcode,
-                        'data_length' => strlen($data)
-                    ]);
-                    break;
-                }
                 $this->logFrameError("Invalid opcode", ['opcode' => $opcode]);
                 break;
             }
