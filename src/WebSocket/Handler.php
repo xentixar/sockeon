@@ -34,6 +34,12 @@ class Handler
     protected array $handshakes = [];
 
     /**
+     * Buffers incomplete WebSocket frames per client
+     * @var array<int, string>
+     */
+    protected array $frameBuffers = [];
+
+    /**
      * Allowed origins for WebSocket connections
      * @var array<int, string>
      */
@@ -86,9 +92,47 @@ class Handler
                 return true;
             }
 
-            $frames = $this->decodeWebSocketFrame($data);
+            // Buffer incomplete frames
+            if (!isset($this->frameBuffers[$clientId])) {
+                $this->frameBuffers[$clientId] = '';
+            }
+            
+            // Prepend buffered data to new data
+            $data = $this->frameBuffers[$clientId] . $data;
+            $this->frameBuffers[$clientId] = '';
+
+            // Only try to decode if we have at least 2 bytes (minimum frame header size)
+            if (strlen($data) < 2) {
+                // Not enough data even for a frame header, buffer it
+                $this->frameBuffers[$clientId] = $data;
+                $this->server->getLogger()->debug("Buffering data (insufficient for frame header) for client: $clientId", [
+                    'buffered_bytes' => strlen($data)
+                ]);
+                return true;
+            }
+
+            [$frames, $remainingData] = $this->decodeWebSocketFrame($data);
+            
+            // Buffer remaining data (incomplete frame) for next read
+            if (strlen($remainingData) > 0) {
+                $this->frameBuffers[$clientId] = $remainingData;
+                // Only log if we decoded some frames (partial success) or if buffer is getting large
+                if (count($frames) > 0 || strlen($remainingData) > 1024) {
+                    $this->server->getLogger()->debug("Buffering incomplete frame for client: $clientId", [
+                        'buffered_bytes' => strlen($remainingData),
+                        'frames_decoded' => count($frames)
+                    ]);
+                }
+            }
+            
             if (empty($frames)) {
-                $this->server->getLogger()->debug("No valid frames decoded from client: $clientId");
+                // Don't log if we're just waiting for more data (normal fragmentation)
+                // Only log if we have buffered data that's not being processed
+                if (strlen($remainingData) > 0 && strlen($remainingData) > 1024) {
+                    $this->server->getLogger()->debug("Waiting for more data to complete frame for client: $clientId", [
+                        'buffered_bytes' => strlen($remainingData)
+                    ]);
+                }
                 return true;
             }
 
@@ -103,6 +147,8 @@ class Handler
                 switch ($opcode) {
                     case 8:
                         $this->server->getLogger()->debug("Received close frame from client: $clientId");
+                        // Clear frame buffer on disconnect
+                        unset($this->frameBuffers[$clientId]);
                         return false;
                         
                     case 9:
@@ -143,6 +189,9 @@ class Handler
                 'context' => 'WebSocketHandler::handle',
                 'data_length' => strlen($data)
             ]);
+            
+            // Clear frame buffer on error to prevent corruption
+            unset($this->frameBuffers[$clientId]);
             
             try {
                 $this->sendErrorMessage($clientId, 'Internal server error processing WebSocket frame');

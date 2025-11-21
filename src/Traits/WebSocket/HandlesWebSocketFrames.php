@@ -19,7 +19,7 @@ trait HandlesWebSocketFrames
      * Decode WebSocket frames from raw binary data
      * 
      * @param string $data The raw WebSocket frame data
-     * @return array<int, array<string, mixed>> An array of parsed WebSocket frames
+     * @return array{0: array<int, array<string, mixed>>, 1: string} An array containing [frames, remaining_data]
      */
     public function decodeWebSocketFrame(string $data): array
     {
@@ -32,7 +32,8 @@ trait HandlesWebSocketFrames
         while (strlen($data) > 0) {
             // Make sure we have at least 2 bytes for the basic header
             if (strlen($data) < 2) {
-                $this->logFrameError("Incomplete frame header", [
+                // Don't log as error - this is expected when waiting for more data
+                $this->logFrameDebug("Incomplete frame header (will buffer)", [
                     'remaining_bytes' => strlen($data),
                     'required_bytes' => 2
                 ]);
@@ -47,8 +48,19 @@ trait HandlesWebSocketFrames
             $masked = ($secondByte & 0x80) == 0x80;
             $payloadLength = $secondByte & 0x7F;
             
-            // Validate opcode
+            // Validate opcode - but only if we have enough data to be sure
+            // If we don't have enough data, it might be an incomplete frame header
             if (!$this->isValidOpcode($opcode)) {
+                // Check if we might have incomplete data that's causing false opcode detection
+                // This can happen when we're in the middle of a frame
+                if (strlen($data) < 2) {
+                    // Not enough data, will buffer
+                    $this->logFrameDebug("Invalid opcode detected but insufficient data (will buffer)", [
+                        'opcode' => $opcode,
+                        'data_length' => strlen($data)
+                    ]);
+                    break;
+                }
                 $this->logFrameError("Invalid opcode", ['opcode' => $opcode]);
                 break;
             }
@@ -60,7 +72,7 @@ trait HandlesWebSocketFrames
             if ($payloadLength == 126) {
                 // Make sure we have enough bytes for extended 16-bit length
                 if (strlen($data) < 4) {
-                    $this->logFrameError("Incomplete extended 16-bit length", [
+                    $this->logFrameDebug("Incomplete extended 16-bit length (will buffer)", [
                         'remaining_bytes' => strlen($data),
                         'required_bytes' => 4
                     ]);
@@ -79,7 +91,7 @@ trait HandlesWebSocketFrames
             elseif ($payloadLength == 127) {
                 // Make sure we have enough bytes for extended 64-bit length
                 if (strlen($data) < 10) {
-                    $this->logFrameError("Incomplete extended 64-bit length", [
+                    $this->logFrameDebug("Incomplete extended 64-bit length (will buffer)", [
                         'remaining_bytes' => strlen($data),
                         'required_bytes' => 10
                     ]);
@@ -112,7 +124,9 @@ trait HandlesWebSocketFrames
             $frameLength += $payloadLength; // @phpstan-ignore-line
 
             if (strlen($data) < $frameLength) {
-                $this->logFrameError("Incomplete frame", [
+                // Don't log as error - this is expected when frames are fragmented
+                // The remaining data will be buffered and processed on next read
+                $this->logFrameDebug("Incomplete frame detected (will buffer)", [
                     'remaining_bytes' => strlen($data),
                     'required_bytes' => $frameLength,
                     'payload_length' => $payloadLength
@@ -183,7 +197,7 @@ trait HandlesWebSocketFrames
             ]);
         }
         
-        return $frames;
+        return [$frames, $data];
     }
 
     /**
