@@ -156,7 +156,7 @@ trait HandlesClients
             $maxAcceptPerLoop = min(5, 10000 - count($this->clients)); // Limit total connections
             
             while (($client = @stream_socket_accept($this->socket, 0)) !== false && $acceptedCount < $maxAcceptPerLoop) {
-                if ($client && is_resource($client)) {
+                if (is_resource($client)) {
                     stream_set_blocking($client, false);
                     
                     $clientId = (int) $client;
@@ -170,9 +170,10 @@ trait HandlesClients
                     
                     // Try to reuse connection from pool first
                     $pooledConnection = $this->connectionPool->acquireConnection('unknown', $clientId, $client);
-                    if ($pooledConnection && $pooledConnection['reuse_count'] > 0) {
+                    $reuseCount = isset($pooledConnection['reuse_count']) && is_int($pooledConnection['reuse_count']) ? $pooledConnection['reuse_count'] : 0;
+                    if ($reuseCount > 0) {
                         // Use pooled connection data for optimization
-                        $this->logger->debug("[Sockeon Connection] Reusing pooled connection for client: $clientId (reused {$pooledConnection['reuse_count']} times)");
+                        $this->logger->debug("[Sockeon Connection] Reusing pooled connection for client: $clientId (reused $reuseCount times)");
                     }
                     
                     $this->clients[$clientId] = $client;
@@ -441,7 +442,7 @@ trait HandlesClients
         // File operations
         $this->taskQueue->registerProcessor('file_write', function(array $data, array $task) {
             try {
-                if (isset($data['path']) && isset($data['content'])) {
+                if (isset($data['path']) && is_string($data['path']) && isset($data['content'])) {
                     file_put_contents($data['path'], $data['content']);
                     return true;
                 }
@@ -461,12 +462,13 @@ trait HandlesClients
         // External API calls
         $this->taskQueue->registerProcessor('api_call', function(array $data, array $task) {
             try {
-                if (isset($data['url'])) {
+                if (isset($data['url']) && is_string($data['url'])) {
                     // Make external API calls without blocking
+                    $method = isset($data['method']) && is_string($data['method']) ? $data['method'] : 'GET';
                     $context = stream_context_create([
                         'http' => [
                             'timeout' => 5,
-                            'method' => $data['method'] ?? 'GET'
+                            'method' => $method
                         ]
                     ]);
                     

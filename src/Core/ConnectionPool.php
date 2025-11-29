@@ -18,13 +18,13 @@ class ConnectionPool
 {
     /**
      * Pool of available connections organized by type
-     * @var array<string, SplQueue>
+     * @var array<string, SplQueue<array<string, mixed>>>
      */
     protected array $pools = [];
 
     /**
      * Active connections being used
-     * @var array<int, array>
+     * @var array<int, array<string, mixed>>
      */
     protected array $activeConnections = [];
 
@@ -63,7 +63,7 @@ class ConnectionPool
      * @param string $type Connection type (ws, http)
      * @param int $clientId Client identifier
      * @param resource $resource Socket resource
-     * @return array Connection info
+     * @return array<string, mixed> Connection info
      */
     public function acquireConnection(string $type, int $clientId, $resource): array
     {
@@ -85,7 +85,8 @@ class ConnectionPool
                 $pooledConnection['id'] = $clientId;
                 $pooledConnection['resource'] = $resource;
                 $pooledConnection['last_used'] = microtime(true);
-                $pooledConnection['reuse_count']++;
+                $reuseCount = isset($pooledConnection['reuse_count']) && is_int($pooledConnection['reuse_count']) ? $pooledConnection['reuse_count'] : 0;
+                $pooledConnection['reuse_count'] = $reuseCount + 1;
                 
                 $this->activeConnections[$clientId] = $pooledConnection;
                 $this->metrics['total_reused']++;
@@ -120,17 +121,21 @@ class ConnectionPool
         $this->metrics['active_count']--;
         $this->metrics['total_released']++;
 
-        $type = $connection['type'];
+        $type = isset($connection['type']) && is_string($connection['type']) ? $connection['type'] : 'unknown';
+        $reuseCount = isset($connection['reuse_count']) && is_int($connection['reuse_count']) ? $connection['reuse_count'] : 0;
+        $createdAt = isset($connection['created_at']) && is_float($connection['created_at']) ? $connection['created_at'] : microtime(true);
 
         // Don't pool if connection is too old or has been reused too much
-        if ($connection['reuse_count'] >= 50 || 
-            (microtime(true) - $connection['created_at']) > $this->connectionTimeout) {
+        if ($reuseCount >= 50 || 
+            (microtime(true) - $createdAt) > $this->connectionTimeout) {
             return;
         }
 
         // Initialize pool if needed
         if (!isset($this->pools[$type])) {
-            $this->pools[$type] = new SplQueue();
+            /** @var SplQueue<array<string, mixed>> $newQueue */
+            $newQueue = new SplQueue();
+            $this->pools[$type] = $newQueue;
         }
 
         // Add to pool if not full
@@ -143,18 +148,20 @@ class ConnectionPool
     /**
      * Check if a pooled connection is still valid
      * 
-     * @param array $connection Connection info
+     * @param array<string, mixed> $connection Connection info
      * @return bool True if valid
      */
     protected function isConnectionValid(array $connection): bool
     {
         // Check age
-        if ((microtime(true) - ($connection['pooled_at'] ?? 0)) > 30) {
+        $pooledAt = isset($connection['pooled_at']) && is_float($connection['pooled_at']) ? $connection['pooled_at'] : 0.0;
+        if ((microtime(true) - $pooledAt) > 30) {
             return false;
         }
 
         // Check reuse count
-        if ($connection['reuse_count'] >= 50) {
+        $reuseCount = isset($connection['reuse_count']) && is_int($connection['reuse_count']) ? $connection['reuse_count'] : 0;
+        if ($reuseCount >= 50) {
             return false;
         }
 
@@ -169,6 +176,7 @@ class ConnectionPool
     public function cleanup(): void
     {
         foreach ($this->pools as $type => $pool) {
+            /** @var SplQueue<array<string, mixed>> $validConnections */
             $validConnections = new SplQueue();
             
             while (!$pool->isEmpty()) {

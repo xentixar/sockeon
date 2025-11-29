@@ -369,22 +369,7 @@ abstract class SocketController
      */
     public function getServerStats(): array
     {
-        if (method_exists($this->server, 'getServerStats')) {
-            return $this->server->getServerStats();
-        }
-        
-        // Fallback to basic stats if enhanced stats not available
-        return [
-            'basic_stats' => [
-                'uptime' => $this->getUptimeString() ?? '0s',
-                'uptime_seconds' => $this->getUptime() ?? 0,
-                'start_time' => $this->getStartTime(),
-                'current_time' => microtime(true),
-                'active_clients' => $this->getClientCount(),
-                'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
-                'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2)
-            ]
-        ];
+        return $this->server->getServerStats();
     }
 
     /**
@@ -397,14 +382,7 @@ abstract class SocketController
      */
     public function queueAsyncTask(string $type, array $data, int $priority = 0): void
     {
-        if (method_exists($this->server, 'queueAsyncTask')) {
-            $this->server->queueAsyncTask($type, $data, $priority);
-        } else {
-            $this->getLogger()->warning('[Async Tasks] Async task support not available', [
-                'type' => $type,
-                'data' => $data
-            ]);
-        }
+        $this->server->queueAsyncTask($type, $data, $priority);
     }
 
     /**
@@ -415,7 +393,12 @@ abstract class SocketController
     public function getPerformanceMetrics(): array
     {
         $stats = $this->getServerStats();
-        return $stats['performance'] ?? [];
+        $performance = $stats['performance'] ?? [];
+        if (!is_array($performance)) {
+            return [];
+        }
+        /** @var array<string, mixed> $performance */
+        return $performance;
     }
 
     /**
@@ -426,7 +409,12 @@ abstract class SocketController
     public function getConnectionPoolStats(): array
     {
         $stats = $this->getServerStats();
-        return $stats['connection_pool'] ?? [];
+        $poolStats = $stats['connection_pool'] ?? [];
+        if (!is_array($poolStats)) {
+            return [];
+        }
+        /** @var array<string, mixed> $poolStats */
+        return $poolStats;
     }
 
     /**
@@ -437,7 +425,12 @@ abstract class SocketController
     public function getTaskQueueStats(): array
     {
         $stats = $this->getServerStats();
-        return $stats['task_queue'] ?? [];
+        $queueStats = $stats['task_queue'] ?? [];
+        if (!is_array($queueStats)) {
+            return [];
+        }
+        /** @var array<string, mixed> $queueStats */
+        return $queueStats;
     }
 
     /**
@@ -448,10 +441,7 @@ abstract class SocketController
      */
     public function getClientIpAddress(int $clientId): ?string
     {
-        if (method_exists($this->server, 'getClientIpAddress')) {
-            return $this->server->getClientIpAddress($clientId);
-        }
-        return null;
+        return $this->server->getClientIpAddress($clientId);
     }
 
     /**
@@ -463,9 +453,7 @@ abstract class SocketController
      */
     public function recordMetric(string $type, float $value = 0): void
     {
-        if (method_exists($this->server, 'recordRequestMetric')) {
-            $this->server->recordRequestMetric($type, $value);
-        }
+        $this->server->recordRequestMetric($type, $value);
     }
 
     /**
@@ -476,8 +464,6 @@ abstract class SocketController
      */
     public function recordError(string $type): void
     {
-        if (method_exists($this->server, 'recordErrorMetric')) {
-            $this->server->recordErrorMetric($type);
-        }
+        $this->server->recordErrorMetric($type);
     }
 }

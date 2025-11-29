@@ -19,19 +19,19 @@ class AsyncTaskQueue
 {
     /**
      * High priority task queue
-     * @var SplPriorityQueue
+     * @var SplPriorityQueue<int, array<string, mixed>>
      */
     protected SplPriorityQueue $priorityQueue;
 
     /**
      * Regular task queue
-     * @var SplQueue
+     * @var SplQueue<array<string, mixed>>
      */
     protected SplQueue $regularQueue;
 
     /**
      * Task execution metrics
-     * @var array<string, int>
+     * @var array<string, float|int>
      */
     protected array $metrics = [
         'total_queued' => 0,
@@ -111,7 +111,7 @@ class AsyncTaskQueue
         // Process high priority tasks first
         while (!$this->priorityQueue->isEmpty() && $processed < $this->maxTasksPerCycle) {
             $task = $this->priorityQueue->extract();
-            if ($this->processTask($task)) {
+            if (is_array($task) && $this->processTask($task)) {
                 $processed++;
             }
         }
@@ -134,21 +134,27 @@ class AsyncTaskQueue
     /**
      * Process a single task
      * 
-     * @param array $task Task info
+     * @param array<string, mixed> $task Task info
      * @return bool Success
      */
     protected function processTask(array $task): bool
     {
+        // Ensure attempts is set at the start
+        if (!isset($task['attempts']) || !is_int($task['attempts'])) {
+            $task['attempts'] = 0;
+        }
+        $task['attempts']++;
+        
         try {
-            $task['attempts']++;
-
-            if (!isset($this->processors[$task['type']])) {
+            $taskType = isset($task['type']) && is_string($task['type']) ? $task['type'] : '';
+            if (!isset($this->processors[$taskType])) {
                 $this->metrics['total_failed']++;
                 return false;
             }
 
-            $processor = $this->processors[$task['type']];
-            $result = $processor($task['data'], $task);
+            $processor = $this->processors[$taskType];
+            $taskData = isset($task['data']) && is_array($task['data']) ? $task['data'] : [];
+            $result = $processor($taskData, $task);
 
             return $result !== false;
         } catch (Throwable $e) {
