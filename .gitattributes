@@ -1,0 +1,7 @@
+# Export only composer.json and src/ directory
+/composer.json export
+/src/ export
+
+# Exclude everything else from distribution
+* export-ignore
+
