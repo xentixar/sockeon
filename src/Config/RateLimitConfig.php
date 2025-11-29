@@ -24,7 +24,7 @@ class RateLimitConfig
      * Maximum HTTP requests per IP address per time window
      * @var int
      */
-    protected int $maxHttpRequestsPerIp = 100;
+    protected int $maxHttpRequestsPerIp = 1000;
 
     /**
      * HTTP rate limit time window in seconds
@@ -36,7 +36,7 @@ class RateLimitConfig
      * Maximum WebSocket messages per client per time window
      * @var int
      */
-    protected int $maxWebSocketMessagesPerClient = 200;
+    protected int $maxWebSocketMessagesPerClient = 2000;
 
     /**
      * WebSocket rate limit time window in seconds
@@ -48,7 +48,7 @@ class RateLimitConfig
      * Maximum connections per IP address per time window
      * @var int
      */
-    protected int $maxConnectionsPerIp = 50;
+    protected int $maxConnectionsPerIp = 500;
 
     /**
      * Connection rate limit time window in seconds
@@ -60,13 +60,13 @@ class RateLimitConfig
      * Maximum total connections across all IPs
      * @var int
      */
-    protected int $maxGlobalConnections = 10000;
+    protected int $maxGlobalConnections = 50000;
 
     /**
      * Additional requests allowed for bursts
      * @var int
      */
-    protected int $burstAllowance = 10;
+    protected int $burstAllowance = 100;
 
     /**
      * Cleanup interval for expired entries (seconds)
