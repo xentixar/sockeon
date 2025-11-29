@@ -361,4 +361,109 @@ abstract class SocketController
     {
         return $this->server->getStartTime();
     }
+
+    /**
+     * Get comprehensive server statistics including scaling features
+     * 
+     * @return array<string, mixed> Comprehensive server statistics
+     */
+    public function getServerStats(): array
+    {
+        return $this->server->getServerStats();
+    }
+
+    /**
+     * Queue an async task for background processing
+     * 
+     * @param string $type Task type
+     * @param array<string, mixed> $data Task data
+     * @param int $priority Priority level (higher = more important)
+     * @return void
+     */
+    public function queueAsyncTask(string $type, array $data, int $priority = 0): void
+    {
+        $this->server->queueAsyncTask($type, $data, $priority);
+    }
+
+    /**
+     * Get performance metrics from the server
+     * 
+     * @return array<string, mixed> Performance metrics
+     */
+    public function getPerformanceMetrics(): array
+    {
+        $stats = $this->getServerStats();
+        $performance = $stats['performance'] ?? [];
+        if (!is_array($performance)) {
+            return [];
+        }
+        /** @var array<string, mixed> $performance */
+        return $performance;
+    }
+
+    /**
+     * Get connection pool statistics
+     * 
+     * @return array<string, mixed> Connection pool statistics
+     */
+    public function getConnectionPoolStats(): array
+    {
+        $stats = $this->getServerStats();
+        $poolStats = $stats['connection_pool'] ?? [];
+        if (!is_array($poolStats)) {
+            return [];
+        }
+        /** @var array<string, mixed> $poolStats */
+        return $poolStats;
+    }
+
+    /**
+     * Get async task queue statistics
+     * 
+     * @return array<string, mixed> Task queue statistics
+     */
+    public function getTaskQueueStats(): array
+    {
+        $stats = $this->getServerStats();
+        $queueStats = $stats['task_queue'] ?? [];
+        if (!is_array($queueStats)) {
+            return [];
+        }
+        /** @var array<string, mixed> $queueStats */
+        return $queueStats;
+    }
+
+    /**
+     * Get client IP address
+     * 
+     * @param int $clientId The client ID
+     * @return string|null The client IP address or null if not found
+     */
+    public function getClientIpAddress(int $clientId): ?string
+    {
+        return $this->server->getClientIpAddress($clientId);
+    }
+
+    /**
+     * Record a performance metric
+     * 
+     * @param string $type Metric type (http/websocket/connection/request)
+     * @param float $value Metric value (response time, etc.)
+     * @return void
+     */
+    public function recordMetric(string $type, float $value = 0): void
+    {
+        $this->server->recordRequestMetric($type, $value);
+    }
+
+    /**
+     * Record an error metric
+     * 
+     * @param string $type Error type (connection/request)
+     * @return void
+     */
+    public function recordError(string $type): void
+    {
+        $this->server->recordErrorMetric($type);
+    }
 }
