@@ -85,7 +85,7 @@ class Middleware
     /**
      * Execute the WebSocket middleware stack
      * 
-     * @param int $clientId Client ID
+     * @param string $clientId Client ID
      * @param string $event Event name
      * @param array<string, mixed> $data Event data
      * @param Closure $target Target function to execute at the end of the middleware chain
@@ -94,7 +94,7 @@ class Middleware
      * @param array<int, class-string> $excludeGlobalMiddlewares Optional array of global middlewares to exclude
      * @return mixed Result of the target function or middleware if chain is interrupted
      */
-    public function runWebSocketStack(int $clientId, string $event, array $data, Closure $target, Server $server, array $additionalMiddlewares = [], array $excludeGlobalMiddlewares = []): mixed
+    public function runWebSocketStack(string $clientId, string $event, array $data, Closure $target, Server $server, array $additionalMiddlewares = [], array $excludeGlobalMiddlewares = []): mixed
     {
         $globalStack = $this->filterExcludedMiddlewares($this->wsStack, $excludeGlobalMiddlewares);
         $stack = array_merge($globalStack, $additionalMiddlewares);
@@ -157,14 +157,14 @@ class Middleware
     /**
      * Execute the WebSocket handshake middleware stack
      * 
-     * @param int $clientId Client ID
+     * @param string $clientId Client ID
      * @param HandshakeRequest $request Handshake request object
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @param Server $server Server instance handling the WebSocket handshake
      * @param array<int, class-string> $additionalMiddlewares Optional additional middlewares to include in the stack
      * @return bool|array<string, mixed> Result of the target function or middleware if chain is interrupted
      */
-    public function runHandshakeStack(int $clientId, HandshakeRequest $request, Closure $target, Server $server, array $additionalMiddlewares = []): bool|array
+    public function runHandshakeStack(string $clientId, HandshakeRequest $request, Closure $target, Server $server, array $additionalMiddlewares = []): bool|array
     {
         $stack = array_merge($this->handshakeStack, $additionalMiddlewares);
         

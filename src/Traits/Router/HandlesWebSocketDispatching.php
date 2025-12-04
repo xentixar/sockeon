@@ -18,12 +18,12 @@ trait HandlesWebSocketDispatching
     /**
      * Dispatch a WebSocket event to the appropriate handler
      *
-     * @param int $clientId The client identifier
+     * @param string $clientId The client identifier
      * @param string $event The event name
      * @param array<string, mixed> $data The event data
      * @return void
      */
-    public function dispatch(int $clientId, string $event, array $data): void
+    public function dispatch(string $clientId, string $event, array $data): void
     {
         if (isset($this->wsRoutes[$event])) {
             [$controller, $method, $middlewares, $excludeGlobalMiddlewares] = $this->wsRoutes[$event];
@@ -51,11 +51,11 @@ trait HandlesWebSocketDispatching
     /**
      * Dispatch a special event (connect/disconnect) to all registered handlers
      * 
-     * @param int $clientId The client identifier
+     * @param string $clientId The client identifier
      * @param string $eventType The special event type ('connect' or 'disconnect')
      * @return void
      */
-    public function dispatchSpecialEvent(int $clientId, string $eventType): void
+    public function dispatchSpecialEvent(string $clientId, string $eventType): void
     {
         if (!isset($this->specialEventHandlers[$eventType])) {
             return;

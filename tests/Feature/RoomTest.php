@@ -11,24 +11,24 @@ test('rooms can be joined and left', function () {
     
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, string> $data
          * @return true
          */
         #[SocketOn('room.join')]
-        public function onRoomJoin(int $clientId, array $data): bool
+        public function onRoomJoin(string $clientId, array $data): bool
         {
             parent::joinRoom($clientId, $data['room'] ?? 'default');
             return true;
         }
 
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, string> $data
          * @return true
          */
         #[SocketOn('room.leave')]
-        public function onRoomLeave(int $clientId, array $data): bool
+        public function onRoomLeave(string $clientId, array $data): bool
         {
             parent::leaveRoom($clientId, $data['room'] ?? 'default');
             return true;
@@ -46,12 +46,12 @@ test('messages can be broadcast to rooms', function () {
     
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, string> $data
          * @return bool
          */
         #[SocketOn('broadcast.room')]
-        public function broadcastToRoom(int $clientId, array $data): bool
+        public function broadcastToRoom(string $clientId, array $data): bool
         {
             $this->broadcast('room.message', [
                 'message' => $data['message'] ?? '',
@@ -72,24 +72,24 @@ test('namespaces can be created and managed', function () {
     
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, string> $data
          * @return bool
          */
         #[SocketOn('namespace.join')]
-        public function joinNamespace(int $clientId, array $data): bool
+        public function joinNamespace(string $clientId, array $data): bool
         {
             $this->joinRoom($clientId, 'room1', $data['namespace'] ?? '/');
             return true;
         }
 
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, string> $data
          * @return bool
          */
         #[SocketOn('namespace.broadcast')]
-        public function broadcastToNamespace(int $clientId, array $data): bool
+        public function broadcastToNamespace(string $clientId, array $data): bool
         {
             $this->broadcast('message', [
                 'data' => $data['message'] ?? ''
@@ -116,12 +116,12 @@ test('client can join multiple rooms', function () {
     
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, array<string>> $data
          * @return bool
          */
         #[SocketOn('rooms.join')]
-        public function joinRooms(int $clientId, array $data): bool
+        public function joinRooms(string $clientId, array $data): bool
         {
             foreach ($data['rooms'] ?? [] as $room) {
                 $this->joinRoom($clientId, $room);
@@ -148,12 +148,12 @@ test('rooms in different namespaces are isolated', function () {
     
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, string> $data
          * @return bool
          */
         #[SocketOn('room.broadcast')]
-        public function broadcastToRoom(int $clientId, array $data): bool
+        public function broadcastToRoom(string $clientId, array $data): bool
         {
             $this->broadcast('message', [
                 'data' => $data['message'] ?? ''

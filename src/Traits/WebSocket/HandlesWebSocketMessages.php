@@ -18,11 +18,11 @@ trait HandlesWebSocketMessages
     /**
      * Handle an incoming WebSocket message
      * 
-     * @param int $clientId The client ID
+     * @param string $clientId The client ID
      * @param string $payload The message payload
      * @return void
      */
-    public function handleMessage(int $clientId, string $payload): void
+    public function handleMessage(string $clientId, string $payload): void
     {
         try {
             // Validate payload is not empty
@@ -99,11 +99,11 @@ trait HandlesWebSocketMessages
     /**
      * Send an error message to a specific client
      * 
-     * @param int $clientId The client ID
+     * @param string $clientId The client ID
      * @param string $errorMessage The error message
      * @return void
      */
-    public function sendErrorMessage(int $clientId, string $errorMessage): void
+    public function sendErrorMessage(string $clientId, string $errorMessage): void
     {
         try {
             $errorResponse = [
@@ -205,12 +205,12 @@ trait HandlesWebSocketMessages
     /**
      * Send a message to a specific client
      * 
-     * @param int $clientId The client ID
+     * @param string $clientId The client ID
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @return bool True if message was sent successfully
      */
-    public function sendMessage(int $clientId, string $event, array $data = []): bool
+    public function sendMessage(string $clientId, string $event, array $data = []): bool
     {
         try {
             $message = $this->createMessage($event, $data);

@@ -9,12 +9,12 @@ trait HandlesSendBroadcast
     /**
      * Send a WebSocket message to a specific client
      * 
-     * @param int $clientId The client ID to send to
+     * @param string $clientId The client ID to send to
      * @param string $event Event name
      * @param array<string, mixed> $data Data to send
      * @return void
      */
-    public function send(int $clientId, string $event, array $data): void
+    public function send(string $clientId, string $event, array $data): void
     {
         if (isset($this->clients[$clientId]) && ($this->clientTypes[$clientId] ?? '') === 'ws' && is_resource($this->clients[$clientId])) {
             try {
@@ -35,11 +35,11 @@ trait HandlesSendBroadcast
     /**
      * Send raw message data to a specific client
      * 
-     * @param int $clientId The client ID to send to
+     * @param string $clientId The client ID to send to
      * @param string $message Raw message data
      * @return void
      */
-    public function sendToClient(int $clientId, string $message): void
+    public function sendToClient(string $clientId, string $message): void
     {
         if (isset($this->clients[$clientId]) && ($this->clientTypes[$clientId] ?? '') === 'ws' && is_resource($this->clients[$clientId])) {
             try {

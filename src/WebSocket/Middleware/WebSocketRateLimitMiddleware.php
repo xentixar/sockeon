@@ -4,23 +4,7 @@
  * 
  * Implements rate limiting for WebSocket messages to prevent abuse and ensure fair usage.
  * Tracks messages per client within configurable time windows with support for both 
- * global and event-spe        $message = [
-            'event' => 'rate_limit_exceeded',
-            'data' => [
-                'error' => 'Rate limit exceeded',
-                'message' => 'You have exceeded the event-specific rate limit. Please try again later.',
-                'original_event' => $event,
-                'retry_after' => $rateLimitConfig->getTimeWindow(),
-                'limit' => $rateLimitConfig->getMaxMessages(),
-                'window' => $rateLimitConfig->getTimeWindow(),
-                'type' => $type
-            ]
-        ];
-
-        $jsonMessage = json_encode($message);
-        if ($jsonMessage !== false) {
-            $server->sendToClient($clientId, $jsonMessage);
-        }its.
+ * global and event-specific rate limits.
  * 
  * @package     Sockeon\Sockeon
  * @author      Sockeon
@@ -58,14 +42,14 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
     /**
      * Handle the WebSocket message with rate limiting
      * 
-     * @param int $clientId The client ID
+     * @param string $clientId The client ID
      * @param string $event The event name
      * @param array<string, mixed> $data The event data
      * @param callable $next The next middleware handler to call
      * @param Server $server The server instance handling the WebSocket message
      * @return mixed The response from the next middleware or null if rate limited
      */
-    public function handle(int $clientId, string $event, array $data, callable $next, Server $server): mixed
+    public function handle(string $clientId, string $event, array $data, callable $next, Server $server): mixed
     {
         $globalRateLimitConfig = $server->getRateLimitConfig();
         $clientIp = $server->getClientIpAddress($clientId);
@@ -257,14 +241,14 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
     /**
      * Send a rate limit exceeded message to the client
      * 
-     * @param int $clientId Client ID
+     * @param string $clientId Client ID
      * @param string $event Event name
      * @param RateLimit $rateLimitConfig Rate limit configuration
      * @param Server $server Server instance
      * @param string $type Type of rate limit
      * @return void
      */
-    protected function sendRateLimitMessage(int $clientId, string $event, RateLimit $rateLimitConfig, Server $server, string $type): void
+    protected function sendRateLimitMessage(string $clientId, string $event, RateLimit $rateLimitConfig, Server $server, string $type): void
     {
         $message = [
             'event' => 'rate_limit_exceeded',
@@ -288,13 +272,13 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
     /**
      * Send a global rate limit exceeded message to the client
      * 
-     * @param int $clientId Client ID
+     * @param string $clientId Client ID
      * @param string $event Event name
      * @param \Sockeon\Sockeon\Config\RateLimitConfig $rateLimitConfig Rate limit configuration
      * @param Server $server Server instance
      * @return void
      */
-    protected function sendGlobalRateLimitMessage(int $clientId, string $event, $rateLimitConfig, Server $server): void
+    protected function sendGlobalRateLimitMessage(string $clientId, string $event, $rateLimitConfig, Server $server): void
     {
         $message = [
             'event' => 'rate_limit_exceeded',

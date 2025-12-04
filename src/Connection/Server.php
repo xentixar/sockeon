@@ -34,14 +34,20 @@ class Server
     /** @var resource|false */
     protected $socket;
 
-    /** @var array<int, resource> */
+    /** @var array<string, resource> */
     protected array $clients = [];
 
-    /** @var array<int, string> */
+    /** @var array<string, string> */
     protected array $clientTypes = [];
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var array<string, array<string, mixed>> */
     protected array $clientData = [];
+
+    /** @var array<int, string> Maps resource ID to unique client ID */
+    protected array $resourceToClientId = [];
+
+    /** @var int Counter for generating sequential part of client ID */
+    protected int $clientIdCounter = 0;
 
     protected Router $router;
 
@@ -83,7 +89,7 @@ class Server
     /**
      * Get all connected clients
      * 
-     * @return array<int, resource> Array of client IDs and their resources
+     * @return array<string, resource> Array of client IDs and their resources
      */
     public function getClients(): array
     {
@@ -93,7 +99,7 @@ class Server
     /**
      * Get client types
      * 
-     * @return array<int, string> Array of client IDs and their types
+     * @return array<string, string> Array of client IDs and their types
      */
     public function getClientTypes(): array
     {
@@ -101,9 +107,38 @@ class Server
     }
 
     /**
-     * Get client IDs only
+     * Generate a unique client ID
      * 
-     * @return array<int, int> Array of client IDs
+     * @return string Unique client identifier
+     */
+    protected function generateClientId(): string
+    {
+        $this->clientIdCounter++;
+        // Format: sockeon_{timestamp}_{counter}_{random}
+        return sprintf(
+            'sockeon_%s_%d_%s',
+            base_convert((string)microtime(true), 10, 36),
+            $this->clientIdCounter,
+            bin2hex(random_bytes(4))
+        );
+    }
+
+    /**
+     * Get client ID from resource
+     * 
+     * @param resource $resource
+     * @return string|null
+     */
+    protected function getClientIdFromResource($resource): ?string
+    {
+        $resourceId = (int)$resource;
+        return $this->resourceToClientId[$resourceId] ?? null;
+    }
+
+    /**
+     * Get all client IDs
+     * 
+     * @return list<string> Array of client IDs
      */
     public function getClientIds(): array
     {
@@ -121,12 +156,12 @@ class Server
     }
 
     /**
-     * Check if a client is connected
+     * Check if a client is currently connected
      * 
-     * @param int $clientId The client ID to check
+     * @param string $clientId The client ID to check
      * @return bool True if connected, false otherwise
      */
-    public function isClientConnected(int $clientId): bool
+    public function isClientConnected(string $clientId): bool
     {
         return isset($this->clients[$clientId]);
     }
@@ -134,10 +169,10 @@ class Server
     /**
      * Get the type of a specific client
      * 
-     * @param int $clientId The client ID to check
+     * @param string $clientId The client ID to check
      * @return string|null The client type or null if not found
      */
-    public function getClientType(int $clientId): ?string
+    public function getClientType(string $clientId): ?string
     {
         return $this->clientTypes[$clientId] ?? null;
     }

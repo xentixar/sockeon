@@ -26,12 +26,12 @@ test('server can register controllers', function () {
     // Mock controller
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, mixed> $data
          * @return bool
          */
         #[SocketOn('test.event')]
-        public function testEvent(int $clientId, array $data): bool
+        public function testEvent(string $clientId, array $data): bool
         {
             return true;
         }
@@ -47,13 +47,13 @@ test('server adds middleware correctly', function () {
     $server = $this->server; //@phpstan-ignore-line
 
     /**
-     * @param int $clientId
+     * @param string $clientId
      * @param string $event
      * @param array<string, mixed> $data
      * @param callable $next
      * @return mixed
      */
-    $middleware = function (int $clientId, string $event,array $data, callable $next) {
+    $middleware = function (string $clientId, string $event,array $data, callable $next) {
         return $next();
     };
     
@@ -77,7 +77,7 @@ class TestHttpMiddleware implements HttpMiddleware
 
 class TestWebSocketMiddleware implements WebSocketMiddleware
 {
-    public function handle(int $clientId, string $event, array $data, callable $next, Server $server): mixed
+    public function handle(string $clientId, string $event, array $data, callable $next, Server $server): mixed
     {
         return $next();
     }

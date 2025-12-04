@@ -13,12 +13,12 @@ use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 class TestController extends SocketController 
 {
     /**
-     * @param int $clientId
+     * @param string $clientId
      * @param array<string, mixed> $data
      * @return void
      */
     #[SocketOn('message.send')]
-    public function handleMessage(int $clientId, array $data): void
+    public function handleMessage(string $clientId, array $data): void
     {
         $this->broadcast('message.receive', [
             'message' => $data['message'] ?? '',
@@ -28,11 +28,11 @@ class TestController extends SocketController
 
     /**
      * Special event: called when a client connects
-     * @param int $clientId
+     * @param string $clientId
      * @return void
      */
     #[OnConnect]
-    public function onClientConnect(int $clientId): void
+    public function onClientConnect(string $clientId): void
     {
         $this->emit($clientId, 'welcome', [
             'message' => 'Welcome to the server!',
@@ -47,11 +47,11 @@ class TestController extends SocketController
 
     /**
      * Special event: called when a client disconnects
-     * @param int $clientId
+     * @param string $clientId
      * @return void
      */
     #[OnDisconnect]
-    public function onClientDisconnect(int $clientId): void
+    public function onClientDisconnect(string $clientId): void
     {
         $this->broadcast('user.left', [
             'clientId' => $clientId,
