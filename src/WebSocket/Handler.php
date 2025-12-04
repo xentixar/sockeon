@@ -29,13 +29,13 @@ class Handler
 
     /**
      * Tracks completed handshakes by client ID
-     * @var array<int, bool>
+     * @var array<string, bool>
      */
     protected array $handshakes = [];
 
     /**
      * Buffers incomplete WebSocket frames per client
-     * @var array<int, string>
+     * @var array<string, string>
      */
     protected array $frameBuffers = [];
 
@@ -75,12 +75,12 @@ class Handler
     /**
      * Handle data from a WebSocket client
      * 
-     * @param int $clientId The client ID
+     * @param string $clientId The client ID
      * @param resource $client The client socket resource
      * @param string $data The received data
      * @return bool Whether to keep the connection alive
      */
-    public function handle(int $clientId, $client, string $data): bool
+    public function handle(string $clientId, $client, string $data): bool
     {
         try {
             if (!isset($this->handshakes[$clientId])) {

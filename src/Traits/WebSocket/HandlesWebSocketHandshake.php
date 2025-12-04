@@ -19,19 +19,19 @@ trait HandlesWebSocketHandshake
     /**
      * Perform WebSocket handshake with client
      * 
-     * @param int $clientId The client identifier
+     * @param string $clientId The client identifier
      * @param resource $client The client socket resource
      * @param string $data The HTTP handshake request
      * @return bool Whether the handshake was successful
      */
-    protected function performHandshake(int $clientId, $client, string $data): bool
+    protected function performHandshake(string $clientId, $client, string $data): bool
     {
         $handshakeRequest = new HandshakeRequest($data);
         
         $result = $this->server->getMiddleware()->runHandshakeStack(
             $clientId,
             $handshakeRequest,
-            function (int $clientId, HandshakeRequest $request) use ($client) {
+            function (string $clientId, HandshakeRequest $request) use ($client) {
                 return $this->executeHandshake($clientId, $client, $request);
             },
             $this->server
@@ -48,12 +48,12 @@ trait HandlesWebSocketHandshake
     /**
      * Execute the actual handshake process (after middleware)
      * 
-     * @param int $clientId The client identifier
+     * @param string $clientId The client identifier
      * @param resource $client The client socket resource
      * @param HandshakeRequest $request The handshake request
      * @return bool Whether the handshake was successful
      */
-    protected function executeHandshake(int $clientId, $client, HandshakeRequest $request): bool
+    protected function executeHandshake(string $clientId, $client, HandshakeRequest $request): bool
     {
         // Check origin
         $origin = $request->getOrigin();

@@ -159,11 +159,15 @@ trait HandlesClients
                 if (is_resource($client)) {
                     stream_set_blocking($client, false);
                     
-                    $clientId = (int) $client;
+                    // Generate unique client ID
+                    $clientId = $this->generateClientId();
+                    $resourceId = (int)$client;
+                    $this->resourceToClientId[$resourceId] = $clientId;
                     
                     // Check if we're at capacity
                     if (count($this->clients) >= 10000) {
                         @fclose($client);
+                        unset($this->resourceToClientId[$resourceId]);
                         $this->logger->warning("[Sockeon Connection] Connection limit reached, rejecting client");
                         break;
                     }
@@ -194,13 +198,13 @@ trait HandlesClients
 
     /**
      * Client buffers for incomplete requests
-     * @var array<int, string>
+     * @var array<string, string>
      */
     protected array $clientBuffers = [];
 
     /**
      * Client buffer timestamps to handle timeouts
-     * @var array<int, float>
+     * @var array<string, float>
      */
     protected array $clientBufferTimestamps = [];
 
@@ -210,7 +214,13 @@ trait HandlesClients
     protected function handleClientData(array $read): void
     {
         foreach ($read as $client) {
-            $clientId = (int)$client;
+            $clientId = $this->getClientIdFromResource($client);
+            
+            if ($clientId === null) {
+                // Unknown client, disconnect
+                @fclose($client);
+                continue;
+            }
             
                 try {
                     // Check if client is still connected before reading
@@ -350,12 +360,16 @@ trait HandlesClients
         $this->logger->info("[Sockeon Cleanup] Active connections: " . count($this->clients));
     }
 
-    public function disconnectClient(int $clientId): void
+    public function disconnectClient(string $clientId): void
     {
         try {
             if (isset($this->clients[$clientId])) {
+                // Get resource for cleanup
+                $client = $this->clients[$clientId];
+                $resourceId = is_resource($client) ? (int)$client : null;
+                
                 // Only dispatch disconnect event if client was a WebSocket and still connected
-                if (($this->clientTypes[$clientId] ?? null) === 'ws' && is_resource($this->clients[$clientId])) {
+                if (($this->clientTypes[$clientId] ?? null) === 'ws' && is_resource($client)) {
                     try {
                         $this->router->dispatchSpecialEvent($clientId, 'disconnect');
                     } catch (Throwable $e) {
@@ -364,7 +378,6 @@ trait HandlesClients
                 }
 
                 // Return connection to pool if it's still valid
-                $client = $this->clients[$clientId];
                 if (is_resource($client) && !@feof($client)) {
                     $this->connectionPool->releaseConnection($clientId);
                 } else {
@@ -379,6 +392,12 @@ trait HandlesClients
                 if (isset($this->clientBuffers[$clientId])) {
                     unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
                 }
+                
+                // Clean up resource-to-clientId mapping
+                if ($resourceId !== null) {
+                    unset($this->resourceToClientId[$resourceId]);
+                }
+                
                 $this->namespaceManager->leaveNamespace($clientId);
 
                 $this->logger->debug("[Sockeon Connection] Client disconnected: $clientId");
@@ -388,12 +407,12 @@ trait HandlesClients
         }
     }
 
-    public function setClientData(int $clientId, string $key, mixed $value): void
+    public function setClientData(string $clientId, string $key, mixed $value): void
     {
         $this->clientData[$clientId][$key] = $value;
     }
 
-    public function getClientData(int $clientId, ?string $key = null): mixed
+    public function getClientData(string $clientId, ?string $key = null): mixed
     {
         if (!isset($this->clientData[$clientId])) {
             return null;
@@ -405,10 +424,10 @@ trait HandlesClients
     /**
      * Get the IP address of a client
      * 
-     * @param int $clientId The client ID
+     * @param string $clientId The client ID
      * @return string|null The client IP address or null if not found
      */
-    public function getClientIpAddress(int $clientId): ?string
+    public function getClientIpAddress(string $clientId): ?string
     {
         if (!isset($this->clients[$clientId]) || !is_resource($this->clients[$clientId])) {
             return null;

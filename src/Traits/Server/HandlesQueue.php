@@ -62,15 +62,15 @@ trait HandlesQueue
      */
     protected function handleEmitQueue(array $payload): void
     {
-        $clientIdRaw = $payload['clientId'] ?? 0;
-        $clientId = is_int($clientIdRaw) ? $clientIdRaw : (is_numeric($clientIdRaw) ? (int)$clientIdRaw : 0);
+        $clientIdRaw = $payload['clientId'] ?? '';
+        $clientId = is_string($clientIdRaw) ? $clientIdRaw : (is_numeric($clientIdRaw) ? (string)$clientIdRaw : '');
         $eventRaw = $payload['event'] ?? '';
         $event = is_string($eventRaw) ? $eventRaw : '';
         
         /** @var array<string, mixed> $data */
         $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
 
-        if ($clientId && $event) {
+        if ($clientId !== '' && $event !== '') {
             $this->send($clientId, $event, $data);
         } else {
             $this->logger->warning("[Queue] Invalid emit payload");

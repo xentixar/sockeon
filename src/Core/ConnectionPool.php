@@ -24,7 +24,7 @@ class ConnectionPool
 
     /**
      * Active connections being used
-     * @var array<int, array<string, mixed>>
+     * @var array<string, array<string, mixed>>
      */
     protected array $activeConnections = [];
 
@@ -61,11 +61,11 @@ class ConnectionPool
      * Get a connection from the pool or create a new one
      * 
      * @param string $type Connection type (ws, http)
-     * @param int $clientId Client identifier
+     * @param string $clientId Client identifier
      * @param resource $resource Socket resource
      * @return array<string, mixed> Connection info
      */
-    public function acquireConnection(string $type, int $clientId, $resource): array
+    public function acquireConnection(string $type, string $clientId, $resource): array
     {
         $connection = [
             'id' => $clientId,
@@ -107,10 +107,10 @@ class ConnectionPool
     /**
      * Release a connection back to the pool
      * 
-     * @param int $clientId Client identifier
+     * @param string $clientId Client identifier
      * @return void
      */
-    public function releaseConnection(int $clientId): void
+    public function releaseConnection(string $clientId): void
     {
         if (!isset($this->activeConnections[$clientId])) {
             return;

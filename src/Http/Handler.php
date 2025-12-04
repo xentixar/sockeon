@@ -61,12 +61,12 @@ class Handler
     /**
      * Handle an incoming HTTP request
      * 
-     * @param int $clientId The client identifier
+     * @param string $clientId The client identifier
      * @param resource $client The client socket resource
      * @param string $data The raw HTTP request data
      * @return void
      */
-    public function handle(int $clientId, $client, string $data): void
+    public function handle(string $clientId, $client, string $data): void
     {
         try {
             $this->debug("Received HTTP request from client #{$clientId}");
