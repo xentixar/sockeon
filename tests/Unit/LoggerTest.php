@@ -97,8 +97,8 @@ test('logger can write to log file', function() use (&$tempLogDir) {
     $testMessage = 'Test log message ' . uniqid();
     $logger->info($testMessage);
 
-    $date = (new DateTime())->format('Y-m-d');
-    $logFile = "{$tempLogDir}/sockeon-{$date}.log";
+    // When separateLogFiles is false (default), no date suffix
+    $logFile = "{$tempLogDir}/sockeon.log";
 
     expect(file_exists($logFile))->toBeTrue();
 
@@ -152,8 +152,8 @@ test('logger can log exceptions', function() use (&$tempLogDir) {
     $exception = new Exception('Test exception message');
     $logger->exception($exception);
 
-    $date = (new DateTime())->format('Y-m-d');
-    $logFile = "{$tempLogDir}/sockeon-{$date}.log";
+    // When separateLogFiles is false (default), no date suffix
+    $logFile = "{$tempLogDir}/sockeon.log";
 
     $content = (string) file_get_contents($logFile);
     expect(str_contains($content, 'Exception: Test exception message'))->toBeTrue()
@@ -177,8 +177,8 @@ test('logger can include context data', function() use (&$tempLogDir) {
 
     $logger->info('User action', $context);
 
-    $date = (new DateTime())->format('Y-m-d');
-    $logFile = "{$tempLogDir}/sockeon-{$date}.log";
+    // When separateLogFiles is false (default), no date suffix
+    $logFile = "{$tempLogDir}/sockeon.log";
 
     $content = (string) file_get_contents($logFile);
     expect(str_contains($content, 'User action'))->toBeTrue()
@@ -247,8 +247,8 @@ test('logger setLogToFile method works', function() use (&$tempLogDir) {
     $testMessage = 'File logging activated';
     $logger->info($testMessage);
 
-    $date = (new DateTime())->format('Y-m-d');
-    $logFile = "{$tempLogDir}/sockeon-{$date}.log";
+    // When separateLogFiles is false (default), no date suffix
+    $logFile = "{$tempLogDir}/sockeon.log";
 
     expect(file_exists($logFile))->toBeTrue();
     $fileContent = (string) file_get_contents($logFile);

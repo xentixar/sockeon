@@ -291,9 +291,12 @@ class Logger implements LoggerInterface
     {
         $date = (new DateTime())->format('Y-m-d');
 
-        $mainLogFile = "{$this->logDirectory}/sockeon-{$date}.log";
+        // Only append date if separateLogFiles is enabled
+        $mainLogFile = $this->separateLogFiles 
+            ? "{$this->logDirectory}/sockeon-{$date}.log"
+            : "{$this->logDirectory}/sockeon.log";
+        
         file_put_contents($mainLogFile, $logEntry . PHP_EOL, FILE_APPEND);
-
 
         if ($this->separateLogFiles) {
             $levelDir = "{$this->logDirectory}/{$level}";
