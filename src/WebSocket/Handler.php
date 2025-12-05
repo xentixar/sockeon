@@ -182,7 +182,7 @@ class Handler
                                 ]);
                             }
                             
-                            $this->messageBuffers[$clientId] = [
+                            $this->messageBuffers[$clientId] = [ //@phpstan-ignore-line
                                 'opcode' => $opcode,
                                 'payload' => $payload,
                                 'fin' => false
@@ -262,6 +262,7 @@ class Handler
             return;
         }
 
+        /** @var bool $fin */
         $fin = $frame['fin'] ?? true;
         $payload = $frame['payload'] ?? '';
         
