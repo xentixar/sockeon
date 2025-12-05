@@ -76,6 +76,14 @@ class ServerConfig
     protected ?string $healthCheckPath = null;
 
     /**
+     * Maximum message size in bytes. If set, limits the size of incoming messages.
+     * Default: 65536 (64KB)
+     * 
+     * @var int
+     */
+    protected int $maxMessageSize = 65536; // 64KB
+
+    /**
      * Create a new server configuration instance
      *
      * @param array<string, mixed> $config
@@ -98,6 +106,10 @@ class ServerConfig
             } else {
                 $this->debug = !empty($config['debug']);
             }
+        }
+
+        if (isset($config['max_message_size']) && is_int($config['max_message_size'])) {
+            $this->maxMessageSize = $config['max_message_size'];
         }
 
         // Initialize CORS config
@@ -219,6 +231,26 @@ class ServerConfig
         $this->debug = $debug;
     }
 
+    /**
+     * Get the maximum message size
+     *
+     * @return int
+     */
+    public function getMaxMessageSize(): int
+    {
+        return $this->maxMessageSize;
+    }
+
+    /**
+     * Set the maximum message size
+     *
+     * @param int $maxMessageSize
+     * @return void
+     */
+    public function setMaxMessageSize(int $maxMessageSize): void
+    {
+        $this->maxMessageSize = $maxMessageSize;
+    }
     /**
      * Get CORS configuration
      *

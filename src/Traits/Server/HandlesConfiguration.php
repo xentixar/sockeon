@@ -42,6 +42,8 @@ trait HandlesConfiguration
 
         $this->rateLimitConfig = $config->getRateLimitConfig();
 
+        $this->maxMessageSize = $config->getMaxMessageSize();
+
         $this->logger = $config->getLogger() ?? new Logger(
             minLogLevel: $this->isDebug ? LogLevel::DEBUG : LogLevel::INFO,
             logToConsole: true,
