@@ -32,7 +32,7 @@ trait HandlesWebSocketMessages
             }
 
             // Validate payload length
-            if (strlen($payload) > 65536) { // 64KB limit
+            if (strlen($payload) > $this->server->getMaxMessageSize()) {
                 $this->sendErrorMessage($clientId, 'Message payload too large');
                 return;
             }

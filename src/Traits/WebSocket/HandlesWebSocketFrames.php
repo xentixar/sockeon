@@ -26,8 +26,8 @@ trait HandlesWebSocketFrames
         $frames = [];
         $originalDataLength = strlen($data);
         
-        // Maximum payload size (16MB)
-        $maxPayloadSize = 16777216;
+        // Maximum payload size
+        $maxPayloadSize = $this->server->getMaxMessageSize();
         
         while (strlen($data) > 0) {
             // Make sure we have at least 2 bytes for the basic header
@@ -200,8 +200,8 @@ trait HandlesWebSocketFrames
     {
         $payloadLength = strlen($payload);
         
-        // Validate payload length (16MB max)
-        $maxPayloadSize = 16777216;
+        // Validate payload length
+        $maxPayloadSize = $this->server->getMaxMessageSize();
         if ($payloadLength > $maxPayloadSize) {
             $this->logFrameError("Payload too large for encoding", [
                 'payload_length' => $payloadLength,

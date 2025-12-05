@@ -67,6 +67,8 @@ class Server
 
     protected ?string $healthCheckPath = null;
 
+    protected int $maxMessageSize = 65536; // 64KB
+
     /**
      * Server start time (Unix timestamp with microseconds)
      * 
@@ -106,6 +108,16 @@ class Server
         return $this->clientTypes;
     }
 
+    /**
+     * Get the maximum message size
+     * 
+     * @return int
+     */
+    public function getMaxMessageSize(): int
+    {
+        return $this->maxMessageSize;
+    }
+    
     /**
      * Generate a unique client ID
      * 
