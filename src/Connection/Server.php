@@ -34,14 +34,20 @@ class Server
     /** @var resource|false */
     protected $socket;
 
-    /** @var array<int, resource> */
+    /** @var array<string, resource> */
     protected array $clients = [];
 
-    /** @var array<int, string> */
+    /** @var array<string, string> */
     protected array $clientTypes = [];
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var array<string, array<string, mixed>> */
     protected array $clientData = [];
+
+    /** @var array<int, string> Maps resource ID to unique client ID */
+    protected array $resourceToClientId = [];
+
+    /** @var int Counter for generating sequential part of client ID */
+    protected int $clientIdCounter = 0;
 
     protected Router $router;
 
@@ -59,6 +65,17 @@ class Server
 
     protected ?RateLimitConfig $rateLimitConfig = null;
 
+    protected ?string $healthCheckPath = null;
+
+    protected int $maxMessageSize = 65536; // 64KB
+
+    /**
+     * Server start time (Unix timestamp with microseconds)
+     * 
+     * @var float|null
+     */
+    protected ?float $startTime = null;
+
     public function __construct(ServerConfig $config)
     {
         $this->applyServerConfig($config);
@@ -74,7 +91,7 @@ class Server
     /**
      * Get all connected clients
      * 
-     * @return array<int, resource> Array of client IDs and their resources
+     * @return array<string, resource> Array of client IDs and their resources
      */
     public function getClients(): array
     {
@@ -84,7 +101,7 @@ class Server
     /**
      * Get client types
      * 
-     * @return array<int, string> Array of client IDs and their types
+     * @return array<string, string> Array of client IDs and their types
      */
     public function getClientTypes(): array
     {
@@ -92,9 +109,48 @@ class Server
     }
 
     /**
-     * Get client IDs only
+     * Get the maximum message size
      * 
-     * @return array<int, int> Array of client IDs
+     * @return int
+     */
+    public function getMaxMessageSize(): int
+    {
+        return $this->maxMessageSize;
+    }
+    
+    /**
+     * Generate a unique client ID
+     * 
+     * @return string Unique client identifier
+     */
+    protected function generateClientId(): string
+    {
+        $this->clientIdCounter++;
+        // Format: sockeon_{timestamp}_{counter}_{random}
+        return sprintf(
+            'sockeon_%s_%d_%s',
+            base_convert((string)microtime(true), 10, 36),
+            $this->clientIdCounter,
+            bin2hex(random_bytes(4))
+        );
+    }
+
+    /**
+     * Get client ID from resource
+     * 
+     * @param resource $resource
+     * @return string|null
+     */
+    protected function getClientIdFromResource($resource): ?string
+    {
+        $resourceId = (int)$resource;
+        return $this->resourceToClientId[$resourceId] ?? null;
+    }
+
+    /**
+     * Get all client IDs
+     * 
+     * @return list<string> Array of client IDs
      */
     public function getClientIds(): array
     {
@@ -112,12 +168,12 @@ class Server
     }
 
     /**
-     * Check if a client is connected
+     * Check if a client is currently connected
      * 
-     * @param int $clientId The client ID to check
+     * @param string $clientId The client ID to check
      * @return bool True if connected, false otherwise
      */
-    public function isClientConnected(int $clientId): bool
+    public function isClientConnected(string $clientId): bool
     {
         return isset($this->clients[$clientId]);
     }
@@ -125,10 +181,10 @@ class Server
     /**
      * Get the type of a specific client
      * 
-     * @param int $clientId The client ID to check
+     * @param string $clientId The client ID to check
      * @return string|null The client type or null if not found
      */
-    public function getClientType(int $clientId): ?string
+    public function getClientType(string $clientId): ?string
     {
         return $this->clientTypes[$clientId] ?? null;
     }
@@ -151,5 +207,73 @@ class Server
     public function isRateLimitingEnabled(): bool
     {
         return $this->rateLimitConfig !== null && $this->rateLimitConfig->isEnabled();
+    }
+
+    /**
+     * Get the health check endpoint path
+     * 
+     * @return string|null The health check path or null if disabled
+     */
+    public function getHealthCheckPath(): ?string
+    {
+        return $this->healthCheckPath;
+    }
+
+    /**
+     * Get server start time
+     * 
+     * @return float|null Unix timestamp with microseconds when server started, or null if not started
+     */
+    public function getStartTime(): ?float
+    {
+        return $this->startTime;
+    }
+
+    /**
+     * Get server uptime in seconds
+     * 
+     * @return int|null Server uptime in seconds, or null if server hasn't started
+     */
+    public function getUptime(): ?int
+    {
+        if ($this->startTime === null) {
+            return null;
+        }
+
+        return (int) (microtime(true) - $this->startTime);
+    }
+
+    /**
+     * Get server uptime as a human-readable string
+     * 
+     * @return string|null Human-readable uptime string (e.g., "2h 30m 15s"), or null if not started
+     */
+    public function getUptimeString(): ?string
+    {
+        $uptime = $this->getUptime();
+        if ($uptime === null) {
+            return null;
+        }
+
+        $seconds = $uptime % 60;
+        $minutes = (int) (($uptime / 60) % 60);
+        $hours = (int) (($uptime / 3600) % 24);
+        $days = (int) ($uptime / 86400);
+
+        $parts = [];
+        if ($days > 0) {
+            $parts[] = $days . 'd';
+        }
+        if ($hours > 0) {
+            $parts[] = $hours . 'h';
+        }
+        if ($minutes > 0) {
+            $parts[] = $minutes . 'm';
+        }
+        if ($seconds > 0 || empty($parts)) {
+            $parts[] = $seconds . 's';
+        }
+
+        return implode(' ', $parts);
     }
 }

@@ -30,13 +30,13 @@ trait HandlesHttpWs
     /**
      * Handle incoming HTTP/WebSocket data.
      *
-     * @param int $clientId
+     * @param string $clientId
      * @param mixed $client
      * @param string $data
      * @return void
      */
     protected function handleHttpWs(
-        int $clientId,
+        string $clientId,
         mixed $client,
         string $data
     ): void {

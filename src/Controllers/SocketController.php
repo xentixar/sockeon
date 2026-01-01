@@ -41,12 +41,12 @@ abstract class SocketController
     /**
      * Emits an event to a specific client
      * 
-     * @param int $clientId The ID of the client to send to
+     * @param string $clientId The ID of the client to send to
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @return void
      */
-    public function emit(int $clientId, string $event, array $data): void
+    public function emit(string $clientId, string $event, array $data): void
     {
         $this->server->send($clientId, $event, $data);
     }
@@ -68,12 +68,12 @@ abstract class SocketController
     /**
      * Adds a client to a room
      * 
-     * @param int $clientId The ID of the client to add
+     * @param string $clientId The ID of the client to add
      * @param string $room The room name
      * @param string $namespace The namespace
      * @return void
      */
-    public function joinRoom(int $clientId, string $room, string $namespace = '/'): void
+    public function joinRoom(string $clientId, string $room, string $namespace = '/'): void
     {
         $this->server->joinRoom($clientId, $room, $namespace);
     }
@@ -81,12 +81,12 @@ abstract class SocketController
     /**
      * Removes a client from a room
      * 
-     * @param int $clientId The ID of the client to remove
+     * @param string $clientId The ID of the client to remove
      * @param string $room The room name to leave
      * @param string $namespace The namespace containing the room
      * @return void
      */
-    public function leaveRoom(int $clientId, string $room, string $namespace = '/'): void
+    public function leaveRoom(string $clientId, string $room, string $namespace = '/'): void
     {
         $this->server->leaveRoom($clientId, $room, $namespace);
     }
@@ -96,10 +96,10 @@ abstract class SocketController
      * 
      * Closes the connection and cleans up all client resources
      * 
-     * @param int $clientId The ID of the client to disconnect
+     * @param string $clientId The ID of the client to disconnect
      * @return void
      */
-    public function disconnectClient(int $clientId): void
+    public function disconnectClient(string $clientId): void
     {
         $this->server->disconnectClient($clientId);
     }
@@ -107,11 +107,11 @@ abstract class SocketController
     /**
      * Gets data for a specific client
      * 
-     * @param int $clientId The ID of the client to get data for
+     * @param string $clientId The ID of the client to get data for
      * @param string|null $key Optional key to retrieve specific data
      * @return mixed The data for the client, or null if not found
      */
-    public function getClientData(int $clientId, ?string $key = null): mixed
+    public function getClientData(string $clientId, ?string $key = null): mixed
     {
         return $this->server->getClientData($clientId, $key);
     }
@@ -119,12 +119,12 @@ abstract class SocketController
     /**
      * Sets data for a specific client
      * 
-     * @param int $clientId The ID of the client to set data for
+     * @param string $clientId The ID of the client to set data for
      * @param string $key The key to set in the client's data
      * @param mixed $value The value to set for the key
      * @return void
      */
-    public function setClientData(int $clientId, string $key, mixed $value): void
+    public function setClientData(string $clientId, string $key, mixed $value): void
     {
         $this->server->setClientData($clientId, $key, $value);
     }
@@ -133,7 +133,7 @@ abstract class SocketController
      * Gets all clients in a specific namespace
      * 
      * @param string $namespace The namespace to query (default: '/')
-     * @return array<int, int> Array of client IDs in the namespace
+     * @return array<string, string> Array of client IDs in the namespace
      */
     public function getClientsInNamespace(string $namespace = '/'): array
     {
@@ -143,10 +143,10 @@ abstract class SocketController
     /**
      * Gets the namespace a client belongs to
      * 
-     * @param int $clientId The client ID to query
+     * @param string $clientId The client ID to query
      * @return string The namespace the client belongs to
      */
-    public function getClientNamespace(int $clientId): string
+    public function getClientNamespace(string $clientId): string
     {
         return $this->server->getNamespaceManager()->getClientNamespace($clientId);
     }
@@ -154,11 +154,11 @@ abstract class SocketController
     /**
      * Joins a client to a specific namespace
      * 
-     * @param int $clientId The client ID to move
+     * @param string $clientId The client ID to move
      * @param string $namespace The namespace to join
      * @return void
      */
-    public function moveClientToNamespace(int $clientId, string $namespace = '/'): void
+    public function moveClientToNamespace(string $clientId, string $namespace = '/'): void
     {
         $this->server->getNamespaceManager()->joinNamespace($clientId, $namespace);
     }
@@ -168,7 +168,7 @@ abstract class SocketController
      * 
      * @param string $room The room name to query
      * @param string $namespace The namespace containing the room (default: '/')
-     * @return array<int, int> Array of client IDs in the room
+     * @return array<string, string> Array of client IDs in the room
      */
     public function getClientsInRoom(string $room, string $namespace = '/'): array
     {
@@ -189,10 +189,10 @@ abstract class SocketController
     /**
      * Gets all rooms a client belongs to
      * 
-     * @param int $clientId The client ID to query
+     * @param string $clientId The client ID to query
      * @return array<int, string> Array of room names the client belongs to
      */
-    public function getClientRooms(int $clientId): array
+    public function getClientRooms(string $clientId): array
     {
         return $this->server->getNamespaceManager()->getClientRooms($clientId);
     }
@@ -200,10 +200,10 @@ abstract class SocketController
     /**
      * Removes a client from all rooms they belong to
      * 
-     * @param int $clientId The client ID to remove from all rooms
+     * @param string $clientId The client ID to remove from all rooms
      * @return void
      */
-    public function leaveAllRooms(int $clientId): void
+    public function leaveAllRooms(string $clientId): void
     {
         $this->server->getNamespaceManager()->leaveAllRooms($clientId);
     }
@@ -250,7 +250,7 @@ abstract class SocketController
     /**
      * Gets all connected client IDs
      * 
-     * @return array<int, int> Array of all connected client IDs
+     * @return list<string> Array of all connected client IDs
      */
     public function getAllClients(): array
     {
@@ -270,10 +270,10 @@ abstract class SocketController
     /**
      * Checks if a client is currently connected
      * 
-     * @param int $clientId The client ID to check
+     * @param string $clientId The client ID to check
      * @return bool True if the client is connected, false otherwise
      */
-    public function isClientConnected(int $clientId): bool
+    public function isClientConnected(string $clientId): bool
     {
         return $this->server->isClientConnected($clientId);
     }
@@ -281,10 +281,10 @@ abstract class SocketController
     /**
      * Gets the client connection type (e.g., 'ws', 'http', 'unknown')
      * 
-     * @param int $clientId The client ID to check
+     * @param string $clientId The client ID to check
      * @return string|null The client type or null if not found
      */
-    public function getClientType(int $clientId): ?string
+    public function getClientType(string $clientId): ?string
     {
         return $this->server->getClientType($clientId);
     }
@@ -330,5 +330,140 @@ abstract class SocketController
     public function getLogger(): LoggerInterface
     {
         return $this->server->getLogger();
+    }
+
+    /**
+     * Get server uptime in seconds
+     * 
+     * @return int|null Server uptime in seconds, or null if server hasn't started
+     */
+    public function getUptime(): ?int
+    {
+        return $this->server->getUptime();
+    }
+
+    /**
+     * Get server uptime as a human-readable string
+     * 
+     * @return string|null Human-readable uptime string (e.g., "2h 30m 15s"), or null if not started
+     */
+    public function getUptimeString(): ?string
+    {
+        return $this->server->getUptimeString();
+    }
+
+    /**
+     * Get server start time
+     * 
+     * @return float|null Unix timestamp with microseconds when server started, or null if not started
+     */
+    public function getStartTime(): ?float
+    {
+        return $this->server->getStartTime();
+    }
+
+    /**
+     * Get comprehensive server statistics including scaling features
+     * 
+     * @return array<string, mixed> Comprehensive server statistics
+     */
+    public function getServerStats(): array
+    {
+        return $this->server->getServerStats();
+    }
+
+    /**
+     * Queue an async task for background processing
+     * 
+     * @param string $type Task type
+     * @param array<string, mixed> $data Task data
+     * @param int $priority Priority level (higher = more important)
+     * @return void
+     */
+    public function queueAsyncTask(string $type, array $data, int $priority = 0): void
+    {
+        $this->server->queueAsyncTask($type, $data, $priority);
+    }
+
+    /**
+     * Get performance metrics from the server
+     * 
+     * @return array<string, mixed> Performance metrics
+     */
+    public function getPerformanceMetrics(): array
+    {
+        $stats = $this->getServerStats();
+        $performance = $stats['performance'] ?? [];
+        if (!is_array($performance)) {
+            return [];
+        }
+        /** @var array<string, mixed> $performance */
+        return $performance;
+    }
+
+    /**
+     * Get connection pool statistics
+     * 
+     * @return array<string, mixed> Connection pool statistics
+     */
+    public function getConnectionPoolStats(): array
+    {
+        $stats = $this->getServerStats();
+        $poolStats = $stats['connection_pool'] ?? [];
+        if (!is_array($poolStats)) {
+            return [];
+        }
+        /** @var array<string, mixed> $poolStats */
+        return $poolStats;
+    }
+
+    /**
+     * Get async task queue statistics
+     * 
+     * @return array<string, mixed> Task queue statistics
+     */
+    public function getTaskQueueStats(): array
+    {
+        $stats = $this->getServerStats();
+        $queueStats = $stats['task_queue'] ?? [];
+        if (!is_array($queueStats)) {
+            return [];
+        }
+        /** @var array<string, mixed> $queueStats */
+        return $queueStats;
+    }
+
+    /**
+     * Get client IP address
+     * 
+     * @param string $clientId The client ID
+     * @return string|null The client IP address or null if not found
+     */
+    public function getClientIpAddress(string $clientId): ?string
+    {
+        return $this->server->getClientIpAddress($clientId);
+    }
+
+    /**
+     * Record a performance metric
+     * 
+     * @param string $type Metric type (http/websocket/connection/request)
+     * @param float $value Metric value (response time, etc.)
+     * @return void
+     */
+    public function recordMetric(string $type, float $value = 0): void
+    {
+        $this->server->recordRequestMetric($type, $value);
+    }
+
+    /**
+     * Record an error metric
+     * 
+     * @param string $type Error type (connection/request)
+     * @return void
+     */
+    public function recordError(string $type): void
+    {
+        $this->server->recordErrorMetric($type);
     }
 }

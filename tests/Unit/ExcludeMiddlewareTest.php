@@ -23,7 +23,7 @@ class TestGlobalWebSocketMiddleware implements WebsocketMiddleware
 {
     public static array $calls = [];
 
-    public function handle(int $clientId, string $event, array $data, callable $next, Server $server): mixed
+    public function handle(string $clientId, string $event, array $data, callable $next, Server $server): mixed
     {
         self::$calls[] = 'global_ws';
         return $next();
@@ -45,7 +45,7 @@ class TestRouteSpecificWebSocketMiddleware implements WebsocketMiddleware
 {
     public static array $calls = [];
 
-    public function handle(int $clientId, string $event, array $data, callable $next, Server $server): mixed
+    public function handle(string $clientId, string $event, array $data, callable $next, Server $server): mixed
     {
         self::$calls[] = 'route_specific_ws';
         return $next();
@@ -67,23 +67,23 @@ test('websocket event can exclude global middleware', function () {
 
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, mixed> $data
          * @return bool
          */
         #[SocketOn('test.normal')]
-        public function normalEvent(int $clientId, array $data): bool
+        public function normalEvent(string $clientId, array $data): bool
         {
             return true;
         }
 
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, mixed> $data
          * @return bool
          */
         #[SocketOn('test.excluded', middlewares: [TestRouteSpecificWebSocketMiddleware::class], excludeGlobalMiddlewares: [TestGlobalWebSocketMiddleware::class])]
-        public function excludedEvent(int $clientId, array $data): bool
+        public function excludedEvent(string $clientId, array $data): bool
         {
             return true;
         }
@@ -164,12 +164,12 @@ test('multiple middlewares can be excluded', function () {
 
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, mixed> $data
          * @return bool
          */
         #[SocketOn('test.exclude-multiple', excludeGlobalMiddlewares: [TestGlobalWebSocketMiddleware::class, TestRouteSpecificWebSocketMiddleware::class])]
-        public function excludeMultipleEvent(int $clientId, array $data): bool
+        public function excludeMultipleEvent(string $clientId, array $data): bool
         {
             return true;
         }
@@ -189,7 +189,7 @@ test('partial exclusion works correctly', function () {
     $anotherGlobalMiddleware = new class implements WebsocketMiddleware {
         public static array $calls = [];
 
-        public function handle(int $clientId, string $event, array $data, callable $next, Server $server): mixed
+        public function handle(string $clientId, string $event, array $data, callable $next, Server $server): mixed
         {
             self::$calls[] = 'another_global_ws';
             return $next();
@@ -201,12 +201,12 @@ test('partial exclusion works correctly', function () {
 
     $controller = new class extends SocketController {
         /**
-         * @param int $clientId
+         * @param string $clientId
          * @param array<string, mixed> $data
          * @return bool
          */
         #[SocketOn('test.partial-exclude', excludeGlobalMiddlewares: [TestGlobalWebSocketMiddleware::class])]
-        public function partialExcludeEvent(int $clientId, array $data): bool
+        public function partialExcludeEvent(string $clientId, array $data): bool
         {
             return true;
         }

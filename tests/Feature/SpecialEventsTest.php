@@ -13,11 +13,11 @@ class TestSpecialEventsController extends SocketController
 
     /**
      * Handler for when a client connects
-     * @param int $clientId
+     * @param string $clientId
      * @return void
      */
     #[OnConnect]
-    public function handleConnect(int $clientId): void
+    public function handleConnect(string $clientId): void
     {
         $this->events[] = "connect:$clientId";
         
@@ -29,11 +29,11 @@ class TestSpecialEventsController extends SocketController
 
     /**
      * Handler for when a client disconnects
-     * @param int $clientId
+     * @param string $clientId
      * @return void
      */
     #[OnDisconnect]
-    public function handleDisconnect(int $clientId): void
+    public function handleDisconnect(string $clientId): void
     {
         $this->events[] = "disconnect:$clientId";
         
@@ -45,12 +45,12 @@ class TestSpecialEventsController extends SocketController
 
     /**
      * Regular event handler
-     * @param int $clientId
+     * @param string $clientId
      * @param array<string, mixed> $data
      * @return void
      */
     #[SocketOn('message.send')]
-    public function handleMessage(int $clientId, array $data): void
+    public function handleMessage(string $clientId, array $data): void
     {
         $this->events[] = "message:$clientId";
         

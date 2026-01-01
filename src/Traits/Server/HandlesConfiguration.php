@@ -2,6 +2,7 @@
 
 namespace Sockeon\Sockeon\Traits\Server;
 
+use Sockeon\Sockeon\Config\CorsConfig;
 use Sockeon\Sockeon\Config\ServerConfig;
 use Sockeon\Sockeon\Core\Config;
 use Sockeon\Sockeon\Core\Middleware;
@@ -16,23 +17,34 @@ trait HandlesConfiguration
 {
     protected function applyServerConfig(ServerConfig $config): void
     {
-        $this->host = $config->host;
-        $this->port = $config->port;
-        $this->isDebug = $config->debug;
+        $this->host = $config->getHost();
+        $this->port = $config->getPort();
+        $this->isDebug = $config->isDebug();
 
         Config::init();
 
-        if ($config->queueFile) {
-            Config::setQueueFile($config->queueFile);
+        if ($config->getQueueFile()) {
+            Config::setQueueFile($config->getQueueFile());
         }
 
-        if ($config->authKey !== null) {
-            Config::setAuthKey($config->authKey);
+        if ($config->getAuthKey() !== null) {
+            Config::setAuthKey($config->getAuthKey());
         }
 
-        $this->rateLimitConfig = $config->rateLimitConfig;
+        // Apply proxy configuration
+        Config::setTrustProxy($config->getTrustProxy());
+        if ($config->getProxyHeaders() !== null) {
+            Config::setProxyHeaders($config->getProxyHeaders());
+        }
 
-        $this->logger = $config->logger ?? new Logger(
+        // Store health check path
+        $this->healthCheckPath = $config->getHealthCheckPath();
+
+        $this->rateLimitConfig = $config->getRateLimitConfig();
+
+        $this->maxMessageSize = $config->getMaxMessageSize();
+
+        $this->logger = $config->getLogger() ?? new Logger(
             minLogLevel: $this->isDebug ? LogLevel::DEBUG : LogLevel::INFO,
             logToConsole: true,
             logToFile: false,
@@ -44,8 +56,8 @@ trait HandlesConfiguration
     protected function initializeCoreComponents(ServerConfig $config): void
     {
         $this->router = new Router();
-        $this->wsHandler = new WebSocketHandler($this, $this->resolveAllowedOrigins($config->cors));
-        $this->httpHandler = new HttpHandler($this, $config->cors);
+        $this->wsHandler = new WebSocketHandler($this, $this->resolveAllowedOrigins($config->getCorsConfig()));
+        $this->httpHandler = new HttpHandler($this, $config->getCorsConfig());
         $this->namespaceManager = new NamespaceManager();
         $this->middleware = new Middleware();
 
@@ -56,18 +68,15 @@ trait HandlesConfiguration
     }
 
     /**
-     * @param array<string, mixed> $cors
+     * @param CorsConfig $cors
      * @return array<int, string>
      */
-    protected function resolveAllowedOrigins(array $cors): array
+    protected function resolveAllowedOrigins(CorsConfig $cors): array
     {
         $origins = [];
-
-        if (isset($cors['allowed_origins']) && is_array($cors['allowed_origins'])) {
-            foreach ($cors['allowed_origins'] as $origin) {
-                if (is_string($origin)) {
-                    $origins[] = $origin;
-                }
+        foreach ($cors->getAllowedOrigins() as $origin) {
+            if (is_string($origin)) { //@phpstan-ignore-line
+                $origins[] = $origin;
             }
         }
 

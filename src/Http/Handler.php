@@ -18,6 +18,7 @@
 
 namespace Sockeon\Sockeon\Http;
 
+use Sockeon\Sockeon\Config\CorsConfig;
 use Sockeon\Sockeon\Connection\Server;
 use Sockeon\Sockeon\Traits\Http\HandlesCors;
 use Sockeon\Sockeon\Traits\Http\HandlesHttpLogging;
@@ -49,23 +50,23 @@ class Handler
      * Constructor
      * 
      * @param Server $server The server instance
-     * @param array<string, mixed> $corsConfig Optional CORS configuration
+     * @param CorsConfig $corsConfig Optional CORS configuration
      */
-    public function __construct(Server $server, array $corsConfig = [])
+    public function __construct(Server $server, CorsConfig $corsConfig)
     {
         $this->server = $server;
-        $this->corsConfig = new CorsConfig($corsConfig);
+        $this->corsConfig = $corsConfig;
     }
 
     /**
      * Handle an incoming HTTP request
      * 
-     * @param int $clientId The client identifier
+     * @param string $clientId The client identifier
      * @param resource $client The client socket resource
      * @param string $data The raw HTTP request data
      * @return void
      */
-    public function handle(int $clientId, $client, string $data): void
+    public function handle(string $clientId, $client, string $data): void
     {
         try {
             $this->debug("Received HTTP request from client #{$clientId}");

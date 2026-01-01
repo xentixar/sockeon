@@ -9,7 +9,7 @@
  * @copyright   Copyright (c) 2025
  */
 
-namespace Sockeon\Sockeon\Http;
+namespace Sockeon\Sockeon\Config;
 
 class CorsConfig
 {
@@ -172,5 +172,60 @@ class CorsConfig
         }
         
         return in_array($origin, $this->allowedOrigins);
+    }
+
+    /**
+     * Set allowed origins
+     * 
+     * @param array<int, string> $origins
+     * @return void
+     */
+    public function setAllowedOrigins(array $origins): void
+    {
+        $this->allowedOrigins = $origins;
+    }
+
+    /**
+     * Set allowed methods
+     * 
+     * @param array<int, string> $methods
+     * @return void
+     */
+    public function setAllowedMethods(array $methods): void
+    {
+        $this->allowedMethods = $methods;
+    }
+
+    /**
+     * Set allowed headers
+     * 
+     * @param array<int, string> $headers
+     * @return void
+     */
+    public function setAllowedHeaders(array $headers): void
+    {
+        $this->allowedHeaders = $headers;
+    }
+
+    /**
+     * Set allow credentials
+     * 
+     * @param bool $allowCredentials
+     * @return void
+     */
+    public function setAllowCredentials(bool $allowCredentials): void
+    {
+        $this->allowCredentials = $allowCredentials;
+    }
+
+    /**
+     * Set max age
+     * 
+     * @param int $maxAge
+     * @return void
+     */
+    public function setMaxAge(int $maxAge): void
+    {
+        $this->maxAge = $maxAge;
     }
 }

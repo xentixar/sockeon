@@ -15,7 +15,7 @@ class NamespaceManager
 {
     /**
      * The namespaces and clients within them
-     * @var array<string, array<int, int>>
+     * @var array<string, array<string, string>>
      */
     protected array $namespaces = [
         '/' => []
@@ -23,30 +23,30 @@ class NamespaceManager
     
     /**
      * Room definitions
-     * @var array<string, array<string, array<int, int>>>
+     * @var array<string, array<string, array<string, string>>>
      */
     protected array $rooms = [];
     
     /**
      * Map of which clients belong to which namespaces
-     * @var array<int, string>
+     * @var array<string, string>
      */
     protected array $clientNamespaces = [];
     
     /**
      * Map of which clients belong to which rooms
-     * @var array<int, array<string, string>>
+     * @var array<string, array<string, string>>
      */
     protected array $clientRooms = [];
     
     /**
      * Add a client to a namespace
      * 
-     * @param int $clientId The client ID to add
+     * @param string $clientId The client ID to add
      * @param string $namespace The namespace to join
      * @return void
      */
-    public function joinNamespace(int $clientId, string $namespace = '/'): void
+    public function joinNamespace(string $clientId, string $namespace = '/'): void
     {
         if (!isset($this->namespaces[$namespace])) {
             $this->namespaces[$namespace] = [];
@@ -59,10 +59,10 @@ class NamespaceManager
     /**
      * Remove a client from its namespace
      * 
-     * @param int $clientId The client ID to remove
+     * @param string $clientId The client ID to remove
      * @return void
      */
-    public function leaveNamespace(int $clientId): void
+    public function leaveNamespace(string $clientId): void
     {
         $namespace = $this->clientNamespaces[$clientId] ?? '/';
         
@@ -75,12 +75,12 @@ class NamespaceManager
     /**
      * Add a client to a room within a namespace
      * 
-     * @param int $clientId The client ID to add
+     * @param string $clientId The client ID to add
      * @param string $room The room name to join
      * @param string $namespace The namespace containing the room
      * @return void
      */
-    public function joinRoom(int $clientId, string $room, string $namespace = '/'): void
+    public function joinRoom(string $clientId, string $room, string $namespace = '/'): void
     {
         if (!isset($this->rooms[$namespace])) {
             $this->rooms[$namespace] = [];
@@ -102,12 +102,12 @@ class NamespaceManager
     /**
      * Remove a client from a room
      * 
-     * @param int $clientId The client ID to remove
+     * @param string $clientId The client ID to remove
      * @param string $room The room name to leave
      * @param string $namespace The namespace containing the room
      * @return void
      */
-    public function leaveRoom(int $clientId, string $room, string $namespace = '/'): void
+    public function leaveRoom(string $clientId, string $room, string $namespace = '/'): void
     {
         if (isset($this->rooms[$namespace][$room][$clientId])) {
             unset($this->rooms[$namespace][$room][$clientId]);
@@ -118,10 +118,10 @@ class NamespaceManager
     /**
      * Remove a client from all rooms
      * 
-     * @param int $clientId The client ID to remove from all rooms
+     * @param string $clientId The client ID to remove from all rooms
      * @return void
      */
-    public function leaveAllRooms(int $clientId): void
+    public function leaveAllRooms(string $clientId): void
     {
         if (!isset($this->clientRooms[$clientId])) {
             return;
@@ -139,7 +139,7 @@ class NamespaceManager
      * Get all clients in a namespace
      * 
      * @param string $namespace The namespace to query
-     * @return array<int, int> Array of client IDs
+     * @return array<string, string> Array of client IDs
      */
     public function getClientsInNamespace(string $namespace = '/'): array
     {
@@ -151,7 +151,7 @@ class NamespaceManager
      * 
      * @param string $room The room name
      * @param string $namespace The namespace containing the room
-     * @return array<int, int> Array of client IDs
+     * @return array<string, string> Array of client IDs
      */
     public function getClientsInRoom(string $room, string $namespace = '/'): array
     {
@@ -172,10 +172,10 @@ class NamespaceManager
     /**
      * Get the namespace a client belongs to
      * 
-     * @param int $clientId The client ID to query
+     * @param string $clientId The client ID to query
      * @return string The namespace the client belongs to
      */
-    public function getClientNamespace(int $clientId): string
+    public function getClientNamespace(string $clientId): string
     {
         return $this->clientNamespaces[$clientId] ?? '/';
     }
@@ -183,10 +183,10 @@ class NamespaceManager
     /**
      * Get all rooms a client belongs to
      * 
-     * @param int $clientId The client ID to query
+     * @param string $clientId The client ID to query
      * @return array<int, string> Array of room names the client belongs to
      */
-    public function getClientRooms(int $clientId): array
+    public function getClientRooms(string $clientId): array
     {
         return array_keys($this->clientRooms[$clientId] ?? []);
     }
@@ -197,10 +197,10 @@ class NamespaceManager
      * Removes the client from its namespace and all rooms.
      * Use this when a client disconnects.
      * 
-     * @param int $clientId The client ID to clean up
+     * @param string $clientId The client ID to clean up
      * @return void
      */
-    public function cleanup(int $clientId): void
+    public function cleanup(string $clientId): void
     {
         $this->leaveNamespace($clientId);
     }

@@ -35,7 +35,7 @@ test('handshake request parses correctly', function () {
 
 class TestHandshakeMiddleware implements HandshakeMiddleware
 {
-    public function handle(int $clientId, HandshakeRequest $request, callable $next, Server $server): bool|array
+    public function handle(string $clientId, HandshakeRequest $request, callable $next, Server $server): bool|array
     {
         // Simple test middleware that always allows the connection
         return $next();
