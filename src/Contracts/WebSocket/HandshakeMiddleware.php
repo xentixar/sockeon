@@ -26,7 +26,7 @@ interface HandshakeMiddleware
      * @param HandshakeRequest $request The handshake request object.
      * @param callable $next The next middleware or handler to call.
      * @param Server $server The server instance handling the WebSocket handshake.
-     * @return bool|array<string, mixed> True to continue handshake, false to reject, or array with custom response
+     * @return mixed Callable to continue handshake, false to reject, or array with custom response
      */
-    public function handle(string $clientId, HandshakeRequest $request, callable $next, Server $server): bool|array;
+    public function handle(string $clientId, HandshakeRequest $request, callable $next, Server $server): mixed;
 }

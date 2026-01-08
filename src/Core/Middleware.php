@@ -163,21 +163,21 @@ class Middleware
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @param Server $server Server instance handling the WebSocket handshake
      * @param array<int, class-string> $additionalMiddlewares Optional additional middlewares to include in the stack
-     * @return bool|array<string, mixed> Result of the target function or middleware if chain is interrupted
+     * @return mixed Result of the target function or middleware if chain is interrupted
      */
-    public function runHandshakeStack(string $clientId, HandshakeRequest $request, Closure $target, Server $server, array $additionalMiddlewares = []): bool|array
+    public function runHandshakeStack(string $clientId, HandshakeRequest $request, Closure $target, Server $server, array $additionalMiddlewares = []): mixed
     {
         $stack = array_merge($this->handshakeStack, $additionalMiddlewares);
 
-        $run = function (int $index) use (&$run, $stack, $clientId, $request, $target, $server): bool|array {
+        $run = function (int $index) use (&$run, $stack, $clientId, $request, $target, $server): mixed {
             if ($index >= count($stack)) {
-                /** @var bool|array<string, mixed> */
+                /** @var mixed */
                 return $target($clientId, $request);
             }
 
             $middleware = $stack[$index];
 
-            $next = function () use ($index, $run): bool|array {
+            $next = function () use ($index, $run): mixed {
                 return $run($index + 1);
             };
 
