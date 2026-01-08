@@ -1,9 +1,9 @@
 <?php
 /**
  * HandlesWebSocketHandshake trait
- * 
+ *
  * Manages WebSocket handshake process and authentication
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -18,7 +18,7 @@ trait HandlesWebSocketHandshake
 {
     /**
      * Perform WebSocket handshake with client
-     * 
+     *
      * @param string $clientId The client identifier
      * @param resource $client The client socket resource
      * @param string $data The HTTP handshake request
@@ -27,7 +27,7 @@ trait HandlesWebSocketHandshake
     protected function performHandshake(string $clientId, $client, string $data): bool
     {
         $handshakeRequest = new HandshakeRequest($data);
-        
+
         $result = $this->server->getMiddleware()->runHandshakeStack(
             $clientId,
             $handshakeRequest,
@@ -36,18 +36,22 @@ trait HandlesWebSocketHandshake
             },
             $this->server
         );
-        
+
+        if ($result === false) {
+            $this->sendCustomResponse($client, []);
+        }
+
         if (is_array($result)) {
             $this->sendCustomResponse($client, $result);
             return false;
         }
-        
+
         return $result;
     }
 
     /**
      * Execute the actual handshake process (after middleware)
-     * 
+     *
      * @param string $clientId The client identifier
      * @param resource $client The client socket resource
      * @param HandshakeRequest $request The handshake request
@@ -66,14 +70,14 @@ trait HandlesWebSocketHandshake
         $authKey = Config::getAuthKey();
         if ($authKey !== null) {
             $keyParam = $request->getQueryParam('key');
-            
+
             if ($keyParam === null || $keyParam !== $authKey) {
                 $response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid authentication key";
                 fwrite($client, $response);
                 $this->server->getLogger()->debug("[WebSocket Authentication] Authentication failed for client: $clientId");
                 return false;
             }
-            
+
             $this->server->getLogger()->debug("[WebSocket Authentication] Authentication successful for client: $clientId");
         }
 
@@ -105,15 +109,15 @@ trait HandlesWebSocketHandshake
         $response = implode("\r\n", $headers) . "\r\n\r\n";
         fwrite($client, $response);
         $this->handshakes[$clientId] = true;
-        
+
         $this->server->getRouter()->dispatchSpecialEvent($clientId, 'connect');
-        
+
         return true;
     }
 
     /**
      * Send a custom response to the client
-     * 
+     *
      * @param resource $client The client socket resource
      * @param array<string, mixed> $responseData Response data from middleware
      * @return void
@@ -124,18 +128,18 @@ trait HandlesWebSocketHandshake
         $statusText = is_string($responseData['statusText'] ?? null) ? $responseData['statusText'] : 'Forbidden';
         $headers = is_array($responseData['headers'] ?? null) ? $responseData['headers'] : [];
         $body = is_string($responseData['body'] ?? null) ? $responseData['body'] : 'Access denied';
-        
+
         $response = "HTTP/1.1 $statusCode $statusText\r\n";
         $response .= "Content-Type: text/plain\r\n";
-        
+
         foreach ($headers as $name => $value) {
             if (is_string($name) && (is_string($value) || is_numeric($value))) {
-                $response .= $name . ": " . (string) $value . "\r\n";
+                $response .= $name . ": " . (string)$value . "\r\n";
             }
         }
-        
+
         $response .= "\r\n$body";
-        
+
         fwrite($client, $response);
     }
 
