@@ -25,10 +25,20 @@ use Sockeon\Sockeon\Traits\Server\HandlesSendBroadcast;
 
 class Server
 {
-    use HandlesConfiguration, HandlesClients, HandlesMiddlewares, HandlesControllers, HandlesHttpWs, HandlesQueue, HandlesRooms, HandlesSendBroadcast, HandlesLogging, HandlesRouting, HandlesNamespace;
+    use HandlesConfiguration;
+    use HandlesClients;
+    use HandlesMiddlewares;
+    use HandlesControllers;
+    use HandlesHttpWs;
+    use HandlesQueue;
+    use HandlesRooms;
+    use HandlesSendBroadcast;
+    use HandlesLogging;
+    use HandlesRouting;
+    use HandlesNamespace;
 
     protected string $host;
-    
+
     protected int $port;
 
     /** @var resource|false */
@@ -54,13 +64,13 @@ class Server
     protected WebSocketHandler $wsHandler;
 
     protected HttpHandler $httpHandler;
-    
+
     protected NamespaceManager $namespaceManager;
 
     protected Middleware $middleware;
 
     protected bool $isDebug;
-    
+
     protected LoggerInterface $logger;
 
     protected ?RateLimitConfig $rateLimitConfig = null;
@@ -71,7 +81,7 @@ class Server
 
     /**
      * Server start time (Unix timestamp with microseconds)
-     * 
+     *
      * @var float|null
      */
     protected ?float $startTime = null;
@@ -90,7 +100,7 @@ class Server
 
     /**
      * Get all connected clients
-     * 
+     *
      * @return array<string, resource> Array of client IDs and their resources
      */
     public function getClients(): array
@@ -100,7 +110,7 @@ class Server
 
     /**
      * Get client types
-     * 
+     *
      * @return array<string, string> Array of client IDs and their types
      */
     public function getClientTypes(): array
@@ -110,17 +120,17 @@ class Server
 
     /**
      * Get the maximum message size
-     * 
+     *
      * @return int
      */
     public function getMaxMessageSize(): int
     {
         return $this->maxMessageSize;
     }
-    
+
     /**
      * Generate a unique client ID
-     * 
+     *
      * @return string Unique client identifier
      */
     protected function generateClientId(): string
@@ -129,7 +139,7 @@ class Server
         // Format: sockeon_{timestamp}_{counter}_{random}
         return sprintf(
             'sockeon_%s_%d_%s',
-            base_convert((string)microtime(true), 10, 36),
+            base_convert((string) microtime(true), 10, 36),
             $this->clientIdCounter,
             bin2hex(random_bytes(4))
         );
@@ -137,19 +147,19 @@ class Server
 
     /**
      * Get client ID from resource
-     * 
+     *
      * @param resource $resource
      * @return string|null
      */
     protected function getClientIdFromResource($resource): ?string
     {
-        $resourceId = (int)$resource;
+        $resourceId = (int) $resource;
         return $this->resourceToClientId[$resourceId] ?? null;
     }
 
     /**
      * Get all client IDs
-     * 
+     *
      * @return list<string> Array of client IDs
      */
     public function getClientIds(): array
@@ -159,7 +169,7 @@ class Server
 
     /**
      * Get the number of connected clients
-     * 
+     *
      * @return int Number of connected clients
      */
     public function getClientCount(): int
@@ -169,7 +179,7 @@ class Server
 
     /**
      * Check if a client is currently connected
-     * 
+     *
      * @param string $clientId The client ID to check
      * @return bool True if connected, false otherwise
      */
@@ -180,7 +190,7 @@ class Server
 
     /**
      * Get the type of a specific client
-     * 
+     *
      * @param string $clientId The client ID to check
      * @return string|null The client type or null if not found
      */
@@ -191,7 +201,7 @@ class Server
 
     /**
      * Get the rate limiting configuration
-     * 
+     *
      * @return RateLimitConfig|null The rate limiting configuration or null if disabled
      */
     public function getRateLimitConfig(): ?RateLimitConfig
@@ -201,7 +211,7 @@ class Server
 
     /**
      * Check if rate limiting is enabled
-     * 
+     *
      * @return bool True if rate limiting is enabled, false otherwise
      */
     public function isRateLimitingEnabled(): bool
@@ -211,7 +221,7 @@ class Server
 
     /**
      * Get the health check endpoint path
-     * 
+     *
      * @return string|null The health check path or null if disabled
      */
     public function getHealthCheckPath(): ?string
@@ -221,7 +231,7 @@ class Server
 
     /**
      * Get server start time
-     * 
+     *
      * @return float|null Unix timestamp with microseconds when server started, or null if not started
      */
     public function getStartTime(): ?float
@@ -231,7 +241,7 @@ class Server
 
     /**
      * Get server uptime in seconds
-     * 
+     *
      * @return int|null Server uptime in seconds, or null if server hasn't started
      */
     public function getUptime(): ?int
@@ -245,7 +255,7 @@ class Server
 
     /**
      * Get server uptime as a human-readable string
-     * 
+     *
      * @return string|null Human-readable uptime string (e.g., "2h 30m 15s"), or null if not started
      */
     public function getUptimeString(): ?string

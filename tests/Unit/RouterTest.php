@@ -19,24 +19,24 @@ test('router can handle http routes with parameters', function () {
         {
             return [
                 'id' => $request->getParam('id'),
-                'found' => true
+                'found' => true,
             ];
         }
     };
-    
+
     $server->registerController($controller);
-    
+
     $request = new Request([
         'method' => 'GET',
         'path' => '/users/123',
         'headers' => [],
-        'query' => []
+        'query' => [],
     ]);
-    
+
     $result = $server->getRouter()->dispatchHttp($request);
     expect($result)->toBe([
         'id' => '123',
-        'found' => true
+        'found' => true,
     ]);
 });
 
@@ -65,26 +65,26 @@ test('router matches exact routes before parameterized routes', function () {
             return ['route' => 'single'];
         }
     };
-    
+
     $server->registerController($controller);
-    
+
     $request1 = new Request([
         'method' => 'GET',
         'path' => '/users/all',
         'headers' => [],
-        'query' => []
+        'query' => [],
     ]);
-    
+
     $result1 = $server->getRouter()->dispatchHttp($request1);
     expect($result1)->toBe(['route' => 'all']);
-    
+
     $request2 = new Request([
         'method' => 'GET',
         'path' => '/users/123',
         'headers' => [],
-        'query' => []
+        'query' => [],
     ]);
-    
+
     $result2 = $server->getRouter()->dispatchHttp($request2);
     expect($result2)->toBe(['route' => 'single']);
 });
@@ -92,7 +92,7 @@ test('router matches exact routes before parameterized routes', function () {
 test('router handles multiple http methods for same path', function () {
     /** @var Server $server */
     $server = $this->server; //@phpstan-ignore-line
-    
+
     $controller = new class extends SocketController {
         /**
          * @param Request $request
@@ -134,19 +134,19 @@ test('router handles multiple http methods for same path', function () {
             return ['method' => 'DELETE'];
         }
     };
-    
+
     $server->registerController($controller);
-    
+
     $methods = ['GET', 'POST', 'PUT', 'DELETE'];
-    
+
     foreach ($methods as $method) {
         $request = new Request([
             'method' => $method,
             'path' => '/api/resource',
             'headers' => [],
-            'query' => []
+            'query' => [],
         ]);
-        
+
         $result = $server->getRouter()->dispatchHttp($request);
         expect($result)->toBe(['method' => $method]);
     }

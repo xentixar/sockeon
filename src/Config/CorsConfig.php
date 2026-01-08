@@ -1,9 +1,10 @@
 <?php
+
 /**
  * CORS Configuration Class
- * 
+ *
  * Handles Cross-Origin Resource Sharing configurations
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -63,7 +64,7 @@ class CorsConfig
                 $this->allowedOrigins = $origins;
             }
         }
-        
+
         if (isset($config['allowed_methods']) && is_array($config['allowed_methods'])) {
             $methods = [];
             foreach ($config['allowed_methods'] as $method) {
@@ -77,7 +78,7 @@ class CorsConfig
                 $this->allowedMethods = $methods;
             }
         }
-        
+
         if (isset($config['allowed_headers']) && is_array($config['allowed_headers'])) {
             $headers = [];
             foreach ($config['allowed_headers'] as $header) {
@@ -91,7 +92,7 @@ class CorsConfig
                 $this->allowedHeaders = $headers;
             }
         }
-        
+
         if (isset($config['allow_credentials'])) {
             if (is_bool($config['allow_credentials'])) {
                 $this->allowCredentials = $config['allow_credentials'];
@@ -99,7 +100,7 @@ class CorsConfig
                 $this->allowCredentials = !empty($config['allow_credentials']);
             }
         }
-        
+
         if (isset($config['max_age'])) {
             if (is_int($config['max_age'])) {
                 $this->maxAge = $config['max_age'];
@@ -111,7 +112,7 @@ class CorsConfig
 
     /**
      * Get allowed origins
-     * 
+     *
      * @return array<int, string>
      */
     public function getAllowedOrigins(): array
@@ -121,7 +122,7 @@ class CorsConfig
 
     /**
      * Get allowed methods
-     * 
+     *
      * @return array<int, string>
      */
     public function getAllowedMethods(): array
@@ -131,7 +132,7 @@ class CorsConfig
 
     /**
      * Get allowed headers
-     * 
+     *
      * @return array<int, string>
      */
     public function getAllowedHeaders(): array
@@ -141,7 +142,7 @@ class CorsConfig
 
     /**
      * Check if credentials are allowed
-     * 
+     *
      * @return bool
      */
     public function isCredentialsAllowed(): bool
@@ -151,7 +152,7 @@ class CorsConfig
 
     /**
      * Get max age
-     * 
+     *
      * @return int
      */
     public function getMaxAge(): int
@@ -161,7 +162,7 @@ class CorsConfig
 
     /**
      * Check if the origin is allowed
-     * 
+     *
      * @param string $origin
      * @return bool
      */
@@ -170,13 +171,13 @@ class CorsConfig
         if ($this->allowedOrigins === ['*']) {
             return true;
         }
-        
+
         return in_array($origin, $this->allowedOrigins);
     }
 
     /**
      * Set allowed origins
-     * 
+     *
      * @param array<int, string> $origins
      * @return void
      */
@@ -187,7 +188,7 @@ class CorsConfig
 
     /**
      * Set allowed methods
-     * 
+     *
      * @param array<int, string> $methods
      * @return void
      */
@@ -198,7 +199,7 @@ class CorsConfig
 
     /**
      * Set allowed headers
-     * 
+     *
      * @param array<int, string> $headers
      * @return void
      */
@@ -209,7 +210,7 @@ class CorsConfig
 
     /**
      * Set allow credentials
-     * 
+     *
      * @param bool $allowCredentials
      * @return void
      */
@@ -220,7 +221,7 @@ class CorsConfig
 
     /**
      * Set max age
-     * 
+     *
      * @param int $maxAge
      * @return void
      */

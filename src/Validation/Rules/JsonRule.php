@@ -1,9 +1,10 @@
 <?php
+
 /**
  * JsonRule
- * 
+ *
  * Validates that a value is valid JSON
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class JsonRule extends BaseRule
 {
     /**
      * Validate that a value is valid JSON
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is valid JSON
      */
@@ -35,7 +36,7 @@ class JsonRule extends BaseRule
 
     /**
      * Sanitize a JSON value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return mixed The sanitized JSON value
      */
@@ -57,7 +58,7 @@ class JsonRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -65,4 +66,4 @@ class JsonRule extends BaseRule
     {
         return "The {$fieldName} field must be valid JSON.";
     }
-} 
+}

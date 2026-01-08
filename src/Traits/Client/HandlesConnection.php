@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesConnection trait
- * 
+ *
  * Manages WebSocket connection establishment and management
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -29,17 +30,17 @@ trait HandlesConnection
         $this->disconnect();
 
         $socket = @stream_socket_client(
-            "tcp://{$this->host}:{$this->port}", 
-            $errno, 
-            $errstr, 
+            "tcp://{$this->host}:{$this->port}",
+            $errno,
+            $errstr,
             $this->timeout,
             STREAM_CLIENT_CONNECT
         );
-        
+
         if ($socket === false) {
             throw new ConnectionException("Could not connect to WebSocket server: " . (is_string($errstr) ? $errstr : 'Unknown error') . " (" . (is_int($errno) ? $errno : 'Unknown code') . ")");
         }
-        
+
         $this->socket = $socket;
 
         stream_set_blocking($this->socket, false);
@@ -59,14 +60,14 @@ trait HandlesConnection
             if ($this->connected) {
                 $this->sendCloseFrame();
             }
-            
+
             if (is_resource($this->socket)) {
                 fclose($this->socket);
             }
             $this->socket = null;
             $this->connected = false;
         }
-        
+
         return true;
     }
 
@@ -90,7 +91,7 @@ trait HandlesConnection
     protected function performHandshake(array $headers): bool
     {
         $key = base64_encode(openssl_random_pseudo_bytes(16));
-        
+
         $defaultHeaders = [
             'Host' => "{$this->host}:{$this->port}",
             'User-Agent' => 'Sockeon PHP WebSocket Client',
@@ -98,17 +99,17 @@ trait HandlesConnection
             'Upgrade' => 'websocket',
             'Sec-WebSocket-Key' => $key,
             'Sec-WebSocket-Version' => '13',
-            'Origin' => "http://{$this->host}"
+            'Origin' => "http://{$this->host}",
         ];
-        
+
         $headers = array_merge($defaultHeaders, $headers);
-        
+
         $request = "GET {$this->path} HTTP/1.1\r\n";
-        
+
         foreach ($headers as $headerName => $headerValue) {
             $request .= "$headerName: $headerValue\r\n";
         }
-        
+
         $request .= "\r\n";
 
         if (!is_resource($this->socket)) {
@@ -134,27 +135,27 @@ trait HandlesConnection
     {
         $response = '';
         $startTime = time();
-        
+
         while (true) {
             if (time() - $startTime > $this->timeout) {
                 throw new HandshakeException("Handshake timed out");
             }
-            
+
             if (!is_resource($this->socket)) {
                 throw new HandshakeException("Invalid socket resource during handshake");
             }
-            
+
             $buffer = fread($this->socket, 8192);
             if ($buffer === false) {
                 throw new HandshakeException("Failed to read from socket during handshake");
             }
-            
+
             $response .= $buffer;
-            
+
             if (str_contains($response, "\r\n\r\n")) {
                 break;
             }
-            
+
             usleep(10000);
         }
 
@@ -163,7 +164,7 @@ trait HandlesConnection
         }
 
         $expectedKey = base64_encode(pack('H*', sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
-        
+
         if (!preg_match('#Sec-WebSocket-Accept:\s(.+)\r\n#i', $response, $matches) || trim($matches[1]) !== $expectedKey) {
             throw new HandshakeException("Invalid Sec-WebSocket-Accept value");
         }

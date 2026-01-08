@@ -6,7 +6,6 @@ use Sockeon\Sockeon\Core\Middleware;
 
 trait HandlesMiddlewares
 {
-
     public function getMiddleware(): Middleware
     {
         return $this->middleware;
@@ -14,7 +13,7 @@ trait HandlesMiddlewares
 
     /**
      * Add a WebSocket middleware
-     * 
+     *
      * @param string $middleware The WebSocket middleware class implementing WebsocketMiddleware
      * @return self This server instance for method chaining
      */

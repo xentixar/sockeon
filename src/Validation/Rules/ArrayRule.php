@@ -1,9 +1,10 @@
 <?php
+
 /**
  * ArrayRule
- * 
+ *
  * Validates that a value is an array
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class ArrayRule extends BaseRule
 {
     /**
      * Validate that a value is an array
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is an array
      */
@@ -29,7 +30,7 @@ class ArrayRule extends BaseRule
 
     /**
      * Sanitize a value to array
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return array<mixed> The sanitized array value
      */
@@ -52,7 +53,7 @@ class ArrayRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -60,4 +61,4 @@ class ArrayRule extends BaseRule
     {
         return "The {$fieldName} field must be an array.";
     }
-} 
+}

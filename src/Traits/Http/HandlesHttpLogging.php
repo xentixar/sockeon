@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesHttpLogging trait
- * 
+ *
  * Manages HTTP request logging and debugging
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -17,7 +18,7 @@ trait HandlesHttpLogging
 {
     /**
      * Log debug information if debug mode is enabled
-     * 
+     *
      * @param string $message The debug message
      * @param mixed|null $data Additional data to log
      * @return void

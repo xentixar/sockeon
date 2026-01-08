@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Unified Rate Limit Attribute
- * 
+ *
  * Attribute for applying rate limiting configuration to both HTTP routes and WebSocket events.
  * Provides fine-grained control over rate limits with flexible naming for different contexts.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -19,7 +20,7 @@ class RateLimit
 {
     /**
      * Constructor
-     * 
+     *
      * @param int $maxCount Maximum requests/messages per client within the time window
      * @param int $timeWindow Time window in seconds
      * @param int $burstAllowance Additional requests/messages allowed for bursts
@@ -38,7 +39,7 @@ class RateLimit
 
     /**
      * Get maximum count allowed (requests for HTTP, messages for WebSocket)
-     * 
+     *
      * @return int
      */
     public function getMaxCount(): int
@@ -48,7 +49,7 @@ class RateLimit
 
     /**
      * Get maximum requests (alias for HTTP compatibility)
-     * 
+     *
      * @return int
      */
     public function getMaxRequests(): int
@@ -58,7 +59,7 @@ class RateLimit
 
     /**
      * Get maximum messages (alias for WebSocket compatibility)
-     * 
+     *
      * @return int
      */
     public function getMaxMessages(): int
@@ -68,7 +69,7 @@ class RateLimit
 
     /**
      * Get time window in seconds
-     * 
+     *
      * @return int
      */
     public function getTimeWindow(): int
@@ -78,7 +79,7 @@ class RateLimit
 
     /**
      * Get burst allowance
-     * 
+     *
      * @return int
      */
     public function getBurstAllowance(): int
@@ -88,7 +89,7 @@ class RateLimit
 
     /**
      * Check if this rate limit should bypass global rate limiting
-     * 
+     *
      * @return bool
      */
     public function shouldBypassGlobal(): bool
@@ -98,7 +99,7 @@ class RateLimit
 
     /**
      * Get whitelist of IP addresses
-     * 
+     *
      * @return array<int, string>
      */
     public function getWhitelist(): array
@@ -108,7 +109,7 @@ class RateLimit
 
     /**
      * Check if an IP is whitelisted for this rate limit
-     * 
+     *
      * @param string $ip IP address to check
      * @return bool
      */
@@ -124,7 +125,7 @@ class RateLimit
 
     /**
      * Match IP address against pattern (supports CIDR notation)
-     * 
+     *
      * @param string $ip IP address to check
      * @param string $pattern Pattern to match against
      * @return bool
@@ -138,18 +139,18 @@ class RateLimit
         if (str_contains($pattern, '/')) {
             [$subnet, $mask] = explode('/', $pattern, 2);
             $mask = (int) $mask;
-            
+
             if ($mask < 0 || $mask > 32) {
                 return false;
             }
-            
+
             $ipLong = ip2long($ip);
             $subnetLong = ip2long($subnet);
-            
+
             if ($ipLong === false || $subnetLong === false) {
                 return false;
             }
-            
+
             $maskLong = -1 << (32 - $mask);
             return ($ipLong & $maskLong) === ($subnetLong & $maskLong);
         }

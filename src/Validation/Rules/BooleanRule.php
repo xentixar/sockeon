@@ -1,9 +1,10 @@
 <?php
+
 /**
  * BooleanRule
- * 
+ *
  * Validates that a value is a boolean
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class BooleanRule extends BaseRule
 {
     /**
      * Validate that a value is a boolean
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is a boolean
      */
@@ -29,7 +30,7 @@ class BooleanRule extends BaseRule
 
     /**
      * Sanitize a value to boolean
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return bool The sanitized boolean value
      */
@@ -49,7 +50,7 @@ class BooleanRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -57,4 +58,4 @@ class BooleanRule extends BaseRule
     {
         return "The {$fieldName} field must be a boolean.";
     }
-} 
+}

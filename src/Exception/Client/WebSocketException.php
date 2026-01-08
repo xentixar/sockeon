@@ -1,9 +1,10 @@
 <?php
+
 /**
  * WebSocketException class
- * 
+ *
  * Base exception class for WebSocket client errors.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025

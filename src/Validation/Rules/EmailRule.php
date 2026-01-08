@@ -1,9 +1,10 @@
 <?php
+
 /**
  * EmailRule
- * 
+ *
  * Validates that a value is a valid email address
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class EmailRule extends BaseRule
 {
     /**
      * Validate that a value is a valid email
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is a valid email
      */
@@ -32,7 +33,7 @@ class EmailRule extends BaseRule
 
     /**
      * Sanitize an email value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized email value
      */
@@ -48,7 +49,7 @@ class EmailRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -56,4 +57,4 @@ class EmailRule extends BaseRule
     {
         return "The {$fieldName} field must be a valid email address.";
     }
-} 
+}

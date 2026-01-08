@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesFrames trait
- * 
+ *
  * Manages WebSocket frame encoding and decoding for client
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -26,9 +27,9 @@ trait HandlesFrames
         $length = strlen($payload);
         $mask = '';
         $maskKey = '';
-        
+
         $frame = chr(0x80 | $opcode);
-        
+
         if ($length <= 125) {
             $frame .= chr($length | ($masked ? 0x80 : 0));
         } elseif ($length <= 65535) {
@@ -38,21 +39,21 @@ trait HandlesFrames
             $frame .= chr(127 | ($masked ? 0x80 : 0));
             $frame .= pack('J', $length);
         }
-        
+
         if ($masked) {
             $maskKey = openssl_random_pseudo_bytes(4);
             $mask = $maskKey;
             $frame .= $maskKey;
-            
+
             $maskedPayload = '';
             for ($i = 0; $i < $length; $i++) {
                 $maskedPayload .= $payload[$i] ^ $maskKey[$i % 4];
             }
             $payload = $maskedPayload;
         }
-        
+
         $frame .= $payload;
-        
+
         return $frame;
     }
 
@@ -65,7 +66,7 @@ trait HandlesFrames
     protected function decodeWebSocketFrames(string $data): array
     {
         $frames = [];
-        
+
         while (strlen($data) > 0) {
             if (strlen($data) < 2) {
                 break;
@@ -73,14 +74,14 @@ trait HandlesFrames
 
             $firstByte = ord($data[0]);
             $secondByte = ord($data[1]);
-            
+
             $fin = ($firstByte & 0x80) == 0x80;
             $opcode = $firstByte & 0x0F;
             $masked = ($secondByte & 0x80) == 0x80;
             $payloadLength = $secondByte & 0x7F;
-            
+
             $offset = 2;
-            
+
             if ($payloadLength == 126) {
                 if (strlen($data) < 4) {
                     break;
@@ -89,10 +90,9 @@ trait HandlesFrames
                 if (!$unpacked || !isset($unpacked[1])) {
                     break;
                 }
-                $payloadLength = (int)$unpacked[1]; //@phpstan-ignore-line
+                $payloadLength = (int) $unpacked[1]; //@phpstan-ignore-line
                 $offset += 2;
-            }
-            elseif ($payloadLength == 127) {
+            } elseif ($payloadLength == 127) {
                 if (strlen($data) < 10) {
                     break;
                 }
@@ -103,11 +103,11 @@ trait HandlesFrames
                 if (is_int($unpacked[1])) {
                     $payloadLength = $unpacked[1];
                 } else {
-                    $payloadLength = (int)$unpacked[1]; //@phpstan-ignore-line
+                    $payloadLength = (int) $unpacked[1]; //@phpstan-ignore-line
                 }
                 $offset = $offset + 8;
             }
-            
+
             $frameLength = $offset;
             if ($masked) {
                 $frameLength += 4;
@@ -122,33 +122,33 @@ trait HandlesFrames
                 $maskKey = substr($data, $offset, 4);
                 $offset += 4;
 
-                $payload = substr($data, $offset, (int)$payloadLength);
+                $payload = substr($data, $offset, (int) $payloadLength);
                 $unmaskedPayload = '';
-                
+
                 $length = strlen($payload);
                 for ($i = 0; $i < $length; $i++) {
                     $unmaskedPayload .= $payload[$i] ^ $maskKey[$i % 4];
                 }
-                
+
                 $frames[] = [
                     'fin' => $fin,
                     'opcode' => $opcode,
                     'masked' => $masked,
-                    'payload' => $unmaskedPayload
+                    'payload' => $unmaskedPayload,
                 ];
             } else {
-                $payload = substr($data, $offset, (int)$payloadLength);
+                $payload = substr($data, $offset, (int) $payloadLength);
                 $frames[] = [
                     'fin' => $fin,
                     'opcode' => $opcode,
                     'masked' => $masked,
-                    'payload' => $payload
+                    'payload' => $payload,
                 ];
             }
-            
+
             $data = substr($data, $frameLength);
         }
-        
+
         return $frames;
     }
 
@@ -164,10 +164,10 @@ trait HandlesFrames
         if ($this->socket === null || !$this->connected) {
             return;
         }
-        
+
         $payload = pack('n', $code) . $reason;
         $frame = $this->createWebSocketFrame($payload, 8);
-        
+
         if (is_resource($this->socket)) {
             fwrite($this->socket, $frame);
         }

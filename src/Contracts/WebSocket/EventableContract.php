@@ -4,7 +4,7 @@ namespace Sockeon\Sockeon\Contracts\WebSocket;
 
 /**
  * EventableContract interface
- * 
+ *
  * This interface defines the methods required for broadcasting events in a WebSocket context.
  * Classes implementing this interface should provide the necessary details for event broadcasting.
  *
@@ -23,14 +23,14 @@ interface EventableContract
 
     /**
      * Get the data to be broadcast with the event.
-     * 
+     *
      * @return array<mixed>
      */
     public function broadcastWith(): array;
 
     /**
      * Get the rooms to broadcast the event to.
-     * 
+     *
      * @return array<string>|null
      */
     public function broadcastOn(): ?array;

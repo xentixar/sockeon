@@ -28,7 +28,7 @@ trait HandlesClients
      * @var PerformanceMonitor
      */
     protected PerformanceMonitor $performanceMonitor;
-    
+
     protected function startSocket(): void
     {
         $this->logger->info("[Sockeon Server] Starting server...");
@@ -49,8 +49,8 @@ trait HandlesClients
             'socket' => [
                 'so_reuseport' => 1,
                 'so_keepalive' => 1,
-                'backlog' => 1024
-            ]
+                'backlog' => 1024,
+            ],
         ]);
 
         $this->socket = stream_socket_server(
@@ -68,7 +68,7 @@ trait HandlesClients
         }
 
         stream_set_blocking($this->socket, false);
-        
+
         // Set socket options for better performance
         if (function_exists('socket_import_stream')) {
             $socketResource = socket_import_stream($this->socket);
@@ -112,7 +112,7 @@ trait HandlesClients
                     $this->cleanupDeadConnections();
                     $this->connectionPool->cleanup();
                     $lastBufferCleanup = microtime(true);
-                    
+
                     // Force garbage collection periodically
                     if (function_exists('gc_collect_cycles')) {
                         gc_collect_cycles();
@@ -135,7 +135,7 @@ trait HandlesClients
                 $this->logger->exception($e, ['context' => 'Main loop']);
                 usleep(50000); // Reduced sleep for faster recovery
             }
-            
+
             // Micro-sleep to prevent CPU spinning when idle, but yield to OS scheduler
             if (empty($readSockets) || count($this->clients) === 0) {
                 usleep(10000); // Longer sleep when no clients
@@ -154,16 +154,16 @@ trait HandlesClients
             // Accept clients with connection limit to prevent overwhelming
             $acceptedCount = 0;
             $maxAcceptPerLoop = min(5, 10000 - count($this->clients)); // Limit total connections
-            
+
             while (($client = @stream_socket_accept($this->socket, 0)) !== false && $acceptedCount < $maxAcceptPerLoop) {
                 if (is_resource($client)) {
                     stream_set_blocking($client, false);
-                    
+
                     // Generate unique client ID
                     $clientId = $this->generateClientId();
-                    $resourceId = (int)$client;
+                    $resourceId = (int) $client;
                     $this->resourceToClientId[$resourceId] = $clientId;
-                    
+
                     // Check if we're at capacity
                     if (count($this->clients) >= 10000) {
                         @fclose($client);
@@ -171,7 +171,7 @@ trait HandlesClients
                         $this->logger->warning("[Sockeon Connection] Connection limit reached, rejecting client");
                         break;
                     }
-                    
+
                     // Try to reuse connection from pool first
                     $pooledConnection = $this->connectionPool->acquireConnection('unknown', $clientId, $client);
                     $reuseCount = isset($pooledConnection['reuse_count']) && is_int($pooledConnection['reuse_count']) ? $pooledConnection['reuse_count'] : 0;
@@ -179,15 +179,15 @@ trait HandlesClients
                         // Use pooled connection data for optimization
                         $this->logger->debug("[Sockeon Connection] Reusing pooled connection for client: $clientId (reused $reuseCount times)");
                     }
-                    
+
                     $this->clients[$clientId] = $client;
                     $this->clientTypes[$clientId] = 'unknown';
                     $this->namespaceManager->joinNamespace($clientId);
                     $this->logger->debug("[Sockeon Connection] Client connected: $clientId");
-                    
+
                     // Update performance metrics
                     $this->performanceMonitor->recordRequest('connection');
-                    
+
                     $acceptedCount++;
                 }
             }
@@ -215,26 +215,26 @@ trait HandlesClients
     {
         foreach ($read as $client) {
             $clientId = $this->getClientIdFromResource($client);
-            
+
             if ($clientId === null) {
                 // Unknown client, disconnect
                 @fclose($client);
                 continue;
             }
-            
-                try {
-                    // Check if client is still connected before reading
-                    if (!is_resource($client) || feof($client)) {
-                        $this->disconnectClient($clientId);
-                        continue;
-                    }
-                    
-                    $data = @fread($client, 32768); // Moderate buffer size
-                    
-                    if ($data === '' || $data === false) {
-                        $this->disconnectClient($clientId);
-                        continue;
-                    }                if (($this->clientTypes[$clientId] ?? 'unknown') === 'ws') {
+
+            try {
+                // Check if client is still connected before reading
+                if (!is_resource($client) || feof($client)) {
+                    $this->disconnectClient($clientId);
+                    continue;
+                }
+
+                $data = @fread($client, 32768); // Moderate buffer size
+
+                if ($data === '' || $data === false) {
+                    $this->disconnectClient($clientId);
+                    continue;
+                }                if (($this->clientTypes[$clientId] ?? 'unknown') === 'ws') {
                     $this->handleHttpWs($clientId, $client, $data);
                 } else {
                     if (!isset($this->clientBuffers[$clientId])) {
@@ -242,7 +242,7 @@ trait HandlesClients
                         $this->clientBufferTimestamps[$clientId] = microtime(true);
                     }
                     $this->clientBuffers[$clientId] .= $data;
-                    
+
                     if ($this->isCompleteHttpRequest($this->clientBuffers[$clientId])) {
                         $this->handleHttpWs($clientId, $client, $this->clientBuffers[$clientId]);
                         unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
@@ -262,7 +262,7 @@ trait HandlesClients
 
     /**
      * Check if we have received a complete HTTP request
-     * 
+     *
      * @param string $data The buffered request data
      * @return bool True if the request is complete
      */
@@ -276,14 +276,14 @@ trait HandlesClients
         if ($headerEndPos === false) {
             return false;
         }
-        
+
         $headerSection = substr($data, 0, $headerEndPos);
         $bodySection = substr($data, $headerEndPos + 4);
-        
+
         $contentLength = 0;
         $transferEncoding = '';
         $lines = explode("\r\n", $headerSection);
-        
+
         foreach ($lines as $line) {
             if (stripos($line, 'Content-Length:') === 0) {
                 $parts = explode(':', $line, 2);
@@ -297,21 +297,21 @@ trait HandlesClients
                 }
             }
         }
-        
+
         if ($transferEncoding === 'chunked') {
             return $this->isCompleteChunkedRequest($bodySection);
         }
-        
+
         if ($contentLength === 0) {
             return true;
         }
-        
+
         return strlen($bodySection) >= $contentLength;
     }
 
     /**
      * Check if a chunked request is complete
-     * 
+     *
      * @param string $body The request body
      * @return bool True if the chunked request is complete
      */
@@ -322,7 +322,7 @@ trait HandlesClients
 
     /**
      * Clean up expired client buffers
-     * 
+     *
      * @return void
      */
     protected function cleanupExpiredBuffers(): void
@@ -339,24 +339,24 @@ trait HandlesClients
 
     /**
      * Clean up dead connections that are no longer valid resources
-     * 
+     *
      * @return void
      */
     protected function cleanupDeadConnections(): void
     {
         $deadConnections = [];
-        
+
         foreach ($this->clients as $clientId => $client) {
             if (!is_resource($client) || @feof($client)) {
                 $deadConnections[] = $clientId;
             }
         }
-        
+
         foreach ($deadConnections as $clientId) {
             $this->logger->debug("Cleaning up dead connection: $clientId");
             $this->disconnectClient($clientId);
         }
-        
+
         $this->logger->info("[Sockeon Cleanup] Active connections: " . count($this->clients));
     }
 
@@ -366,8 +366,8 @@ trait HandlesClients
             if (isset($this->clients[$clientId])) {
                 // Get resource for cleanup
                 $client = $this->clients[$clientId];
-                $resourceId = is_resource($client) ? (int)$client : null;
-                
+                $resourceId = is_resource($client) ? (int) $client : null;
+
                 // Only dispatch disconnect event if client was a WebSocket and still connected
                 if (($this->clientTypes[$clientId] ?? null) === 'ws' && is_resource($client)) {
                     try {
@@ -386,18 +386,18 @@ trait HandlesClients
                         @fclose($client);
                     }
                 }
-                
+
                 // Clean up all client data
                 unset($this->clients[$clientId], $this->clientTypes[$clientId], $this->clientData[$clientId]);
                 if (isset($this->clientBuffers[$clientId])) {
                     unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
                 }
-                
+
                 // Clean up resource-to-clientId mapping
                 if ($resourceId !== null) {
                     unset($this->resourceToClientId[$resourceId]);
                 }
-                
+
                 $this->namespaceManager->leaveNamespace($clientId);
 
                 $this->logger->debug("[Sockeon Connection] Client disconnected: $clientId");
@@ -423,7 +423,7 @@ trait HandlesClients
 
     /**
      * Get the IP address of a client
-     * 
+     *
      * @param string $clientId The client ID
      * @return string|null The client IP address or null if not found
      */
@@ -445,13 +445,13 @@ trait HandlesClients
 
     /**
      * Register async task processors
-     * 
+     *
      * @return void
      */
     protected function registerTaskProcessors(): void
     {
         // Database operations
-        $this->taskQueue->registerProcessor('db_write', function(array $data, array $task) {
+        $this->taskQueue->registerProcessor('db_write', function (array $data, array $task) {
             // Queue database writes to avoid blocking main thread
             $this->logger->debug("[Async Task] Processing DB write", ['data' => $data]);
             // Implement actual database write here
@@ -459,7 +459,7 @@ trait HandlesClients
         });
 
         // File operations
-        $this->taskQueue->registerProcessor('file_write', function(array $data, array $task) {
+        $this->taskQueue->registerProcessor('file_write', function (array $data, array $task) {
             try {
                 if (isset($data['path']) && is_string($data['path']) && isset($data['content'])) {
                     file_put_contents($data['path'], $data['content']);
@@ -472,14 +472,14 @@ trait HandlesClients
         });
 
         // Log processing
-        $this->taskQueue->registerProcessor('log_process', function(array $data, array $task) {
+        $this->taskQueue->registerProcessor('log_process', function (array $data, array $task) {
             // Process logs asynchronously
             $this->logger->debug("[Async Task] Processing log", ['data' => $data]);
             return true;
         });
 
         // External API calls
-        $this->taskQueue->registerProcessor('api_call', function(array $data, array $task) {
+        $this->taskQueue->registerProcessor('api_call', function (array $data, array $task) {
             try {
                 if (isset($data['url']) && is_string($data['url'])) {
                     // Make external API calls without blocking
@@ -487,10 +487,10 @@ trait HandlesClients
                     $context = stream_context_create([
                         'http' => [
                             'timeout' => 5,
-                            'method' => $method
-                        ]
+                            'method' => $method,
+                        ],
                     ]);
-                    
+
                     $result = @file_get_contents($data['url'], false, $context);
                     return $result !== false;
                 }
@@ -503,7 +503,7 @@ trait HandlesClients
 
     /**
      * Update performance metrics
-     * 
+     *
      * @return void
      */
     protected function updatePerformanceMetrics(): void
@@ -513,11 +513,11 @@ trait HandlesClients
             $connectionStats = [
                 'active_connections' => count($this->clients),
                 'total_accepted' => count($this->clients), // This should be tracked separately
-                'total_closed' => 0 // This should be tracked separately
+                'total_closed' => 0, // This should be tracked separately
             ];
-            
+
             $this->performanceMonitor->updateConnectionStats($connectionStats);
-            
+
             // Update with connection pool and task queue stats
             $this->performanceMonitor->collectSystemMetrics();
         } catch (Throwable $e) {
@@ -527,7 +527,7 @@ trait HandlesClients
 
     /**
      * Queue an async task
-     * 
+     *
      * @param string $type Task type
      * @param array<string, mixed> $data Task data
      * @param int $priority Priority level
@@ -540,7 +540,7 @@ trait HandlesClients
 
     /**
      * Get comprehensive server statistics
-     * 
+     *
      * @return array<string, mixed>
      */
     public function getServerStats(): array
@@ -555,14 +555,14 @@ trait HandlesClients
                 'client_types' => array_count_values($this->clientTypes),
                 'pending_tasks' => $this->taskQueue->getPendingCount(),
                 'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
-                'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2)
-            ]
+                'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
+            ],
         ];
     }
 
     /**
      * Record request for performance monitoring
-     * 
+     *
      * @param string $type Request type (http/websocket)
      * @param float $responseTime Response time in milliseconds
      * @return void
@@ -574,7 +574,7 @@ trait HandlesClients
 
     /**
      * Record error for monitoring
-     * 
+     *
      * @param string $type Error type (connection/request)
      * @return void
      */

@@ -1,9 +1,10 @@
 <?php
+
 /**
  * RegexRule
- * 
+ *
  * Validates that a value matches a regex pattern
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class RegexRule extends BaseRule
 {
     /**
      * Validate that a value matches a regex pattern
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value matches the pattern
      */
@@ -39,7 +40,7 @@ class RegexRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -47,4 +48,4 @@ class RegexRule extends BaseRule
     {
         return "The {$fieldName} field format is invalid.";
     }
-} 
+}

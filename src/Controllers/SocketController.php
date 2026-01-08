@@ -1,10 +1,11 @@
 <?php
+
 /**
  * SocketController abstract class
- * 
+ *
  * Base class for all socket controllers providing access to core server functionalities
  * Provides methods for emitting events, broadcasting messages, and managing rooms
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -27,9 +28,9 @@ abstract class SocketController
 
     /**
      * Sets the server instance for this controller
-     * 
+     *
      * This method is called by the server when registering the controller
-     * 
+     *
      * @param Server $server The server instance to set
      * @return void
      */
@@ -40,7 +41,7 @@ abstract class SocketController
 
     /**
      * Emits an event to a specific client
-     * 
+     *
      * @param string $clientId The ID of the client to send to
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
@@ -64,10 +65,10 @@ abstract class SocketController
     {
         $this->server->broadcast($event, $data, $namespace, $room);
     }
-    
+
     /**
      * Adds a client to a room
-     * 
+     *
      * @param string $clientId The ID of the client to add
      * @param string $room The room name
      * @param string $namespace The namespace
@@ -77,10 +78,10 @@ abstract class SocketController
     {
         $this->server->joinRoom($clientId, $room, $namespace);
     }
-    
+
     /**
      * Removes a client from a room
-     * 
+     *
      * @param string $clientId The ID of the client to remove
      * @param string $room The room name to leave
      * @param string $namespace The namespace containing the room
@@ -90,12 +91,12 @@ abstract class SocketController
     {
         $this->server->leaveRoom($clientId, $room, $namespace);
     }
-    
+
     /**
      * Disconnects a client from the server
-     * 
+     *
      * Closes the connection and cleans up all client resources
-     * 
+     *
      * @param string $clientId The ID of the client to disconnect
      * @return void
      */
@@ -106,7 +107,7 @@ abstract class SocketController
 
     /**
      * Gets data for a specific client
-     * 
+     *
      * @param string $clientId The ID of the client to get data for
      * @param string|null $key Optional key to retrieve specific data
      * @return mixed The data for the client, or null if not found
@@ -118,7 +119,7 @@ abstract class SocketController
 
     /**
      * Sets data for a specific client
-     * 
+     *
      * @param string $clientId The ID of the client to set data for
      * @param string $key The key to set in the client's data
      * @param mixed $value The value to set for the key
@@ -131,7 +132,7 @@ abstract class SocketController
 
     /**
      * Gets all clients in a specific namespace
-     * 
+     *
      * @param string $namespace The namespace to query (default: '/')
      * @return array<string, string> Array of client IDs in the namespace
      */
@@ -142,7 +143,7 @@ abstract class SocketController
 
     /**
      * Gets the namespace a client belongs to
-     * 
+     *
      * @param string $clientId The client ID to query
      * @return string The namespace the client belongs to
      */
@@ -153,7 +154,7 @@ abstract class SocketController
 
     /**
      * Joins a client to a specific namespace
-     * 
+     *
      * @param string $clientId The client ID to move
      * @param string $namespace The namespace to join
      * @return void
@@ -165,7 +166,7 @@ abstract class SocketController
 
     /**
      * Gets all clients in a specific room
-     * 
+     *
      * @param string $room The room name to query
      * @param string $namespace The namespace containing the room (default: '/')
      * @return array<string, string> Array of client IDs in the room
@@ -177,7 +178,7 @@ abstract class SocketController
 
     /**
      * Gets all rooms in a namespace
-     * 
+     *
      * @param string $namespace The namespace to query (default: '/')
      * @return array<int, string> Array of room names
      */
@@ -188,7 +189,7 @@ abstract class SocketController
 
     /**
      * Gets all rooms a client belongs to
-     * 
+     *
      * @param string $clientId The client ID to query
      * @return array<int, string> Array of room names the client belongs to
      */
@@ -199,7 +200,7 @@ abstract class SocketController
 
     /**
      * Removes a client from all rooms they belong to
-     * 
+     *
      * @param string $clientId The client ID to remove from all rooms
      * @return void
      */
@@ -210,7 +211,7 @@ abstract class SocketController
 
     /**
      * Broadcasts an event to all clients in a specific namespace
-     * 
+     *
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @param string $namespace The namespace to broadcast to
@@ -223,7 +224,7 @@ abstract class SocketController
 
     /**
      * Broadcasts an event to all clients in a specific room
-     * 
+     *
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @param string $room The room to broadcast to
@@ -237,7 +238,7 @@ abstract class SocketController
 
     /**
      * Broadcasts an event to all connected clients
-     * 
+     *
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @return void
@@ -249,7 +250,7 @@ abstract class SocketController
 
     /**
      * Gets all connected client IDs
-     * 
+     *
      * @return list<string> Array of all connected client IDs
      */
     public function getAllClients(): array
@@ -259,7 +260,7 @@ abstract class SocketController
 
     /**
      * Gets the total number of connected clients
-     * 
+     *
      * @return int The number of connected clients
      */
     public function getClientCount(): int
@@ -269,7 +270,7 @@ abstract class SocketController
 
     /**
      * Checks if a client is currently connected
-     * 
+     *
      * @param string $clientId The client ID to check
      * @return bool True if the client is connected, false otherwise
      */
@@ -280,7 +281,7 @@ abstract class SocketController
 
     /**
      * Gets the client connection type (e.g., 'ws', 'http', 'unknown')
-     * 
+     *
      * @param string $clientId The client ID to check
      * @return string|null The client type or null if not found
      */
@@ -291,10 +292,10 @@ abstract class SocketController
 
     /**
      * Gets the server instance for advanced operations
-     * 
+     *
      * This provides direct access to the server for operations not covered
      * by the controller methods
-     * 
+     *
      * @return Server The server instance
      */
     public function getServer(): Server
@@ -304,7 +305,7 @@ abstract class SocketController
 
     /**
      * Gets the namespace manager for advanced namespace operations
-     * 
+     *
      * @return NamespaceManager The namespace manager instance
      */
     public function getNamespaceManager(): NamespaceManager
@@ -314,7 +315,7 @@ abstract class SocketController
 
     /**
      * Gets the router for advanced routing operations
-     * 
+     *
      * @return Router The router instance
      */
     public function getRouter(): Router
@@ -324,7 +325,7 @@ abstract class SocketController
 
     /**
      * Gets the logger instance
-     * 
+     *
      * @return LoggerInterface The logger instance
      */
     public function getLogger(): LoggerInterface
@@ -334,7 +335,7 @@ abstract class SocketController
 
     /**
      * Get server uptime in seconds
-     * 
+     *
      * @return int|null Server uptime in seconds, or null if server hasn't started
      */
     public function getUptime(): ?int
@@ -344,7 +345,7 @@ abstract class SocketController
 
     /**
      * Get server uptime as a human-readable string
-     * 
+     *
      * @return string|null Human-readable uptime string (e.g., "2h 30m 15s"), or null if not started
      */
     public function getUptimeString(): ?string
@@ -354,7 +355,7 @@ abstract class SocketController
 
     /**
      * Get server start time
-     * 
+     *
      * @return float|null Unix timestamp with microseconds when server started, or null if not started
      */
     public function getStartTime(): ?float
@@ -364,7 +365,7 @@ abstract class SocketController
 
     /**
      * Get comprehensive server statistics including scaling features
-     * 
+     *
      * @return array<string, mixed> Comprehensive server statistics
      */
     public function getServerStats(): array
@@ -374,7 +375,7 @@ abstract class SocketController
 
     /**
      * Queue an async task for background processing
-     * 
+     *
      * @param string $type Task type
      * @param array<string, mixed> $data Task data
      * @param int $priority Priority level (higher = more important)
@@ -387,7 +388,7 @@ abstract class SocketController
 
     /**
      * Get performance metrics from the server
-     * 
+     *
      * @return array<string, mixed> Performance metrics
      */
     public function getPerformanceMetrics(): array
@@ -403,7 +404,7 @@ abstract class SocketController
 
     /**
      * Get connection pool statistics
-     * 
+     *
      * @return array<string, mixed> Connection pool statistics
      */
     public function getConnectionPoolStats(): array
@@ -419,7 +420,7 @@ abstract class SocketController
 
     /**
      * Get async task queue statistics
-     * 
+     *
      * @return array<string, mixed> Task queue statistics
      */
     public function getTaskQueueStats(): array
@@ -435,7 +436,7 @@ abstract class SocketController
 
     /**
      * Get client IP address
-     * 
+     *
      * @param string $clientId The client ID
      * @return string|null The client IP address or null if not found
      */
@@ -446,7 +447,7 @@ abstract class SocketController
 
     /**
      * Record a performance metric
-     * 
+     *
      * @param string $type Metric type (http/websocket/connection/request)
      * @param float $value Metric value (response time, etc.)
      * @return void
@@ -458,7 +459,7 @@ abstract class SocketController
 
     /**
      * Record an error metric
-     * 
+     *
      * @param string $type Error type (connection/request)
      * @return void
      */

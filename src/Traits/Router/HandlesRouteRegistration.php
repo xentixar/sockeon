@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesRouteRegistration trait
- * 
+ *
  * Manages registration of controllers and their routes using reflection
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -38,15 +39,15 @@ trait HandlesRouteRegistration
                 $event = $attrInstance->event;
                 $this->wsRoutes[$event] = [$controller, $method->getName(), $attrInstance->middlewares, $attrInstance->excludeGlobalMiddlewares];
             }
-            
+
             foreach ($method->getAttributes(OnConnect::class) as $attr) {
                 $this->specialEventHandlers['connect'][] = [$controller, $method->getName()];
             }
-            
+
             foreach ($method->getAttributes(OnDisconnect::class) as $attr) {
                 $this->specialEventHandlers['disconnect'][] = [$controller, $method->getName()];
             }
-            
+
             foreach ($method->getAttributes(HttpRoute::class) as $attr) {
                 $httpAttr = $attr->newInstance();
                 $key = $httpAttr->method . ' ' . $httpAttr->path;

@@ -1,11 +1,12 @@
 <?php
+
 /**
  * WebSocket Rate Limiting Middleware
- * 
+ *
  * Implements rate limiting for WebSocket messages to prevent abuse and ensure fair usage.
- * Tracks messages per client within configurable time windows with support for both 
+ * Tracks messages per client within configurable time windows with support for both
  * global and event-specific rate limits.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -41,7 +42,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Handle the WebSocket message with rate limiting
-     * 
+     *
      * @param string $clientId The client ID
      * @param string $event The event name
      * @param array<string, mixed> $data The event data
@@ -57,7 +58,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
         if (!$clientIp) {
             $server->getLogger()->warning("[Sockeon WebSocket Rate Limit] Unable to get client IP address", [
                 'client_id' => $clientId,
-                'event' => $event
+                'event' => $event,
             ]);
             return $next($clientId, $data);
         }
@@ -74,7 +75,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             'has_event_config' => $useEventConfig,
             'use_global_config' => $useGlobalConfig,
             'event_max_messages' => $eventRateLimit ? $eventRateLimit->getMaxMessages() : null,
-            'event_bypass_global' => $eventRateLimit ? $eventRateLimit->shouldBypassGlobal() : null
+            'event_bypass_global' => $eventRateLimit ? $eventRateLimit->shouldBypassGlobal() : null,
         ]);
 
         if (!$useEventConfig && !$useGlobalConfig) {
@@ -87,7 +88,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             if ($eventRateLimit->isWhitelisted($clientIp)) {
                 $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] IP is whitelisted for event", [
                     'client_ip' => $clientIp,
-                    'event' => $event
+                    'event' => $event,
                 ]);
                 if ($eventRateLimit->shouldBypassGlobal()) {
                     $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Bypassing global rate limiting due to event config");
@@ -101,7 +102,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                         'client_ip' => $clientIp,
                         'client_id' => $clientId,
                         'event' => $event,
-                        'limit' => $eventRateLimit->getMaxMessages()
+                        'limit' => $eventRateLimit->getMaxMessages(),
                     ]);
                     $this->sendRateLimitMessage($clientId, $event, $eventRateLimit, $server, 'event-specific');
                     return null;
@@ -110,7 +111,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                 $this->recordEventMessage($clientIp, $event);
                 $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Event message recorded", [
                     'client_ip' => $clientIp,
-                    'event' => $event
+                    'event' => $event,
                 ]);
 
                 if ($eventRateLimit->shouldBypassGlobal()) {
@@ -124,7 +125,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Processing global rate limiting");
             if ($globalRateLimitConfig->isWhitelisted($clientIp)) {
                 $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] IP is whitelisted globally", [
-                    'client_ip' => $clientIp
+                    'client_ip' => $clientIp,
                 ]);
                 return $next($clientId, $data);
             }
@@ -137,7 +138,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                     'client_id' => $clientId,
                     'event' => $event,
                     'limit' => $globalRateLimitConfig->getMaxWebSocketMessagesPerClient(),
-                    'burst_allowance' => $globalRateLimitConfig->getBurstAllowance()
+                    'burst_allowance' => $globalRateLimitConfig->getBurstAllowance(),
                 ]);
                 $this->sendGlobalRateLimitMessage($clientId, $event, $globalRateLimitConfig, $server);
                 return null;
@@ -145,7 +146,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
             $this->recordGlobalMessage($clientIp);
             $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Global message recorded", [
-                'client_ip' => $clientIp
+                'client_ip' => $clientIp,
             ]);
         }
 
@@ -154,7 +155,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Check if the IP is globally rate limited
-     * 
+     *
      * @param string $ip Client IP address
      * @param \Sockeon\Sockeon\Config\RateLimitConfig $config Rate limit configuration
      * @return bool True if rate limited, false otherwise
@@ -177,7 +178,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Check if the IP is rate limited for a specific event
-     * 
+     *
      * @param string $ip Client IP address
      * @param string $event Event name
      * @param RateLimit $rateLimitConfig Event-specific rate limit configuration
@@ -201,7 +202,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Record a global message for the given IP
-     * 
+     *
      * @param string $ip Client IP address
      * @return void
      */
@@ -218,7 +219,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Record an event-specific message for the given IP and event
-     * 
+     *
      * @param string $ip Client IP address
      * @param string $event Event name
      * @return void
@@ -240,7 +241,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Send a rate limit exceeded message to the client
-     * 
+     *
      * @param string $clientId Client ID
      * @param string $event Event name
      * @param RateLimit $rateLimitConfig Rate limit configuration
@@ -259,8 +260,8 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                 'retry_after' => $rateLimitConfig->getTimeWindow(),
                 'limit' => $rateLimitConfig->getMaxMessages(),
                 'window' => $rateLimitConfig->getTimeWindow(),
-                'type' => $type
-            ]
+                'type' => $type,
+            ],
         ];
 
         $jsonMessage = json_encode($message);
@@ -271,7 +272,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Send a global rate limit exceeded message to the client
-     * 
+     *
      * @param string $clientId Client ID
      * @param string $event Event name
      * @param \Sockeon\Sockeon\Config\RateLimitConfig $rateLimitConfig Rate limit configuration
@@ -289,8 +290,8 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                 'retry_after' => $rateLimitConfig->getWebSocketTimeWindow(),
                 'limit' => $rateLimitConfig->getMaxWebSocketMessagesPerClient(),
                 'window' => $rateLimitConfig->getWebSocketTimeWindow(),
-                'type' => 'global'
-            ]
+                'type' => 'global',
+            ],
         ];
 
         $jsonMessage = json_encode($message);
@@ -301,7 +302,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Clean up expired entries from the message stores
-     * 
+     *
      * @param \Sockeon\Sockeon\Config\RateLimitConfig|null $config Rate limit configuration
      * @return void
      */
@@ -354,7 +355,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Get event-specific rate limit configuration from attributes
-     * 
+     *
      * @param string $event Event name
      * @param Server $server Server instance
      * @return RateLimit|null Event-specific rate limit configuration or null
@@ -371,7 +372,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
             $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Found event for rate limit lookup", [
                 'event' => $event,
                 'controller' => get_class($controller),
-                'method' => $methodName
+                'method' => $methodName,
             ]);
 
             try {
@@ -384,7 +385,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                         'max_messages' => $rateLimit->getMaxMessages(),
                         'time_window' => $rateLimit->getTimeWindow(),
                         'burst_allowance' => $rateLimit->getBurstAllowance(),
-                        'bypass_global' => $rateLimit->shouldBypassGlobal()
+                        'bypass_global' => $rateLimit->shouldBypassGlobal(),
                     ]);
                     return $rateLimit;
                 } else {
@@ -394,14 +395,14 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                 $server->getLogger()->warning("[Sockeon WebSocket Rate Limit] Reflection error while checking for RateLimit attributes", [
                     'error' => $e->getMessage(),
                     'controller' => get_class($controller),
-                    'method' => $methodName
+                    'method' => $methodName,
                 ]);
                 // If reflection fails, continue without event-specific limits
             }
         } else {
             $server->getLogger()->debug("[Sockeon WebSocket Rate Limit] Event not found in registered routes", [
                 'looking_for' => $event,
-                'available_events' => array_keys($wsRoutes)
+                'available_events' => array_keys($wsRoutes),
             ]);
         }
 
@@ -410,7 +411,7 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
 
     /**
      * Get current rate limiting statistics
-     * 
+     *
      * @return array<string, mixed> Rate limiting statistics
      */
     public static function getStats(): array
@@ -444,13 +445,13 @@ class WebSocketRateLimitMiddleware implements WebsocketMiddleware
                 'total_messages' => $eventMessages,
                 'store_size_kb' => round(strlen(serialize(self::$eventMessageStore)) / 1024, 2),
             ],
-            'last_cleanup' => self::$lastCleanup
+            'last_cleanup' => self::$lastCleanup,
         ];
     }
 
     /**
      * Clear all rate limiting data (useful for testing)
-     * 
+     *
      * @return void
      */
     public static function clearStore(): void

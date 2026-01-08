@@ -1,4 +1,5 @@
 <?php
+
 /**
  * HandlesWebSocketHandshake trait
  *
@@ -135,7 +136,7 @@ trait HandlesWebSocketHandshake
 
         foreach ($headers as $name => $value) {
             if (is_string($name) && (is_string($value) || is_numeric($value))) {
-                $response .= $name . ": " . (string)$value . "\r\n";
+                $response .= $name . ": " . (string) $value . "\r\n";
             }
         }
 

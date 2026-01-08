@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesListening trait
- * 
+ *
  * Manages message listening and event loop for WebSocket client
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -31,25 +32,25 @@ trait HandlesListening
         if (is_resource($this->socket)) {
             stream_set_timeout($this->socket, $timeout);
         }
-        
+
         $read = is_resource($this->socket) ? [$this->socket] : [];
         $write = null;
         $except = null;
-        
+
         if (stream_select($read, $write, $except, $timeout) > 0) {
             foreach ($read as $socket) {
                 if (!is_resource($socket)) {
                     $this->disconnect();
                     return;
                 }
-                
+
                 $data = fread($socket, 8192);
-                
+
                 if ($data === false || strlen($data) === 0) {
                     $this->disconnect();
                     return;
                 }
-                
+
                 $this->handleIncomingData($data);
             }
         }
@@ -67,14 +68,14 @@ trait HandlesListening
     {
         while ($this->isConnected()) {
             $this->listen(0);
-            
+
             if ($callback !== null) {
                 $result = call_user_func($callback);
                 if ($result === false) {
                     break;
                 }
             }
-            
+
             usleep($checkInterval * 1000);
         }
     }
@@ -88,7 +89,7 @@ trait HandlesListening
     protected function handleIncomingData(string $data): void
     {
         $frames = $this->decodeWebSocketFrames($data);
-        
+
         foreach ($frames as $frame) {
             if ($frame['opcode'] === 8) {
                 $this->disconnect();
@@ -102,7 +103,7 @@ trait HandlesListening
             } elseif ($frame['opcode'] === 10) {
                 continue;
             }
-            
+
             if (($frame['opcode'] === 1 || $frame['opcode'] === 2) && isset($frame['payload']) && is_string($frame['payload'])) {
                 $this->processMessage($frame['payload']);
             }

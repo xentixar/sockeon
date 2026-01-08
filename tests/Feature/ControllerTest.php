@@ -10,7 +10,7 @@ use Sockeon\Sockeon\WebSocket\Attributes\OnConnect;
 use Sockeon\Sockeon\WebSocket\Attributes\OnDisconnect;
 use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 
-class TestController extends SocketController 
+class TestController extends SocketController
 {
     /**
      * @param string $clientId
@@ -22,7 +22,7 @@ class TestController extends SocketController
     {
         $this->broadcast('message.receive', [
             'message' => $data['message'] ?? '',
-            'from' => $clientId
+            'from' => $clientId,
         ]);
     }
 
@@ -36,12 +36,12 @@ class TestController extends SocketController
     {
         $this->emit($clientId, 'welcome', [
             'message' => 'Welcome to the server!',
-            'clientId' => $clientId
+            'clientId' => $clientId,
         ]);
-        
+
         $this->broadcast('user.joined', [
             'clientId' => $clientId,
-            'message' => "User $clientId joined the server"
+            'message' => "User $clientId joined the server",
         ]);
     }
 
@@ -55,7 +55,7 @@ class TestController extends SocketController
     {
         $this->broadcast('user.left', [
             'clientId' => $clientId,
-            'message' => "User $clientId left the server"
+            'message' => "User $clientId left the server",
         ]);
     }
 
@@ -64,7 +64,7 @@ class TestController extends SocketController
     {
         return Response::json([
             'status' => 'online',
-            'timestamp' => time()
+            'timestamp' => time(),
         ]);
     }
 }
@@ -74,9 +74,9 @@ test('controller can handle websocket events', function () {
     $server = $this->server; //@phpstan-ignore-line
 
     $controller = new TestController();
-    
+
     $server->registerController($controller);
-    
+
     expect($server->getRouter())->toBeInstanceOf(Router::class);
 });
 
@@ -85,21 +85,21 @@ test('controller routes are registered correctly', function () {
     $server = $this->server; //@phpstan-ignore-line
 
     $controller = new TestController();
-    
+
     $server->registerController($controller);
-    
+
     $router = $server->getRouter();
-    
+
     $request = new Request([
         'method' => 'GET',
         'path' => '/api/status',
         'headers' => [],
         'query' => [],
-        'body' => null
+        'body' => null,
     ]);
-    
+
     $response = $router->dispatchHttp($request);
-    
+
     expect($response)->toBeInstanceOf(Response::class)
         ->and($response->getBody())->toHaveKey('status') //@phpstan-ignore-line
         ->and($response->getBody())->toHaveKey('timestamp'); //@phpstan-ignore-line

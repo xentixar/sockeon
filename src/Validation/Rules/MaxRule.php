@@ -1,9 +1,10 @@
 <?php
+
 /**
  * MaxRule
- * 
+ *
  * Validates that a value meets maximum requirements
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class MaxRule extends BaseRule
 {
     /**
      * Validate that a value meets maximum requirements
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value meets maximum requirements
      */
@@ -47,7 +48,7 @@ class MaxRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -56,4 +57,4 @@ class MaxRule extends BaseRule
         $max = $this->getFirstParameter();
         return "The {$fieldName} field must not exceed {$max}.";
     }
-} 
+}

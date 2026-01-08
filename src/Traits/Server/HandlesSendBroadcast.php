@@ -8,7 +8,7 @@ trait HandlesSendBroadcast
 {
     /**
      * Send a WebSocket message to a specific client
-     * 
+     *
      * @param string $clientId The client ID to send to
      * @param string $event Event name
      * @param array<string, mixed> $data Data to send
@@ -20,7 +20,7 @@ trait HandlesSendBroadcast
             try {
                 $frame = $this->wsHandler->prepareMessage($event, $data);
                 $result = @fwrite($this->clients[$clientId], $frame);
-                
+
                 if ($result === false) {
                     // Connection lost, clean up
                     $this->disconnectClient($clientId);
@@ -34,7 +34,7 @@ trait HandlesSendBroadcast
 
     /**
      * Send raw message data to a specific client
-     * 
+     *
      * @param string $clientId The client ID to send to
      * @param string $message Raw message data
      * @return void
@@ -45,7 +45,7 @@ trait HandlesSendBroadcast
             try {
                 $frame = $this->wsHandler->encodeWebSocketFrame($message, 1);
                 $result = @fwrite($this->clients[$clientId], $frame);
-                
+
                 if ($result === false) {
                     // Connection lost, clean up
                     $this->disconnectClient($clientId);
@@ -59,7 +59,7 @@ trait HandlesSendBroadcast
 
     /**
      * Broadcast a WebSocket message to multiple clients, optionally filtered by namespace and room
-     * 
+     *
      * @param string $event Event name
      * @param array<string, mixed> $data Data to broadcast
      * @param string|null $namespace Optional namespace filter
@@ -79,12 +79,12 @@ trait HandlesSendBroadcast
         }
 
         $disconnectedClients = [];
-        
+
         foreach ($clients as $clientId) {
             if (isset($this->clients[$clientId]) && ($this->clientTypes[$clientId] ?? '') === 'ws' && is_resource($this->clients[$clientId])) {
                 try {
                     $result = @fwrite($this->clients[$clientId], $frame);
-                    
+
                     if ($result === false) {
                         $disconnectedClients[] = $clientId;
                     }
@@ -93,7 +93,7 @@ trait HandlesSendBroadcast
                 }
             }
         }
-        
+
         // Clean up disconnected clients after broadcast
         foreach ($disconnectedClients as $clientId) {
             $this->disconnectClient($clientId);

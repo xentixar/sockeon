@@ -1,9 +1,10 @@
 <?php
+
 /**
  * UrlRule
- * 
+ *
  * Validates that a value is a valid URL
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class UrlRule extends BaseRule
 {
     /**
      * Validate that a value is a valid URL
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is a valid URL
      */
@@ -32,7 +33,7 @@ class UrlRule extends BaseRule
 
     /**
      * Sanitize a URL value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized URL value
      */
@@ -48,7 +49,7 @@ class UrlRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -56,4 +57,4 @@ class UrlRule extends BaseRule
     {
         return "The {$fieldName} field must be a valid URL.";
     }
-} 
+}

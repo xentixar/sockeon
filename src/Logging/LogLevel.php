@@ -1,4 +1,5 @@
 <?php
+
 /**
  * LogLevel class
  *
@@ -17,42 +18,42 @@ class LogLevel
     /**
      * System is unusable
      */
-    const EMERGENCY = 'emergency';
+    public const EMERGENCY = 'emergency';
 
     /**
      * Action must be taken immediately
      */
-    const ALERT = 'alert';
+    public const ALERT = 'alert';
 
     /**
      * Critical conditions
      */
-    const CRITICAL = 'critical';
+    public const CRITICAL = 'critical';
 
     /**
      * Error conditions
      */
-    const ERROR = 'error';
+    public const ERROR = 'error';
 
     /**
      * Warning conditions
      */
-    const WARNING = 'warning';
+    public const WARNING = 'warning';
 
     /**
      * Normal but significant conditions
      */
-    const NOTICE = 'notice';
+    public const NOTICE = 'notice';
 
     /**
      * Informational messages
      */
-    const INFO = 'info';
+    public const INFO = 'info';
 
     /**
      * Debug-level messages
      */
-    const DEBUG = 'debug';
+    public const DEBUG = 'debug';
 
     /**
      * Convert level name to integer severity
@@ -75,4 +76,3 @@ class LogLevel
         };
     }
 }
-

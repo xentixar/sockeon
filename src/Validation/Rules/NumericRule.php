@@ -1,9 +1,10 @@
 <?php
+
 /**
  * NumericRule
- * 
+ *
  * Validates that a value is numeric
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class NumericRule extends BaseRule
 {
     /**
      * Validate that a value is numeric
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is numeric
      */
@@ -30,7 +31,7 @@ class NumericRule extends BaseRule
 
     /**
      * Sanitize a numeric value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return float The sanitized numeric value
      */
@@ -44,7 +45,7 @@ class NumericRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -52,4 +53,4 @@ class NumericRule extends BaseRule
     {
         return "The {$fieldName} field must be numeric.";
     }
-} 
+}
