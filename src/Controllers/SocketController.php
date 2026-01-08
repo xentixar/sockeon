@@ -67,6 +67,39 @@ abstract class SocketController
     }
 
     /**
+     * Broadcasts an event to specified clients
+     *
+     * @param list<string> $clients The array of the client ids to broadcast
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @return void
+     */
+    public function broadcastTo(array $clients, string $event, array $data): void
+    {
+        foreach ($clients as $client) {
+            $this->emit($client, $event, $data);
+        }
+    }
+
+    /**
+     * Broadcasts an event to all clients except the given ones
+     *
+     * @param list<string> $excepts The array of the client ids to ignore
+     * @param string $event The event name
+     * @param array<string, mixed> $data The data to send
+     * @return void
+     */
+    public function broadcastExcept(array $excepts, string $event, array $data): void
+    {
+        $clients = $this->getAllClients();
+        foreach ($clients as $client) {
+            if (!in_array($client, $excepts)) {
+                $this->emit($client, $event, $data);
+            }
+        }
+    }
+
+    /**
      * Adds a client to a room
      *
      * @param string $clientId The ID of the client to add
