@@ -28,6 +28,7 @@ trait HandlesWebSocketHandshake
     {
         $handshakeRequest = new HandshakeRequest($data);
 
+        /** @var bool|array<string, mixed> $result */
         $result = $this->server->getMiddleware()->runHandshakeStack(
             $clientId,
             $handshakeRequest,
