@@ -13,11 +13,11 @@ beforeEach(function () {
 test('handles valid JSON messages with data correctly', function () {
     $validMessage = json_encode([
         'event' => 'test.event',
-        'data' => ['message' => 'Hello World', 'user_id' => 123]
+        'data' => ['message' => 'Hello World', 'user_id' => 123],
     ]);
-    
+
     $frame = $this->handler->encodeWebSocketFrame($validMessage);
-    
+
     expect($frame)->not->toBeEmpty();
     expect(strlen($frame))->toBeGreaterThan(strlen($validMessage));
 });
@@ -32,7 +32,7 @@ test('validates message structure with required data field', function () {
         'invalid_event_format' => json_encode(['event' => 'test@event', 'data' => []]),
         'extra_fields' => json_encode(['event' => 'test.event', 'data' => [], 'extra' => 'field']),
     ];
-    
+
     foreach ($messages as $testName => $message) {
         $this->handler->handleMessage(1, $message);
         expect(true)->toBeTrue();
@@ -42,9 +42,9 @@ test('validates message structure with required data field', function () {
 test('accepts valid messages with empty data array', function () {
     $validMessage = json_encode([
         'event' => 'test.event',
-        'data' => []
+        'data' => [],
     ]);
-    
+
     $this->handler->handleMessage(1, $validMessage);
     expect(true)->toBeTrue();
 });
@@ -59,27 +59,27 @@ test('accepts valid messages with complex data structure', function () {
                 'email' => 'john@example.com',
                 'preferences' => [
                     'theme' => 'dark',
-                    'notifications' => true
-                ]
+                    'notifications' => true,
+                ],
             ],
-            'timestamp' => time()
-        ]
+            'timestamp' => time(),
+        ],
     ]);
-    
+
     $this->handler->handleMessage(1, $validMessage);
     expect(true)->toBeTrue();
 });
 
 test('handles ping frames correctly', function () {
     $pingFrame = $this->handler->encodeWebSocketFrame('ping payload', 9);
-    
+
     expect($pingFrame)->not->toBeEmpty();
     expect(ord($pingFrame[0]) & 0x0F)->toBe(9); // Check opcode
 });
 
 test('validates frame size limits', function () {
     $largePayload = str_repeat('a', 16777217); // 16MB + 1 byte
-    
+
     expect(fn() => $this->handler->encodeWebSocketFrame($largePayload))->toThrow(InvalidArgumentException::class);
 });
 
@@ -91,11 +91,11 @@ test('handles empty payloads gracefully', function () {
 test('validates opcodes correctly', function () {
     $validOpcodes = [0, 1, 2, 8, 9, 10];
     $invalidOpcodes = [3, 4, 5, 6, 7, 11, 15];
-    
+
     foreach ($validOpcodes as $opcode) {
         expect($this->handler->isValidOpcode($opcode))->toBeTrue();
     }
-    
+
     foreach ($invalidOpcodes as $opcode) {
         expect($this->handler->isValidOpcode($opcode))->toBeFalse();
     }
@@ -107,7 +107,7 @@ test('handles malformed frames gracefully', function () {
         'invalid_length' => "\x80\x7F\x00\x00\x00\x00\x00\x00\x00\x01", // Invalid 64-bit length
         'truncated_frame' => "\x80\x01", // Incomplete frame
     ];
-    
+
     foreach ($malformedFrames as $testName => $frame) {
         [$frames, $remaining] = $this->handler->decodeWebSocketFrame($frame);
         expect($frames)->toBe([]); // Should return empty array for malformed frames
@@ -117,7 +117,7 @@ test('handles malformed frames gracefully', function () {
 test('logs frame processing correctly', function () {
     $validFrame = $this->handler->encodeWebSocketFrame('test payload', 1);
     [$frames, $remaining] = $this->handler->decodeWebSocketFrame($validFrame);
-    
+
     expect($frames)->toHaveCount(1);
     expect($frames[0]['opcode'])->toBe(1);
     expect($frames[0]['payload'])->toBe('test payload');
@@ -126,12 +126,12 @@ test('logs frame processing correctly', function () {
 test('handles WebSocket protocol correctly', function () {
     $validMessage = json_encode([
         'event' => 'test.event',
-        'data' => ['message' => 'Hello World']
+        'data' => ['message' => 'Hello World'],
     ]);
-    
+
     $frame = $this->handler->encodeWebSocketFrame($validMessage);
     [$frames, $remaining] = $this->handler->decodeWebSocketFrame($frame);
-    
+
     expect($frames)->toHaveCount(1);
     expect($frames[0]['opcode'])->toBe(1);
     expect($frames[0]['fin'])->toBeTrue();
@@ -141,9 +141,9 @@ test('handles WebSocket protocol correctly', function () {
 test('handles binary frames correctly', function () {
     $binaryData = "\x00\x01\x02\x03\x04";
     $frame = $this->handler->encodeWebSocketFrame($binaryData, 2); // Binary opcode
-    
+
     [$frames, $remaining] = $this->handler->decodeWebSocketFrame($frame);
-    
+
     expect($frames)->toHaveCount(1);
     expect($frames[0]['opcode'])->toBe(2);
     expect($frames[0]['payload'])->toBe($binaryData);
@@ -151,14 +151,14 @@ test('handles binary frames correctly', function () {
 
 test('handles close frames correctly', function () {
     $closeFrame = $this->handler->encodeWebSocketFrame('', 8); // Close opcode
-    
+
     expect($closeFrame)->not->toBeEmpty();
     expect(ord($closeFrame[0]) & 0x0F)->toBe(8); // Check opcode
 });
 
 test('handles pong frames correctly', function () {
     $pongFrame = $this->handler->encodeWebSocketFrame('pong data', 10); // Pong opcode
-    
+
     expect($pongFrame)->not->toBeEmpty();
     expect(ord($pongFrame[0]) & 0x0F)->toBe(10); // Check opcode
 });
@@ -166,15 +166,15 @@ test('handles pong frames correctly', function () {
 test('sends messages with proper data structure', function () {
     $event = 'test.event';
     $data = ['message' => 'Hello World', 'user_id' => 123];
-    
+
     $message = [
         'event' => $event,
-        'data' => $data
+        'data' => $data,
     ];
-    
+
     $encodedMessage = json_encode($message);
     expect($encodedMessage)->not->toBeFalse();
-    
+
     $decodedMessage = json_decode($encodedMessage, true);
     expect($decodedMessage)->toBe($message);
     expect($decodedMessage['event'])->toBe($event);
@@ -185,9 +185,9 @@ test('validates message structure comprehensively', function () {
     $validMessages = [
         'simple' => ['event' => 'test', 'data' => []],
         'complex' => ['event' => 'user.update', 'data' => ['id' => 1, 'name' => 'John']],
-        'nested' => ['event' => 'data.update', 'data' => ['nested' => ['key' => 'value']]]
+        'nested' => ['event' => 'data.update', 'data' => ['nested' => ['key' => 'value']]],
     ];
-    
+
     $invalidMessages = [
         'missing_event' => ['data' => []],
         'missing_data' => ['event' => 'test'],
@@ -195,15 +195,15 @@ test('validates message structure comprehensively', function () {
         'invalid_data_type' => ['event' => 'test', 'data' => 'not array'],
         'empty_event' => ['event' => '', 'data' => []],
         'invalid_event_format' => ['event' => 'test@event', 'data' => []],
-        'extra_fields' => ['event' => 'test', 'data' => [], 'extra' => 'field']
+        'extra_fields' => ['event' => 'test', 'data' => [], 'extra' => 'field'],
     ];
-    
+
     foreach ($validMessages as $testName => $message) {
         $encoded = json_encode($message);
         $this->handler->handleMessage(1, $encoded);
         expect(true)->toBeTrue();
     }
-    
+
     foreach ($invalidMessages as $testName => $message) {
         $encoded = json_encode($message);
         $this->handler->handleMessage(1, $encoded);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * HandshakeMiddleware interface
  *
@@ -18,7 +19,7 @@ use Sockeon\Sockeon\WebSocket\HandshakeRequest;
 
 interface HandshakeMiddleware
 {
-        /**
+    /**
      * Handle the handshake middleware
      *
      * @param string $clientId The client ID that is connecting.

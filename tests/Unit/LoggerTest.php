@@ -5,14 +5,14 @@ use Sockeon\Sockeon\Logging\LogLevel;
 
 $tempLogDir = '';
 
-beforeEach(function() use (&$tempLogDir) {
+beforeEach(function () use (&$tempLogDir) {
     $tempLogDir = sys_get_temp_dir() . '/sockeon_logger_test_' . uniqid();
     if (!file_exists($tempLogDir)) {
         mkdir($tempLogDir, 0755, true);
     }
 });
 
-afterEach(function() use (&$tempLogDir) {
+afterEach(function () use (&$tempLogDir) {
     if (!empty($tempLogDir) && file_exists($tempLogDir)) {
         $files = glob($tempLogDir . '/*.*');
         if (is_array($files)) {
@@ -34,12 +34,12 @@ afterEach(function() use (&$tempLogDir) {
     }
 });
 
-test('logger can be instantiated with default config', function() {
+test('logger can be instantiated with default config', function () {
     $logger = new Logger();
     expect($logger)->toBeInstanceOf(Logger::class);
 });
 
-test('logger can be instantiated with custom config', function() use (&$tempLogDir) {
+test('logger can be instantiated with custom config', function () use (&$tempLogDir) {
     $logger = new Logger(
         minLogLevel: LogLevel::INFO,
         logToConsole: false,
@@ -51,7 +51,7 @@ test('logger can be instantiated with custom config', function() use (&$tempLogD
     expect($logger)->toBeInstanceOf(Logger::class);
 });
 
-test('logger respects minimum log level', function() {
+test('logger respects minimum log level', function () {
     ob_start();
 
     $logger = new Logger(
@@ -73,7 +73,7 @@ test('logger respects minimum log level', function() {
         ->and(str_contains($output, 'Error message'))->toBeTrue();
 });
 
-test('logger can disable console output', function() {
+test('logger can disable console output', function () {
     ob_start();
 
     $logger = new Logger(
@@ -87,7 +87,7 @@ test('logger can disable console output', function() {
     expect($output)->toBe('');
 });
 
-test('logger can write to log file', function() use (&$tempLogDir) {
+test('logger can write to log file', function () use (&$tempLogDir) {
     $logger = new Logger(
         logToConsole: false,
         logToFile: true,
@@ -107,7 +107,7 @@ test('logger can write to log file', function() use (&$tempLogDir) {
         ->and(str_contains($content, 'INFO:'))->toBeTrue();
 });
 
-test('logger can create separate log files per level', function() use (&$tempLogDir) {
+test('logger can create separate log files per level', function () use (&$tempLogDir) {
     $logger = new Logger(
         logToConsole: false,
         logToFile: true,
@@ -142,7 +142,7 @@ test('logger can create separate log files per level', function() use (&$tempLog
     expect(str_contains($warningContent, 'Warning message'))->toBeTrue();
 });
 
-test('logger can log exceptions', function() use (&$tempLogDir) {
+test('logger can log exceptions', function () use (&$tempLogDir) {
     $logger = new Logger(
         logToConsole: false,
         logToFile: true,
@@ -162,7 +162,7 @@ test('logger can log exceptions', function() use (&$tempLogDir) {
         ->and(str_contains($content, 'Trace:'))->toBeTrue();
 });
 
-test('logger can include context data', function() use (&$tempLogDir) {
+test('logger can include context data', function () use (&$tempLogDir) {
     $logger = new Logger(
         logToConsole: false,
         logToFile: true,
@@ -172,7 +172,7 @@ test('logger can include context data', function() use (&$tempLogDir) {
     $context = [
         'user' => 'test_user',
         'action' => 'login',
-        'ip' => '127.0.0.1'
+        'ip' => '127.0.0.1',
     ];
 
     $logger->info('User action', $context);
@@ -187,7 +187,7 @@ test('logger can include context data', function() use (&$tempLogDir) {
         ->and(str_contains($content, '127.0.0.1'))->toBeTrue();
 });
 
-test('logger supports all log levels', function() {
+test('logger supports all log levels', function () {
     ob_start();
 
     $logger = new Logger(
@@ -216,7 +216,7 @@ test('logger supports all log levels', function() {
         ->and(str_contains($output, 'DEBUG: Debug message'))->toBeTrue();
 });
 
-test('logger setLogToConsole method works', function() {
+test('logger setLogToConsole method works', function () {
     $logger = new Logger(
         logToConsole: true,
         logToFile: false
@@ -235,7 +235,7 @@ test('logger setLogToConsole method works', function() {
     expect($output2)->toBe('');
 });
 
-test('logger setLogToFile method works', function() use (&$tempLogDir) {
+test('logger setLogToFile method works', function () use (&$tempLogDir) {
     $logger = new Logger(
         logToConsole: false,
         logToFile: false

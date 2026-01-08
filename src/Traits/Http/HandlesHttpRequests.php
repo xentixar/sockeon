@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesHttpRequests trait
- * 
+ *
  * Manages HTTP request parsing and processing
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -18,7 +19,7 @@ trait HandlesHttpRequests
 {
     /**
      * Parse raw HTTP request into structured format
-     * 
+     *
      * @param string $data The raw HTTP request data
      * @return array<string, mixed> The parsed request as an associative array
      */
@@ -35,17 +36,17 @@ trait HandlesHttpRequests
         $headers = [];
         $headersDone = false;
         $body = '';
-        
+
         $bodyStartPos = strpos($data, "\r\n\r\n");
         if ($bodyStartPos !== false) {
             $headerSection = substr($data, 0, $bodyStartPos);
             $body = substr($data, $bodyStartPos + 4);
-            
+
             $headerLines = explode("\r\n", $headerSection);
             for ($i = 1; $i < count($headerLines); $i++) {
                 $line = $headerLines[$i];
                 if (str_contains($line, ':')) {
-                    list($key, $value) = explode(':', $line, 2);
+                    [$key, $value] = explode(':', $line, 2);
                     $headers[trim($key)] = trim($value);
                 }
             }
@@ -56,9 +57,9 @@ trait HandlesHttpRequests
                         $headersDone = true;
                         continue;
                     }
-                    
+
                     if (str_contains($line, ':')) {
-                        list($key, $value) = explode(':', $line, 2);
+                        [$key, $value] = explode(':', $line, 2);
                         $headers[trim($key)] = trim($value);
                     }
                 } else {
@@ -66,13 +67,13 @@ trait HandlesHttpRequests
                 }
             }
         }
-        
+
         $query = [];
         $url = parse_url($path);
-        
+
         if (isset($url['path'])) {
             $path = $url['path'];
-            
+
             if (empty($path)) {
                 $path = '/';
             } elseif ($path[0] !== '/') {
@@ -81,24 +82,24 @@ trait HandlesHttpRequests
         } else {
             $path = '/';
         }
-        
+
         if (isset($url['query'])) {
             parse_str($url['query'], $query);
         }
-        
+
         return [
             'method' => $method,
             'path' => $path,
             'protocol' => $protocol,
             'headers' => $headers,
             'query' => $query,
-            'body' => $body
+            'body' => $body,
         ];
     }
 
     /**
      * Process an HTTP request and generate response
-     * 
+     *
      * @param Request $request The Request object
      * @return string The HTTP response string
      */
@@ -106,14 +107,14 @@ trait HandlesHttpRequests
     {
         $path = $request->getPath();
         $method = $request->getMethod();
-        
+
         // Check for health check endpoint
         if ($this->server->getHealthCheckPath() !== null && $path === $this->server->getHealthCheckPath()) {
             return $this->handleHealthCheck($request);
         }
-        
+
         $result = $this->server->getRouter()->dispatchHttp($request);
-        
+
         if ($result instanceof Response) {
             $response = $result;
         } elseif ($result !== null) {
@@ -125,13 +126,13 @@ trait HandlesHttpRequests
         } else {
             $response = Response::notFound();
         }
-        
+
         return $response->toString();
     }
 
     /**
      * Handle health check endpoint
-     * 
+     *
      * @param Request $request The Request object
      * @return string The HTTP response string
      */
@@ -152,7 +153,7 @@ trait HandlesHttpRequests
                 'clients' => $this->server->getClientCount(),
                 'uptime' => $uptime,
                 'uptime_human' => $uptimeString,
-            ]
+            ],
         ];
 
         $response = Response::json($healthData, 200);

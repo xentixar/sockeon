@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Validator class
- * 
+ *
  * Provides comprehensive validation for incoming WebSocket and HTTP data
  * with schema validation and sanitization helpers
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -68,7 +69,7 @@ class Validator
 
     /**
      * Validate data against rules
-     * 
+     *
      * @param array<mixed, mixed> $data The data to validate
      * @param array<string, string|array<int, string>> $rules The validation rules
      * @param array<string, string> $messages Custom error messages
@@ -96,7 +97,7 @@ class Validator
 
     /**
      * Validate a single field
-     * 
+     *
      * @param string $field The field name
      * @param mixed $value The field value
      * @param string|array<int, string> $rules The validation rules
@@ -130,7 +131,7 @@ class Validator
 
     /**
      * Create a validation rule object
-     * 
+     *
      * @param string $rule The rule string
      * @return RuleInterface The rule object
      */
@@ -165,14 +166,14 @@ class Validator
 
     /**
      * Parse regex pattern from rule string
-     * 
+     *
      * @param string $rule The rule string
      * @return string The regex pattern
      */
     protected function parseRegexPattern(string $rule): string
     {
         $pattern = substr($rule, 6);
-        
+
         $lastDelimiter = '';
         for ($i = strlen($pattern) - 1; $i >= 0; $i--) {
             $char = $pattern[$i];
@@ -181,22 +182,22 @@ class Validator
                 break;
             }
         }
-        
+
         if ($lastDelimiter === '') {
             return $pattern;
         }
-        
+
         $lastPos = strrpos($pattern, $lastDelimiter);
         if ($lastPos === false) {
             return $pattern;
         }
-        
+
         return substr($pattern, 0, $lastPos + 1);
     }
 
     /**
      * Add a validation error
-     * 
+     *
      * @param string $field The field name
      * @param string $message The error message
      * @return void
@@ -211,7 +212,7 @@ class Validator
 
     /**
      * Get the display name for a field
-     * 
+     *
      * @param string $field The field name
      * @return string The display name
      */
@@ -222,7 +223,7 @@ class Validator
 
     /**
      * Get custom message for a field and rule
-     * 
+     *
      * @param string $field The field name
      * @param RuleInterface $rule The rule object
      * @return string|null The custom message or null
@@ -231,13 +232,13 @@ class Validator
     {
         $ruleName = $this->getRuleName($rule);
         $messageKey = "{$field}.{$ruleName}";
-        
+
         return $this->messages[$messageKey] ?? null;
     }
 
     /**
      * Get the rule name from a rule object
-     * 
+     *
      * @param RuleInterface $rule The rule object
      * @return string The rule name
      */
@@ -248,17 +249,17 @@ class Validator
         /** @var string|false $lastPart */
         $lastPart = end($parts);
         $className = $lastPart !== false ? $lastPart : 'unknown';
-        
+
         $result = preg_replace('/(?<!^)[A-Z]/', '_$0', $className);
         $ruleName = strtolower($result !== null ? $result : $className);
         $ruleName = str_replace('_rule', '', $ruleName);
-        
+
         return $ruleName;
     }
 
     /**
      * Sanitize a value based on validation rules
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param array<int, RuleInterface> $rules The validation rules
      * @return mixed The sanitized value
@@ -273,7 +274,7 @@ class Validator
 
     /**
      * Get validation errors
-     * 
+     *
      * @return array<string, array<int, string>> The validation errors
      */
     public function getErrors(): array
@@ -283,7 +284,7 @@ class Validator
 
     /**
      * Get sanitized data
-     * 
+     *
      * @return array<string, mixed> The sanitized data
      */
     public function getSanitized(): array
@@ -293,7 +294,7 @@ class Validator
 
     /**
      * Check if validation has errors
-     * 
+     *
      * @return bool True if there are errors
      */
     public function hasErrors(): bool
@@ -303,7 +304,7 @@ class Validator
 
     /**
      * Get first error for a field
-     * 
+     *
      * @param string $field The field name
      * @return string|null The first error message or null
      */
@@ -314,7 +315,7 @@ class Validator
 
     /**
      * Get all errors for a field
-     * 
+     *
      * @param string $field The field name
      * @return array<int, string> The error messages
      */
@@ -322,4 +323,4 @@ class Validator
     {
         return $this->errors[$field] ?? [];
     }
-} 
+}

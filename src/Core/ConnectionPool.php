@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Connection Pool Manager
- * 
+ *
  * Manages connection reuse and pooling for better resource utilization
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -36,7 +37,7 @@ class ConnectionPool
         'total_created' => 0,
         'total_reused' => 0,
         'total_released' => 0,
-        'active_count' => 0
+        'active_count' => 0,
     ];
 
     /**
@@ -59,7 +60,7 @@ class ConnectionPool
 
     /**
      * Get a connection from the pool or create a new one
-     * 
+     *
      * @param string $type Connection type (ws, http)
      * @param string $clientId Client identifier
      * @param resource $resource Socket resource
@@ -73,13 +74,13 @@ class ConnectionPool
             'resource' => $resource,
             'created_at' => microtime(true),
             'last_used' => microtime(true),
-            'reuse_count' => 0
+            'reuse_count' => 0,
         ];
 
         // Check if we can reuse a connection from the pool
         if (isset($this->pools[$type]) && !$this->pools[$type]->isEmpty()) {
             $pooledConnection = $this->pools[$type]->dequeue();
-            
+
             // Validate the pooled connection
             if ($this->isConnectionValid($pooledConnection)) {
                 $pooledConnection['id'] = $clientId;
@@ -87,11 +88,11 @@ class ConnectionPool
                 $pooledConnection['last_used'] = microtime(true);
                 $reuseCount = isset($pooledConnection['reuse_count']) && is_int($pooledConnection['reuse_count']) ? $pooledConnection['reuse_count'] : 0;
                 $pooledConnection['reuse_count'] = $reuseCount + 1;
-                
+
                 $this->activeConnections[$clientId] = $pooledConnection;
                 $this->metrics['total_reused']++;
                 $this->metrics['active_count']++;
-                
+
                 return $pooledConnection;
             }
         }
@@ -106,7 +107,7 @@ class ConnectionPool
 
     /**
      * Release a connection back to the pool
-     * 
+     *
      * @param string $clientId Client identifier
      * @return void
      */
@@ -126,8 +127,8 @@ class ConnectionPool
         $createdAt = isset($connection['created_at']) && is_float($connection['created_at']) ? $connection['created_at'] : microtime(true);
 
         // Don't pool if connection is too old or has been reused too much
-        if ($reuseCount >= 50 || 
-            (microtime(true) - $createdAt) > $this->connectionTimeout) {
+        if ($reuseCount >= 50
+            || (microtime(true) - $createdAt) > $this->connectionTimeout) {
             return;
         }
 
@@ -147,7 +148,7 @@ class ConnectionPool
 
     /**
      * Check if a pooled connection is still valid
-     * 
+     *
      * @param array<string, mixed> $connection Connection info
      * @return bool True if valid
      */
@@ -170,7 +171,7 @@ class ConnectionPool
 
     /**
      * Clean up expired connections from pools
-     * 
+     *
      * @return void
      */
     public function cleanup(): void
@@ -178,21 +179,21 @@ class ConnectionPool
         foreach ($this->pools as $type => $pool) {
             /** @var SplQueue<array<string, mixed>> $validConnections */
             $validConnections = new SplQueue();
-            
+
             while (!$pool->isEmpty()) {
                 $connection = $pool->dequeue();
                 if ($this->isConnectionValid($connection)) {
                     $validConnections->enqueue($connection);
                 }
             }
-            
+
             $this->pools[$type] = $validConnections;
         }
     }
 
     /**
      * Get pool statistics
-     * 
+     *
      * @return array<string, mixed>
      */
     public function getStats(): array
@@ -205,7 +206,7 @@ class ConnectionPool
         return [
             'metrics' => $this->metrics,
             'pool_sizes' => $poolSizes,
-            'total_pooled' => array_sum($poolSizes)
+            'total_pooled' => array_sum($poolSizes),
         ];
     }
 }

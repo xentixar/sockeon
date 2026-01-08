@@ -13,7 +13,7 @@ use Sockeon\Sockeon\WebSocket\Attributes\SocketOn;
 test('server can be instantiated with default configuration', function () {
     /** @var Server $server */
     $server = $this->server; //@phpstan-ignore-line
-    
+
     expect($server)->toBeInstanceOf(Server::class)
         ->and($server->getRouter())->toBeInstanceOf(Router::class)
         ->and($server->getHttpHandler())->toBeInstanceOf(Handler::class);
@@ -22,7 +22,7 @@ test('server can be instantiated with default configuration', function () {
 test('server can register controllers', function () {
     /** @var Server $server */
     $server = $this->server; //@phpstan-ignore-line
-    
+
     // Mock controller
     $controller = new class extends SocketController {
         /**
@@ -36,9 +36,9 @@ test('server can register controllers', function () {
             return true;
         }
     };
-    
+
     $server->registerController($controller);
-    
+
     expect($server->getRouter())->toBeInstanceOf(Router::class);
 });
 
@@ -53,17 +53,17 @@ test('server adds middleware correctly', function () {
      * @param callable $next
      * @return mixed
      */
-    $middleware = function (string $clientId, string $event,array $data, callable $next) {
+    $middleware = function (string $clientId, string $event, array $data, callable $next) {
         return $next();
     };
-    
+
     $httpMiddleware = function (Request $request, callable $next) {
         return $next();
     };
-    
+
     $server->addWebSocketMiddleware(TestWebSocketMiddleware::class);
     $server->addHttpMiddleware(TestHttpMiddleware::class);
-    
+
     expect($server->getMiddleware())->toBeInstanceOf(Middleware::class);
 });
 

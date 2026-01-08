@@ -1,9 +1,10 @@
 <?php
+
 /**
  * InRule
- * 
+ *
  * Validates that a value is in a list of allowed values
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class InRule extends BaseRule
 {
     /**
      * Validate that a value is in the allowed list
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is in the allowed list
      */
@@ -30,7 +31,7 @@ class InRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -39,4 +40,4 @@ class InRule extends BaseRule
         $allowed = implode(', ', $this->parameters);
         return "The {$fieldName} field must be one of: {$allowed}.";
     }
-} 
+}

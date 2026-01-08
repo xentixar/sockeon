@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Middleware class
- * 
+ *
  * Manages middleware chains for WebSocket and HTTP pipelines
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -27,28 +28,28 @@ class Middleware
      * @var array<int, class-string>
      */
     protected array $wsStack = [];
-    
+
     /**
      * Stack of HTTP middleware functions
      * @var array<int, class-string>
      */
     protected array $httpStack = [];
-    
+
     /**
      * Stack of WebSocket handshake middleware functions
      * @var array<int, class-string>
      */
     protected array $handshakeStack = [];
-    
+
     /**
      * Add a WebSocket middleware
-     * 
+     *
      * @param string $middleware Middleware instance implementing the WebsocketMiddleware interface
      * @return void
      */
     public function addWebSocketMiddleware(string $middleware): void
     {
-        if(!is_subclass_of($middleware, WebsocketMiddleware::class)) {
+        if (!is_subclass_of($middleware, WebsocketMiddleware::class)) {
             throw new InvalidArgumentException(sprintf("Middleware '%s' must implement the WebsocketMiddleware interface", $middleware));
         }
         $this->wsStack[] = $middleware;
@@ -81,10 +82,10 @@ class Middleware
         }
         $this->handshakeStack[] = $middleware;
     }
-    
+
     /**
      * Execute the WebSocket middleware stack
-     * 
+     *
      * @param string $clientId Client ID
      * @param string $event Event name
      * @param array<string, mixed> $data Event data
@@ -98,30 +99,30 @@ class Middleware
     {
         $globalStack = $this->filterExcludedMiddlewares($this->wsStack, $excludeGlobalMiddlewares);
         $stack = array_merge($globalStack, $additionalMiddlewares);
-        
+
         $run = function (int $index) use (&$run, $stack, $clientId, $event, $data, $target, $server) {
             if ($index >= count($stack)) {
                 return $target($clientId, $data);
             }
-            
+
             $middleware = $stack[$index];
-            
+
             $next = function () use ($index, $run) {
                 return $run($index + 1);
             };
 
             /** @var WebsocketMiddleware $object */
             $object = new $middleware();
-            
+
             return $object->handle($clientId, $event, $data, $next, $server);
         };
-        
+
         return $run(0);
     }
-    
+
     /**
      * Execute the HTTP middleware stack
-     * 
+     *
      * @param Request $request Request object
      * @param Closure $target Target function to execute at the end of the middleware chain
      * @param Server $server Server instance handling the HTTP request
@@ -133,30 +134,30 @@ class Middleware
     {
         $globalStack = $this->filterExcludedMiddlewares($this->httpStack, $excludeGlobalMiddlewares);
         $stack = array_merge($globalStack, $additionalMiddlewares);
-        
+
         $run = function (int $index) use (&$run, $stack, $request, $target, $server) {
             if ($index >= count($stack)) {
                 return $target($request);
             }
-            
+
             $middleware = $stack[$index];
-            
+
             $next = function () use ($index, $run) {
                 return $run($index + 1);
             };
 
             /** @var HttpMiddleware $object */
             $object = new $middleware();
-            
+
             return $object->handle($request, $next, $server);
         };
-        
+
         return $run(0);
     }
 
     /**
      * Execute the WebSocket handshake middleware stack
-     * 
+     *
      * @param string $clientId Client ID
      * @param HandshakeRequest $request Handshake request object
      * @param Closure $target Target function to execute at the end of the middleware chain
@@ -167,31 +168,31 @@ class Middleware
     public function runHandshakeStack(string $clientId, HandshakeRequest $request, Closure $target, Server $server, array $additionalMiddlewares = []): bool|array
     {
         $stack = array_merge($this->handshakeStack, $additionalMiddlewares);
-        
+
         $run = function (int $index) use (&$run, $stack, $clientId, $request, $target, $server): bool|array {
             if ($index >= count($stack)) {
                 /** @var bool|array<string, mixed> */
                 return $target($clientId, $request);
             }
-            
+
             $middleware = $stack[$index];
-            
+
             $next = function () use ($index, $run): bool|array {
                 return $run($index + 1);
             };
 
             /** @var HandshakeMiddleware $object */
             $object = new $middleware();
-            
+
             return $object->handle($clientId, $request, $next, $server);
         };
-        
+
         return $run(0);
     }
 
     /**
      * Filter out excluded middlewares from the global stack
-     * 
+     *
      * @param array<int, class-string> $globalStack The global middleware stack
      * @param array<int, class-string> $excludeMiddlewares Array of middleware class names to exclude
      * @return array<int, class-string> Filtered middleware stack

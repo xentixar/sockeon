@@ -1,9 +1,10 @@
 <?php
+
 /**
  * MinRule
- * 
+ *
  * Validates that a value meets minimum requirements
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class MinRule extends BaseRule
 {
     /**
      * Validate that a value meets minimum requirements
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value meets minimum requirements
      */
@@ -47,7 +48,7 @@ class MinRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -56,4 +57,4 @@ class MinRule extends BaseRule
         $min = $this->getFirstParameter();
         return "The {$fieldName} field must be at least {$min}.";
     }
-} 
+}

@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Response class
- * 
+ *
  * Handles HTTP response generation with status codes, headers, and body
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -18,25 +19,25 @@ class Response
      * @var int
      */
     protected int $statusCode = 200;
-    
+
     /**
      * Response headers
      * @var array<string, string>
      */
     protected array $headers = [];
-    
+
     /**
      * Response body
      * @var mixed
      */
     protected mixed $body;
-    
+
     /**
      * Content type
      * @var string
      */
     protected string $contentType = 'text/html';
-    
+
     /**
      * HTTP status texts
      * @var array<int, string>
@@ -50,12 +51,12 @@ class Response
         403 => 'Forbidden',
         404 => 'Not Found',
         405 => 'Method Not Allowed',
-        500 => 'Internal Server Error'
+        500 => 'Internal Server Error',
     ];
 
     /**
      * Constructor
-     * 
+     *
      * @param mixed $body The response body
      * @param int $statusCode The HTTP status code
      * @param array<string, string> $headers Additional response headers
@@ -65,15 +66,15 @@ class Response
         $this->body = $body;
         $this->statusCode = $statusCode;
         $this->headers = $headers;
-        
+
         if (is_array($body) || is_object($body)) {
             $this->setContentType('application/json');
         }
     }
-    
+
     /**
      * Set response body
-     * 
+     *
      * @param mixed $body The response body
      * @return self
      */
@@ -82,20 +83,20 @@ class Response
         $this->body = $body;
         return $this;
     }
-    
+
     /**
      * Get response body
-     * 
+     *
      * @return mixed The response body
      */
     public function getBody(): mixed
     {
         return $this->body;
     }
-    
+
     /**
      * Set HTTP status code
-     * 
+     *
      * @param int $code The HTTP status code
      * @return self
      */
@@ -104,20 +105,20 @@ class Response
         $this->statusCode = $code;
         return $this;
     }
-    
+
     /**
      * Get HTTP status code
-     * 
+     *
      * @return int The HTTP status code
      */
     public function getStatusCode(): int
     {
         return $this->statusCode;
     }
-    
+
     /**
      * Set content type
-     * 
+     *
      * @param string $contentType The content type
      * @return self
      */
@@ -127,20 +128,20 @@ class Response
         $this->headers['Content-Type'] = $contentType;
         return $this;
     }
-    
+
     /**
      * Get content type
-     * 
+     *
      * @return string The content type
      */
     public function getContentType(): string
     {
         return $this->contentType;
     }
-    
+
     /**
      * Set response header
-     * 
+     *
      * @param string $name The header name
      * @param string $value The header value
      * @return self
@@ -150,10 +151,10 @@ class Response
         $this->headers[$name] = $value;
         return $this;
     }
-    
+
     /**
      * Get response header
-     * 
+     *
      * @param string $name The header name
      * @return string|null The header value
      */
@@ -161,56 +162,56 @@ class Response
     {
         return $this->headers[$name] ?? null;
     }
-    
+
     /**
      * Get all response headers
-     * 
+     *
      * @return array<string, string> The headers
      */
     public function getHeaders(): array
     {
         return $this->headers;
     }
-    
+
     /**
      * Get the formatted HTTP response string
-     * 
+     *
      * @return string The HTTP response
      */
     public function toString(): string
     {
         $body = $this->getBodyString();
-        
+
         $headers = [
             "HTTP/1.1 {$this->statusCode} " . $this->getStatusText($this->statusCode),
             "Content-Type: {$this->contentType}",
             "Connection: close",
             "Content-Length: " . strlen($body),
-            "X-Powered-By: Sockeon"
+            "X-Powered-By: Sockeon",
         ];
-        
+
         $securityHeaders = [
             'X-Content-Type-Options' => 'nosniff',
             'X-XSS-Protection' => '1; mode=block',
-            'X-Frame-Options' => 'SAMEORIGIN'
+            'X-Frame-Options' => 'SAMEORIGIN',
         ];
-        
+
         foreach ($securityHeaders as $name => $value) {
             if (!isset($this->headers[$name])) {
                 $this->headers[$name] = $value;
             }
         }
-        
+
         foreach ($this->headers as $name => $value) {
             $headers[] = "{$name}: {$value}";
         }
-        
+
         return implode("\r\n", $headers) . "\r\n\r\n" . $body;
     }
 
     /**
      * Get the string representation of the body
-     * 
+     *
      * @return string The body as a string
      */
     protected function getBodyString(): string
@@ -222,7 +223,7 @@ class Response
             }
             return $json;
         }
-        
+
         if ($this->body === null) {
             return '';
         }
@@ -240,7 +241,7 @@ class Response
 
     /**
      * Get HTTP status text from status code
-     * 
+     *
      * @param int $code The HTTP status code
      * @return string The corresponding status text
      */
@@ -251,7 +252,7 @@ class Response
 
     /**
      * Create a JSON response
-     * 
+     *
      * @param mixed $data The data to return
      * @param int $statusCode The HTTP status code
      * @param array<string, string> $headers Additional headers
@@ -265,7 +266,7 @@ class Response
 
     /**
      * Create a success response (200 OK)
-     * 
+     *
      * @param mixed $data The data to return
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -277,7 +278,7 @@ class Response
 
     /**
      * Create a 201 Created response
-     * 
+     *
      * @param mixed $data The data to return
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -289,7 +290,7 @@ class Response
 
     /**
      * Create a 404 Not Found response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -304,7 +305,7 @@ class Response
 
     /**
      * Create a 400 Bad Request response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -319,7 +320,7 @@ class Response
 
     /**
      * Create a 500 Internal Server Error response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -331,10 +332,10 @@ class Response
         }
         return self::json($data, 500, $headers);
     }
-    
+
     /**
      * Create a 401 Unauthorized response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -349,7 +350,7 @@ class Response
 
     /**
      * Create a 405 Method Not Allowed response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -361,10 +362,10 @@ class Response
         }
         return self::json($data, 405, $headers);
     }
-    
+
     /**
      * Create a 403 Forbidden response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -376,10 +377,10 @@ class Response
         }
         return self::json($data, 403, $headers);
     }
-    
+
     /**
      * Create a 204 No Content response
-     * 
+     *
      * @param array<string, string> $headers Additional headers
      * @return self
      */
@@ -387,10 +388,10 @@ class Response
     {
         return new self(null, 204, $headers);
     }
-    
+
     /**
      * Create a 429 Too Many Requests response
-     * 
+     *
      * @param mixed $data The error message or data
      * @param array<string, string> $headers Additional headers
      * @return self
@@ -402,10 +403,10 @@ class Response
         }
         return self::json($data, 429, $headers);
     }
-    
+
     /**
      * Create a redirect response
-     * 
+     *
      * @param string $url The URL to redirect to
      * @param int $status The HTTP status code (301, 302, 303, 307, 308)
      * @param array<string, string> $headers Additional headers
@@ -416,10 +417,10 @@ class Response
         $headers['Location'] = $url;
         return new self(null, $status, $headers);
     }
-    
+
     /**
      * Create a file download response
-     * 
+     *
      * @param string $content The file content
      * @param string $filename The suggested filename for the download
      * @param string $contentType The content type
@@ -429,7 +430,7 @@ class Response
     public static function download(string $content, string $filename, string $contentType = 'application/octet-stream', array $headers = []): self
     {
         $headers['Content-Disposition'] = 'attachment; filename="' . $filename . '"';
-        
+
         return (new self($content, 200, $headers))
             ->setContentType($contentType);
     }

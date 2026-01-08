@@ -136,7 +136,7 @@ test('http route can exclude global middleware', function () {
         'method' => 'GET',
         'path' => '/normal',
         'headers' => [],
-        'query' => []
+        'query' => [],
     ]);
     $server->getRouter()->dispatchHttp($request1);
     expect(TestGlobalHttpMiddleware::$calls)->toContain('global_http');
@@ -148,7 +148,7 @@ test('http route can exclude global middleware', function () {
         'method' => 'GET',
         'path' => '/excluded',
         'headers' => [],
-        'query' => []
+        'query' => [],
     ]);
     $server->getRouter()->dispatchHttp($request2);
     expect(TestGlobalHttpMiddleware::$calls)->toBeEmpty();

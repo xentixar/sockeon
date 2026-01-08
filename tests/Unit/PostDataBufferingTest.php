@@ -9,7 +9,7 @@ use Sockeon\Sockeon\Http\Response;
 
 test('http post data buffering works correctly', function () {
     $server = $this->server;
-    
+
     $controller = new class extends SocketController {
         /**
          * @param Request $request
@@ -22,28 +22,28 @@ test('http post data buffering works correctly', function () {
             return [
                 'received' => $body,
                 'method' => $request->getMethod(),
-                'contentType' => $request->getHeader('Content-Type')
+                'contentType' => $request->getHeader('Content-Type'),
             ];
         }
     };
-    
+
     $server->registerController($controller);
-    
+
     $testData = [
         'method' => 'POST',
         'path' => '/api/test',
         'protocol' => 'HTTP/1.1',
         'headers' => [
             'Content-Type' => 'application/json',
-            'Content-Length' => '25'
+            'Content-Length' => '25',
         ],
         'query' => [],
-        'body' => '{"name":"John","age":30}'
+        'body' => '{"name":"John","age":30}',
     ];
-    
+
     $request = new Request($testData);
     $result = $server->getRouter()->dispatchHttp($request);
-    
+
     expect($result)->toBeArray()
         ->and($result['received'])->toBe(['name' => 'John', 'age' => 30])
         ->and($result['method'])->toBe('POST');
@@ -56,44 +56,44 @@ test('http form data parsing works correctly', function () {
         'protocol' => 'HTTP/1.1',
         'headers' => [
             'Content-Type' => 'application/x-www-form-urlencoded',
-            'Content-Length' => '21'
+            'Content-Length' => '21',
         ],
         'query' => [],
-        'body' => 'name=John&age=30&city=NY'
+        'body' => 'name=John&age=30&city=NY',
     ];
-    
+
     $request = new Request($testData);
-    
+
     expect($request->isFormData())->toBeTrue()
         ->and($request->getBody())->toBe([
             'name' => 'John',
             'age' => '30',
-            'city' => 'NY'
+            'city' => 'NY',
         ]);
 });
 
 test('incomplete http request detection works', function () {
     $server = $this->server;
-    
+
     $incompleteData = "POST /api/test HTTP/1.1\r\n";
     $incompleteData .= "Content-Type: application/json\r\n";
     $incompleteData .= "Content-Length: 25\r\n";
     $incompleteData .= "\r\n";
-    $incompleteData .= '{"name":"John"'; 
-    
+    $incompleteData .= '{"name":"John"';
+
     $reflection = new ReflectionClass($server);
     $method = $reflection->getMethod('isCompleteHttpRequest');
     $method->setAccessible(true);
-    
+
     $isComplete = $method->invoke($server, $incompleteData);
     expect($isComplete)->toBeFalse();
-    
+
     $completeData = "POST /api/test HTTP/1.1\r\n";
     $completeData .= "Content-Type: application/json\r\n";
     $completeData .= "Content-Length: 24\r\n";
     $completeData .= "\r\n";
     $completeData .= '{"name":"John","age":30}';
-    
+
     $isComplete = $method->invoke($server, $completeData);
     expect($isComplete)->toBeTrue();
 });

@@ -1,9 +1,10 @@
 <?php
+
 /**
  * ValidationException class
- * 
+ *
  * Exception thrown when validation fails
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -23,7 +24,7 @@ class ValidationException extends Exception
 
     /**
      * Constructor
-     * 
+     *
      * @param string $message The exception message
      * @param array<string, array<int, string>> $errors The validation errors
      * @param int $code The exception code
@@ -37,11 +38,11 @@ class ValidationException extends Exception
 
     /**
      * Get validation errors
-     * 
+     *
      * @return array<string, array<int, string>> The validation errors
      */
     public function getErrors(): array
     {
         return $this->errors;
     }
-} 
+}

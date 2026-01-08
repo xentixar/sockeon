@@ -1,9 +1,10 @@
 <?php
+
 /**
  * BaseRule class
- * 
+ *
  * Base class for all validation rules providing common functionality
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -21,7 +22,7 @@ abstract class BaseRule implements RuleInterface
 
     /**
      * Constructor
-     * 
+     *
      * @param array<int, string> $parameters Rule parameters
      */
     public function __construct(array $parameters = [])
@@ -31,7 +32,7 @@ abstract class BaseRule implements RuleInterface
 
     /**
      * Sanitize a value (default implementation)
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return mixed The sanitized value
      */
@@ -42,7 +43,7 @@ abstract class BaseRule implements RuleInterface
 
     /**
      * Check if a value is empty
-     * 
+     *
      * @param mixed $value The value to check
      * @return bool True if the value is empty
      */
@@ -53,7 +54,7 @@ abstract class BaseRule implements RuleInterface
 
     /**
      * Get the first parameter
-     * 
+     *
      * @return string|null The first parameter or null
      */
     protected function getFirstParameter(): ?string
@@ -63,11 +64,11 @@ abstract class BaseRule implements RuleInterface
 
     /**
      * Get the second parameter
-     * 
+     *
      * @return string|null The second parameter or null
      */
     protected function getSecondParameter(): ?string
     {
         return $this->parameters[1] ?? null;
     }
-} 
+}

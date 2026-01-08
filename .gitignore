@@ -6,3 +6,4 @@ bin
 examples
 docs
 mcp
+.php-cs-fixer.cache

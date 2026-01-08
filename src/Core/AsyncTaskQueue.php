@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Async Task Queue
- * 
+ *
  * Handles asynchronous task processing for heavy operations
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -37,7 +38,7 @@ class AsyncTaskQueue
         'total_queued' => 0,
         'total_processed' => 0,
         'total_failed' => 0,
-        'processing_time_ms' => 0
+        'processing_time_ms' => 0,
     ];
 
     /**
@@ -61,7 +62,7 @@ class AsyncTaskQueue
 
     /**
      * Queue a task for async processing
-     * 
+     *
      * @param string $type Task type
      * @param array<string, mixed> $data Task data
      * @param int $priority Priority (higher = more important)
@@ -74,7 +75,7 @@ class AsyncTaskQueue
             'type' => $type,
             'data' => $data,
             'queued_at' => microtime(true),
-            'attempts' => 0
+            'attempts' => 0,
         ];
 
         if ($priority > 0) {
@@ -88,7 +89,7 @@ class AsyncTaskQueue
 
     /**
      * Register a task processor
-     * 
+     *
      * @param string $type Task type
      * @param callable $processor Processing function
      * @return void
@@ -100,7 +101,7 @@ class AsyncTaskQueue
 
     /**
      * Process queued tasks
-     * 
+     *
      * @return int Number of tasks processed
      */
     public function processTasks(): int
@@ -133,7 +134,7 @@ class AsyncTaskQueue
 
     /**
      * Process a single task
-     * 
+     *
      * @param array<string, mixed> $task Task info
      * @return bool Success
      */
@@ -144,7 +145,7 @@ class AsyncTaskQueue
             $task['attempts'] = 0;
         }
         $task['attempts']++;
-        
+
         try {
             $taskType = isset($task['type']) && is_string($task['type']) ? $task['type'] : '';
             if (!isset($this->processors[$taskType])) {
@@ -159,19 +160,19 @@ class AsyncTaskQueue
             return $result !== false;
         } catch (Throwable $e) {
             $this->metrics['total_failed']++;
-            
+
             // Retry failed tasks (max 3 attempts)
             if ($task['attempts'] < 3) {
                 $this->regularQueue->enqueue($task);
             }
-            
+
             return false;
         }
     }
 
     /**
      * Get queue statistics
-     * 
+     *
      * @return array<string, mixed>
      */
     public function getStats(): array
@@ -180,15 +181,15 @@ class AsyncTaskQueue
             'metrics' => $this->metrics,
             'queue_sizes' => [
                 'priority' => $this->priorityQueue->count(),
-                'regular' => $this->regularQueue->count()
+                'regular' => $this->regularQueue->count(),
             ],
-            'processors' => array_keys($this->processors)
+            'processors' => array_keys($this->processors),
         ];
     }
 
     /**
      * Get pending task count
-     * 
+     *
      * @return int
      */
     public function getPendingCount(): int
@@ -198,7 +199,7 @@ class AsyncTaskQueue
 
     /**
      * Clear all queued tasks
-     * 
+     *
      * @return void
      */
     public function clear(): void

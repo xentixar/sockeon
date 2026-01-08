@@ -23,7 +23,7 @@ class ServerConfig
 
     /**
      * CORS configuration
-     * 
+     *
      * @var CorsConfig
      */
     protected CorsConfig $corsConfig;
@@ -54,7 +54,7 @@ class ServerConfig
      * - true: Trust all proxies
      * - false: Don't trust any proxies (default)
      * - array: List of trusted proxy IPs/CIDR ranges
-     * 
+     *
      * @var bool|array<int, string>
      */
     protected bool|array $trustProxy = false;
@@ -62,7 +62,7 @@ class ServerConfig
     /**
      * Custom proxy header names for X-Forwarded-* headers.
      * Useful when using non-standard proxy headers.
-     * 
+     *
      * @var array<string, string>|null
      */
     protected ?array $proxyHeaders = null;
@@ -70,7 +70,7 @@ class ServerConfig
     /**
      * Health check endpoint path. If set, enables health check endpoint.
      * Default: null (disabled)
-     * 
+     *
      * @var string|null
      */
     protected ?string $healthCheckPath = null;
@@ -78,7 +78,7 @@ class ServerConfig
     /**
      * Maximum message size in bytes. If set, limits the size of incoming messages.
      * Default: 65536 (64KB)
-     * 
+     *
      * @var int
      */
     protected int $maxMessageSize = 65536; // 64KB

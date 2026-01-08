@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Request class
- * 
+ *
  * Handles HTTP request data encapsulation and provides convenient
  * methods to access request parameters, headers, and body
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -23,49 +24,49 @@ class Request
      * @var string
      */
     protected string $method;
-    
+
     /**
      * Request path
      * @var string
      */
     protected string $path;
-    
+
     /**
      * HTTP protocol version
      * @var string
      */
     protected string $protocol;
-    
+
     /**
      * Request headers
      * @var array<string, string>
      */
     protected array $headers;
-    
+
     /**
      * Query parameters
      * @var array<string, mixed>
      */
     protected array $query;
-    
+
     /**
      * Path parameters
      * @var array<string, string>
      */
     protected array $params;
-    
+
     /**
      * Request body
      * @var mixed
      */
     protected mixed $body;
-    
+
     /**
      * Raw request data
      * @var array<string, mixed>
      */
     protected array $rawData;
-    
+
     /**
      * Normalized headers cache (lowercase keys)
      * @var array<string, string>|null
@@ -98,19 +99,19 @@ class Request
 
     /**
      * Constructor
-     * 
+     *
      * @param array<string, mixed> $requestData The parsed HTTP request data
      */
     public function __construct(array $requestData)
     {
-        $this->method = isset($requestData['method']) ?
-            (is_string($requestData['method']) ? $requestData['method'] : '') : '';
+        $this->method = isset($requestData['method'])
+            ? (is_string($requestData['method']) ? $requestData['method'] : '') : '';
 
-        $this->path = isset($requestData['path']) ?
-            (is_string($requestData['path']) ? $requestData['path'] : '/') : '/';
+        $this->path = isset($requestData['path'])
+            ? (is_string($requestData['path']) ? $requestData['path'] : '/') : '/';
 
-        $this->protocol = isset($requestData['protocol']) ?
-            (is_string($requestData['protocol']) ? $requestData['protocol'] : '') : '';
+        $this->protocol = isset($requestData['protocol'])
+            ? (is_string($requestData['protocol']) ? $requestData['protocol'] : '') : '';
 
         $this->headers = [];
         if (isset($requestData['headers']) && is_array($requestData['headers'])) {
@@ -164,7 +165,7 @@ class Request
 
     /**
      * Check if the request has form data content type
-     * 
+     *
      * @return bool True if request has form data content type
      */
     public function isFormData(): bool
@@ -178,7 +179,7 @@ class Request
 
     /**
      * Get HTTP method
-     * 
+     *
      * @return string The HTTP method
      */
     public function getMethod(): string
@@ -188,7 +189,7 @@ class Request
 
     /**
      * Get request path
-     * 
+     *
      * @return string The request path
      */
     public function getPath(): string
@@ -198,7 +199,7 @@ class Request
 
     /**
      * Get HTTP protocol
-     * 
+     *
      * @return string The HTTP protocol version
      */
     public function getProtocol(): string
@@ -208,7 +209,7 @@ class Request
 
     /**
      * Get all headers
-     * 
+     *
      * @return array<string, string> All request headers
      */
     public function getHeaders(): array
@@ -218,7 +219,7 @@ class Request
 
     /**
      * Get a specific header value
-     * 
+     *
      * @param string $name The header name (case-insensitive)
      * @param mixed $default Default value if header is not found
      * @return mixed The header value or default
@@ -231,14 +232,14 @@ class Request
                 $this->normalizedHeaders[strtolower($key)] = $value;
             }
         }
-        
+
         $name = strtolower($name);
         return $this->normalizedHeaders[$name] ?? $default;
     }
 
     /**
      * Get all query parameters
-     * 
+     *
      * @return array<string, mixed> All query parameters
      */
     public function getQueryParams(): array
@@ -248,7 +249,7 @@ class Request
 
     /**
      * Get a specific query parameter
-     * 
+     *
      * @param string $name The query parameter name
      * @param mixed $default Default value if parameter is not found
      * @return mixed The parameter value or default
@@ -260,7 +261,7 @@ class Request
 
     /**
      * Get all path parameters
-     * 
+     *
      * @return array<string, string> All path parameters
      */
     public function getPathParams(): array
@@ -270,7 +271,7 @@ class Request
 
     /**
      * Get a specific path parameter
-     * 
+     *
      * @param string $name The path parameter name
      * @param mixed $default Default value if parameter is not found
      * @return mixed The parameter value or default
@@ -282,7 +283,7 @@ class Request
 
     /**
      * Get request body
-     * 
+     *
      * @return mixed The request body
      */
     public function getBody(): mixed
@@ -292,7 +293,7 @@ class Request
 
     /**
      * Get request body as array (similar to Laravel's all() method)
-     * 
+     *
      * @return array<mixed, mixed> The request body as an array
      */
     public function all(): array
@@ -300,20 +301,20 @@ class Request
         if (is_array($this->body)) {
             return $this->body;
         }
-        
+
         if (is_string($this->body) && !empty($this->body)) {
             $decoded = json_decode($this->body, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }
         }
-        
+
         return [];
     }
 
     /**
      * Check if the request has a JSON content type
-     * 
+     *
      * @return bool True if request has JSON content type
      */
     public function isJson(): bool
@@ -324,20 +325,20 @@ class Request
         }
         return str_contains($contentType, 'application/json');
     }
-    
+
     /**
      * Check if the request is an XHR/AJAX request
-     * 
+     *
      * @return bool True if the request is an AJAX request
      */
     public function isAjax(): bool
     {
         return $this->getHeader('X-Requested-With') === 'XMLHttpRequest';
     }
-    
+
     /**
      * Check if this is a specific HTTP method
-     * 
+     *
      * @param string $method The HTTP method to check (case-insensitive)
      * @return bool True if the request method matches
      */
@@ -345,10 +346,10 @@ class Request
     {
         return strtoupper($this->method) === strtoupper($method);
     }
-    
+
     /**
      * Get the request URL
-     * 
+     *
      * @param bool $includeQuery Whether to include the query string
      * @return string The full request URL
      */
@@ -357,26 +358,26 @@ class Request
         $host = $this->getHost();
         $protocol = $this->getScheme();
         $port = $this->getPort();
-        
+
         $url = "{$protocol}://{$host}";
-        
+
         // Only include port if it's not the default port for the scheme
         if (($protocol === 'https' && $port !== 443) || ($protocol === 'http' && $port !== 80)) {
             $url .= ":{$port}";
         }
-        
+
         $url .= $this->path;
-        
+
         if ($includeQuery && !empty($this->query)) {
             $url .= '?' . http_build_query($this->query);
         }
-        
+
         return $url;
     }
-    
+
     /**
      * Get client IP address
-     * 
+     *
      * @param bool $fallbackToDefault Whether to return a default IP if none found
      * @return string|null The client IP address or null/default
      */
@@ -402,7 +403,7 @@ class Request
                 if (str_contains($ip, ',')) {
                     $ip = trim(explode(',', $ip)[0]);
                 }
-                
+
                 // Validate IP
                 if (filter_var($ip, FILTER_VALIDATE_IP)) {
                     // Prefer public IPs, but return any valid IP if found
@@ -453,12 +454,12 @@ class Request
                 if (str_contains($ip, ',')) {
                     $ip = trim(explode(',', $ip)[0]);
                 }
-                
+
                 // Prefer public IPs
                 if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                     return $ip;
                 }
-                
+
                 // Fallback to any valid IP
                 if (filter_var($ip, FILTER_VALIDATE_IP)) {
                     return $ip;
@@ -471,13 +472,13 @@ class Request
         if ($directIp !== null) {
             return $directIp;
         }
-        
+
         return $fallbackToDefault ? '127.0.0.1' : null;
     }
 
     /**
      * Get the direct connection IP (without proxy headers)
-     * 
+     *
      * @return string|null The direct connection IP or null
      */
     protected function getDirectConnectionIp(): ?string
@@ -501,21 +502,21 @@ class Request
 
     /**
      * Check if we should trust proxy headers
-     * 
+     *
      * @return bool True if proxy headers should be trusted
      */
     protected function shouldTrustProxy(): bool
     {
         $trustProxy = Config::getTrustProxy();
-        
+
         if ($trustProxy === false) {
             return false;
         }
-        
+
         if ($trustProxy === true) {
             return true;
         }
-        
+
         // Check if the direct connection IP is in the trusted proxy list
         // At this point, $trustProxy must be an array since we've checked for false and true
         /** @var array<int, string> $trustProxy */
@@ -523,19 +524,19 @@ class Request
         if ($directIp === null) {
             return false;
         }
-        
+
         foreach ($trustProxy as $trustedProxy) {
             if ($this->ipMatches($directIp, $trustedProxy)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     /**
      * Check if an IP matches a trusted proxy pattern (IP or CIDR)
-     * 
+     *
      * @param string $ip The IP address to check
      * @param string $pattern The pattern (IP or CIDR notation)
      * @return bool True if the IP matches
@@ -546,12 +547,12 @@ class Request
         if ($ip === $pattern) {
             return true;
         }
-        
+
         // CIDR notation match
         if (str_contains($pattern, '/')) {
-            list($subnet, $mask) = explode('/', $pattern, 2);
+            [$subnet, $mask] = explode('/', $pattern, 2);
             $mask = (int) $mask;
-            
+
             if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
                 $ipLong = ip2long($ip);
                 $subnetLong = ip2long($subnet);
@@ -561,7 +562,7 @@ class Request
                 $maskLong = -1 << (32 - $mask);
                 return ($ipLong & $maskLong) === ($subnetLong & $maskLong);
             }
-            
+
             if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
                 // IPv6 CIDR matching (simplified)
                 $ipBin = inet_pton($ip);
@@ -571,18 +572,18 @@ class Request
                 }
                 $bytes = (int) ($mask / 8);
                 $bits = $mask % 8;
-                return substr($ipBin, 0, $bytes) === substr($subnetBin, 0, $bytes) &&
-                       ($bits === 0 || (ord($ipBin[$bytes]) >> (8 - $bits)) === (ord($subnetBin[$bytes]) >> (8 - $bits)));
+                return substr($ipBin, 0, $bytes) === substr($subnetBin, 0, $bytes)
+                       && ($bits === 0 || (ord($ipBin[$bytes]) >> (8 - $bits)) === (ord($subnetBin[$bytes]) >> (8 - $bits)));
             }
         }
-        
+
         return false;
     }
 
     /**
      * Get the request scheme (http or https)
      * Respects X-Forwarded-Proto header when present (even if proxy not fully trusted)
-     * 
+     *
      * @return string The request scheme
      */
     public function getScheme(): string
@@ -590,12 +591,12 @@ class Request
         // First, check proxy headers (they're present even if trust_proxy isn't fully configured)
         $proxyHeaders = Config::getProxyHeaders();
         $protoHeader = $proxyHeaders['proto'] ?? 'X-Forwarded-Proto';
-        
+
         $proto = $this->getHeader($protoHeader);
         if (is_string($proto) && in_array(strtolower($proto), ['http', 'https'], true)) {
             return strtolower($proto);
         }
-        
+
         // Also check Forwarded header (RFC 7239) if trust_proxy is enabled
         if ($this->shouldTrustProxy()) {
             // Also check Forwarded header (RFC 7239)
@@ -609,7 +610,7 @@ class Request
                 }
             }
         }
-        
+
         // Fallback to checking connection or default to http
         return 'http';
     }
@@ -617,7 +618,7 @@ class Request
     /**
      * Get the request host
      * Respects X-Forwarded-Host header when proxy is trusted
-     * 
+     *
      * @return string The request host
      */
     public function getHost(): string
@@ -625,7 +626,7 @@ class Request
         if ($this->shouldTrustProxy()) {
             $proxyHeaders = Config::getProxyHeaders();
             $hostHeader = $proxyHeaders['host'] ?? 'X-Forwarded-Host';
-            
+
             $host = $this->getHeader($hostHeader);
             if (is_string($host) && $host !== '') {
                 // Remove port if present (we'll handle it separately)
@@ -634,7 +635,7 @@ class Request
                 }
                 return $host;
             }
-            
+
             // Also check Forwarded header (RFC 7239)
             $forwarded = $this->getHeader('Forwarded');
             if (is_string($forwarded)) {
@@ -647,7 +648,7 @@ class Request
                 }
             }
         }
-        
+
         // Fallback to Host header
         $host = $this->getHeader('Host');
         if (is_string($host) && $host !== '') {
@@ -656,14 +657,14 @@ class Request
             }
             return $host;
         }
-        
+
         return 'localhost';
     }
 
     /**
      * Get the request port
      * Respects X-Forwarded-Port header when proxy is trusted
-     * 
+     *
      * @return int The request port
      */
     public function getPort(): int
@@ -671,7 +672,7 @@ class Request
         if ($this->shouldTrustProxy()) {
             $proxyHeaders = Config::getProxyHeaders();
             $portHeader = $proxyHeaders['port'] ?? 'X-Forwarded-Port';
-            
+
             $port = $this->getHeader($portHeader);
             if (is_string($port) && is_numeric($port)) {
                 $portInt = (int) $port;
@@ -679,7 +680,7 @@ class Request
                     return $portInt;
                 }
             }
-            
+
             // Also check Forwarded header (RFC 7239)
             $forwarded = $this->getHeader('Forwarded');
             if (is_string($forwarded)) {
@@ -698,7 +699,7 @@ class Request
                 }
             }
         }
-        
+
         // Fallback to Host header port
         $host = $this->getHeader('Host');
         if (is_string($host) && str_contains($host, ':')) {
@@ -711,14 +712,14 @@ class Request
                 }
             }
         }
-        
+
         // Default port based on scheme
         return $this->getScheme() === 'https' ? 443 : 80;
     }
 
     /**
      * Create from raw request array
-     * 
+     *
      * @param array<string, mixed> $request The raw request array
      * @return self New Request instance
      */
@@ -729,17 +730,17 @@ class Request
 
     /**
      * Convert to array
-     * 
+     *
      * @return array<string, mixed> The request as an array
      */
     public function toArray(): array
     {
         return $this->rawData;
     }
-    
+
     /**
      * Set custom data in the request
-     * 
+     *
      * @param string $key The data key
      * @param mixed $value The data value
      * @return self For method chaining
@@ -749,10 +750,10 @@ class Request
         $this->rawData[$key] = $value;
         return $this;
     }
-    
+
     /**
      * Get custom data from the request
-     * 
+     *
      * @param string $key The data key
      * @param mixed $default Default value if key doesn't exist
      * @return mixed The data value or default
@@ -765,7 +766,7 @@ class Request
     /**
      * Magic method to access request data as properties
      * Checks body data first, then query parameters
-     * 
+     *
      * @param string $name The property name
      * @return mixed The property value or null
      */
@@ -775,35 +776,35 @@ class Request
         if (array_key_exists($name, $bodyData)) {
             return $bodyData[$name];
         }
-        
+
         if (array_key_exists($name, $this->query)) {
             return $this->query[$name];
         }
-        
+
         if (array_key_exists($name, $this->params)) {
             return $this->params[$name];
         }
-        
+
         return null;
     }
 
     /**
      * Magic method to check if a property exists
-     * 
+     *
      * @param string $name The property name
      * @return bool True if the property exists
      */
     public function __isset(string $name): bool
     {
         $bodyData = $this->all();
-        return array_key_exists($name, $bodyData) || 
-               array_key_exists($name, $this->query) || 
-               array_key_exists($name, $this->params);
+        return array_key_exists($name, $bodyData)
+               || array_key_exists($name, $this->query)
+               || array_key_exists($name, $this->params);
     }
 
     /**
      * Get a specific input value (body, query, or path parameter)
-     * 
+     *
      * @param string $key The input key
      * @param mixed $default Default value if key doesn't exist
      * @return mixed The input value or default
@@ -815,7 +816,7 @@ class Request
 
     /**
      * Check if a specific input exists
-     * 
+     *
      * @param string $key The input key
      * @return bool True if the input exists
      */
@@ -826,7 +827,7 @@ class Request
 
     /**
      * Validate the request data
-     * 
+     *
      * @param array<string, string|array<int, string>> $rules The validation rules
      * @param array<string, string> $messages Custom error messages
      * @param array<string, string> $fieldNames Custom field names
@@ -851,7 +852,7 @@ class Request
 
     /**
      * Validate the request data and return validated data
-     * 
+     *
      * @param array<string, string|array<int, string>> $rules The validation rules
      * @param array<string, string> $messages Custom error messages
      * @param array<string, string> $fieldNames Custom field names
@@ -866,7 +867,7 @@ class Request
 
     /**
      * Get validation errors
-     * 
+     *
      * @return array<string, array<int, string>> The validation errors
      */
     public function getValidationErrors(): array
@@ -876,7 +877,7 @@ class Request
 
     /**
      * Check if validation has errors
-     * 
+     *
      * @return bool True if there are errors
      */
     public function hasValidationErrors(): bool
@@ -886,7 +887,7 @@ class Request
 
     /**
      * Get first validation error for a field
-     * 
+     *
      * @param string $field The field name
      * @return string|null The first error message or null
      */
@@ -897,7 +898,7 @@ class Request
 
     /**
      * Get all validation errors for a field
-     * 
+     *
      * @param string $field The field name
      * @return array<int, string> The error messages
      */
@@ -908,7 +909,7 @@ class Request
 
     /**
      * Get validated data
-     * 
+     *
      * @return array<string, mixed> The validated and sanitized data
      */
     public function getValidatedData(): array
@@ -918,7 +919,7 @@ class Request
 
     /**
      * Set validation rules
-     * 
+     *
      * @param array<string, string|array<int, string>> $rules The validation rules
      * @return self For method chaining
      */
@@ -930,7 +931,7 @@ class Request
 
     /**
      * Set custom error messages
-     * 
+     *
      * @param array<string, string> $messages The custom error messages
      * @return self For method chaining
      */
@@ -942,7 +943,7 @@ class Request
 
     /**
      * Set custom field names
-     * 
+     *
      * @param array<string, string> $fieldNames The custom field names
      * @return self For method chaining
      */
@@ -954,7 +955,7 @@ class Request
 
     /**
      * Get validation rules
-     * 
+     *
      * @return array<string, string|array<int, string>> The validation rules
      */
     public function getValidationRules(): array
@@ -964,7 +965,7 @@ class Request
 
     /**
      * Get custom error messages
-     * 
+     *
      * @return array<string, string> The custom error messages
      */
     public function getValidationMessages(): array
@@ -974,7 +975,7 @@ class Request
 
     /**
      * Get custom field names
-     * 
+     *
      * @return array<string, string> The custom field names
      */
     public function getValidationFieldNames(): array
@@ -984,7 +985,7 @@ class Request
 
     /**
      * Validate a single field
-     * 
+     *
      * @param string $field The field name
      * @param string|array<int, string> $rules The validation rules
      * @param array<string, string> $messages Custom error messages
@@ -1006,7 +1007,7 @@ class Request
 
     /**
      * Validate multiple fields
-     * 
+     *
      * @param array<string, string|array<int, string>> $rules The validation rules
      * @param array<string, string> $messages Custom error messages
      * @param array<string, string> $fieldNames Custom field names

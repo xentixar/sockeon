@@ -1,4 +1,5 @@
 <?php
+
 /**
  * HandshakeRequest class
  *
@@ -173,10 +174,10 @@ class HandshakeRequest
     public function isValidWebSocketRequest(): bool
     {
         $connection = $this->getHeader('Connection');
-        return $this->getHeader('Upgrade') === 'websocket' &&
-               $connection !== null &&
-               str_contains(strtolower($connection), 'upgrade') &&
-               $this->webSocketKey !== null;
+        return $this->getHeader('Upgrade') === 'websocket'
+               && $connection !== null
+               && str_contains(strtolower($connection), 'upgrade')
+               && $this->webSocketKey !== null;
     }
 
     /**
@@ -187,7 +188,7 @@ class HandshakeRequest
     protected function parseRequest(): void
     {
         $lines = explode("\r\n", $this->rawRequest);
-        
+
         if (!empty($lines[0])) {
             if (preg_match('/GET\s+(.*?)\s+HTTP/i', $lines[0], $matches)) {
                 $this->uri = trim($matches[1]);
@@ -197,17 +198,17 @@ class HandshakeRequest
 
         for ($i = 1; $i < count($lines); $i++) {
             $line = $lines[$i];
-            
+
             if (empty($line)) {
                 break;
             }
-            
+
             if (str_contains($line, ':')) {
                 [$name, $value] = explode(':', $line, 2);
                 $name = trim($name);
                 $value = trim($value);
                 $this->headers[$name] = $value;
-                
+
                 if (strtolower($name) === 'origin') {
                     $this->origin = $value;
                 } elseif (strtolower($name) === 'sec-websocket-key') {
@@ -229,11 +230,11 @@ class HandshakeRequest
         }
 
         $parts = parse_url($this->uri);
-        
+
         if (isset($parts['path'])) {
             $this->path = $parts['path'];
         }
-        
+
         if (isset($parts['query'])) {
             parse_str($parts['query'], $this->queryParams);
         }

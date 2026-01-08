@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Logger class
  *
@@ -21,7 +22,7 @@ class Logger implements LoggerInterface
      * Directory path where log files will be stored
      * @var string|null
      */
-    protected string|null $logDirectory;
+    protected ?string $logDirectory;
 
     /**
      * Current minimum log level
@@ -234,7 +235,7 @@ class Logger implements LoggerInterface
             'code' => $exception->getCode(),
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
-            'trace' => $exception->getTraceAsString()
+            'trace' => $exception->getTraceAsString(),
         ];
 
         $this->log($level, $message, $context);
@@ -292,10 +293,10 @@ class Logger implements LoggerInterface
         $date = (new DateTime())->format('Y-m-d');
 
         // Only append date if separateLogFiles is enabled
-        $mainLogFile = $this->separateLogFiles 
+        $mainLogFile = $this->separateLogFiles
             ? "{$this->logDirectory}/sockeon-{$date}.log"
             : "{$this->logDirectory}/sockeon.log";
-        
+
         file_put_contents($mainLogFile, $logEntry . PHP_EOL, FILE_APPEND);
 
         if ($this->separateLogFiles) {

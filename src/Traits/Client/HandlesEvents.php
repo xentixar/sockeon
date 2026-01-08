@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesEvents trait
- * 
+ *
  * Manages event listeners and event emission for WebSocket client
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -28,9 +29,9 @@ trait HandlesEvents
         if (!isset($this->eventListeners[$event])) {
             $this->eventListeners[$event] = [];
         }
-        
+
         $this->eventListeners[$event][] = $callback;
-        
+
         return $this;
     }
 
@@ -51,25 +52,25 @@ trait HandlesEvents
 
         $message = json_encode([
             'event' => $event,
-            'data' => $data
+            'data' => $data,
         ]);
-        
+
         if ($message === false) {
             throw new MessageException("Failed to encode message");
         }
-        
+
         $frame = $this->createWebSocketFrame($message);
-        
+
         if (!is_resource($this->socket)) {
             throw new ConnectionException("Invalid socket resource");
         }
-        
+
         $bytesWritten = fwrite($this->socket, $frame);
-        
+
         if ($bytesWritten === false || $bytesWritten < strlen($frame)) {
             throw new MessageException("Failed to send message");
         }
-        
+
         return true;
     }
 
@@ -82,24 +83,24 @@ trait HandlesEvents
     protected function processMessage(string $payload): void
     {
         $message = json_decode($payload, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($message)) {
             return;
         }
-        
+
         if (!isset($message['event']) || !is_string($message['event'])) {
             return;
         }
-        
+
         $event = $message['event'];
         $data = isset($message['data']) && is_array($message['data']) ? $message['data'] : [];
-        
+
         if (isset($this->eventListeners[$event])) {
             foreach ($this->eventListeners[$event] as $listener) {
                 call_user_func($listener, $data);
             }
         }
-        
+
         if (isset($this->eventListeners['message'])) {
             foreach ($this->eventListeners['message'] as $listener) {
                 call_user_func($listener, $event, $data);

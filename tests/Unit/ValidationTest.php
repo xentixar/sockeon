@@ -12,13 +12,13 @@ test('basic validation', function () {
     $data = [
         'name' => 'John Doe',
         'email' => 'john@example.com',
-        'age' => 25
+        'age' => 25,
     ];
 
     $rules = [
         'name' => 'required|string|min:3',
         'email' => 'required|email',
-        'age' => 'integer|min:18'
+        'age' => 'integer|min:18',
     ];
 
     $this->validator->validate($data, $rules);
@@ -29,13 +29,13 @@ test('validation with errors', function () {
     $data = [
         'name' => 'Jo', // Too short
         'email' => 'invalid-email', // Invalid email
-        'age' => 15 // Too young
+        'age' => 15, // Too young
     ];
 
     $rules = [
         'name' => 'required|string|min:3',
         'email' => 'required|email',
-        'age' => 'integer|min:18'
+        'age' => 'integer|min:18',
     ];
 
     expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
@@ -144,13 +144,13 @@ test('sanitized data', function () {
     $data = [
         'name' => '  John Doe  ',
         'email' => 'john@example.com',
-        'age' => '25'
+        'age' => '25',
     ];
 
     $rules = [
         'name' => 'required|string',
         'email' => 'required|email',
-        'age' => 'integer'
+        'age' => 'integer',
     ];
 
     $this->validator->validate($data, $rules);
@@ -229,4 +229,4 @@ test('not_in rule', function () {
     $rules = ['role' => 'not_in:admin,super_admin'];
 
     expect(fn() => $this->validator->validate($data, $rules))->toThrow(ValidationException::class);
-}); 
+});

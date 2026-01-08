@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesWebSocketMessages trait
- * 
+ *
  * Manages WebSocket message processing and routing
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -17,7 +18,7 @@ trait HandlesWebSocketMessages
 {
     /**
      * Handle an incoming WebSocket message
-     * 
+     *
      * @param string $clientId The client ID
      * @param string $payload The message payload
      * @return void
@@ -38,18 +39,18 @@ trait HandlesWebSocketMessages
             }
 
             $message = json_decode($payload, true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $errorMsg = 'Invalid JSON format: ' . json_last_error_msg();
                 $this->server->getLogger()->warning("Invalid JSON received from client: $clientId", [
                     'error' => json_last_error_msg(),
                     'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : ''),
-                    'client_id' => $clientId
+                    'client_id' => $clientId,
                 ]);
                 $this->sendErrorMessage($clientId, $errorMsg);
                 return;
             }
-            
+
             if (!is_array($message)) {
                 $this->sendErrorMessage($clientId, 'Message must be a JSON object');
                 return;
@@ -63,7 +64,7 @@ trait HandlesWebSocketMessages
                 $this->server->getLogger()->warning("Message validation failed for client: $clientId", [
                     'errors' => $validationErrors,
                     'payload' => substr($payload, 0, 100) . (strlen($payload) > 100 ? '...' : ''),
-                    'client_id' => $clientId
+                    'client_id' => $clientId,
                 ]);
                 $this->sendErrorMessage($clientId, $errorMsg);
                 return;
@@ -81,24 +82,24 @@ trait HandlesWebSocketMessages
                 'client_id' => $clientId,
                 'event' => $event,
                 'data_size' => count($data),
-                'data_keys' => array_keys($data)
+                'data_keys' => array_keys($data),
             ]);
 
             $this->server->getRouter()->dispatch($clientId, $event, $data); //@phpstan-ignore-line
         } catch (Throwable $e) {
             $this->server->getLogger()->exception($e, [
-                'clientId' => $clientId, 
+                'clientId' => $clientId,
                 'context' => 'WebSocketHandler::handleMessage',
-                'payload_preview' => substr($payload, 0, 100)
+                'payload_preview' => substr($payload, 0, 100),
             ]);
-            
+
             $this->sendErrorMessage($clientId, 'Internal server error processing message');
         }
     }
 
     /**
      * Send an error message to a specific client
-     * 
+     *
      * @param string $clientId The client ID
      * @param string $errorMessage The error message
      * @return void
@@ -110,8 +111,8 @@ trait HandlesWebSocketMessages
                 'event' => 'error',
                 'data' => [
                     'message' => $errorMessage,
-                    'timestamp' => time()
-                ]
+                    'timestamp' => time(),
+                ],
             ];
 
             $encodedMessage = json_encode($errorResponse);
@@ -120,20 +121,20 @@ trait HandlesWebSocketMessages
             }
 
             $frame = $this->encodeWebSocketFrame($encodedMessage);
-            
+
             $clients = $this->server->getClients();
             if (isset($clients[$clientId]) && is_resource($clients[$clientId])) {
                 $bytesWritten = fwrite($clients[$clientId], $frame);
-                
+
                 if ($bytesWritten === false || $bytesWritten < strlen($frame)) {
                     $this->server->getLogger()->warning("Failed to send error message to client: $clientId", [
                         'error_message' => $errorMessage,
                         'bytes_written' => $bytesWritten,
-                        'frame_length' => strlen($frame)
+                        'frame_length' => strlen($frame),
                     ]);
                 } else {
                     $this->server->getLogger()->debug("Sent error message to client: $clientId", [
-                        'error_message' => $errorMessage
+                        'error_message' => $errorMessage,
                     ]);
                 }
             } else {
@@ -143,14 +144,14 @@ trait HandlesWebSocketMessages
             $this->server->getLogger()->exception($e, [
                 'clientId' => $clientId,
                 'context' => 'sendErrorMessage',
-                'error_message' => $errorMessage
+                'error_message' => $errorMessage,
             ]);
         }
     }
 
     /**
      * Validate the structure of a WebSocket message
-     * 
+     *
      * @param array<string, mixed> $message The message to validate
      * @return array<string, string> Array of validation errors
      */
@@ -189,7 +190,7 @@ trait HandlesWebSocketMessages
 
     /**
      * Create a properly formatted WebSocket message
-     * 
+     *
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @return array<string, mixed> The formatted message
@@ -198,13 +199,13 @@ trait HandlesWebSocketMessages
     {
         return [
             'event' => $event,
-            'data' => $data
+            'data' => $data,
         ];
     }
 
     /**
      * Send a message to a specific client
-     * 
+     *
      * @param string $clientId The client ID
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
@@ -215,32 +216,32 @@ trait HandlesWebSocketMessages
         try {
             $message = $this->createMessage($event, $data);
             $encodedMessage = json_encode($message);
-            
+
             if ($encodedMessage === false) {
                 $this->server->getLogger()->error("Failed to encode message for client: $clientId", [
                     'event' => $event,
-                    'data' => $data
+                    'data' => $data,
                 ]);
                 return false;
             }
 
             $frame = $this->encodeWebSocketFrame($encodedMessage);
-            
+
             $clients = $this->server->getClients();
             if (isset($clients[$clientId]) && is_resource($clients[$clientId])) {
                 $bytesWritten = fwrite($clients[$clientId], $frame);
-                
+
                 if ($bytesWritten === false || $bytesWritten < strlen($frame)) {
                     $this->server->getLogger()->warning("Failed to send message to client: $clientId", [
                         'event' => $event,
                         'bytes_written' => $bytesWritten,
-                        'frame_length' => strlen($frame)
+                        'frame_length' => strlen($frame),
                     ]);
                     return false;
                 } else {
                     $this->server->getLogger()->debug("Sent message to client: $clientId", [
                         'event' => $event,
-                        'data_size' => count($data)
+                        'data_size' => count($data),
                     ]);
                     return true;
                 }
@@ -252,7 +253,7 @@ trait HandlesWebSocketMessages
             $this->server->getLogger()->exception($e, [
                 'clientId' => $clientId,
                 'context' => 'sendMessage',
-                'event' => $event
+                'event' => $event,
             ]);
             return false;
         }

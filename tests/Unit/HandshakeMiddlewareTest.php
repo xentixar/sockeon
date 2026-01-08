@@ -10,21 +10,21 @@ test('server can add handshake middleware', function () {
     $server = $this->server; //@phpstan-ignore-line
 
     $server->addHandshakeMiddleware(TestHandshakeMiddleware::class);
-    
+
     expect($server->getMiddleware())->toBeInstanceOf(Middleware::class);
 });
 
 test('handshake request parses correctly', function () {
-    $rawRequest = "GET /chat?token=abc123 HTTP/1.1\r\n" .
-                  "Host: localhost:8080\r\n" .
-                  "Upgrade: websocket\r\n" .
-                  "Connection: Upgrade\r\n" .
-                  "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" .
-                  "Origin: http://localhost:3000\r\n" .
-                  "Sec-WebSocket-Version: 13\r\n\r\n";
+    $rawRequest = "GET /chat?token=abc123 HTTP/1.1\r\n"
+                  . "Host: localhost:8080\r\n"
+                  . "Upgrade: websocket\r\n"
+                  . "Connection: Upgrade\r\n"
+                  . "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+                  . "Origin: http://localhost:3000\r\n"
+                  . "Sec-WebSocket-Version: 13\r\n\r\n";
 
     $request = new HandshakeRequest($rawRequest);
-    
+
     expect($request->getPath())->toBe('/chat')
         ->and($request->getQueryParam('token'))->toBe('abc123')
         ->and($request->getHeader('Upgrade'))->toBe('websocket')

@@ -20,10 +20,10 @@ class TestSpecialEventsController extends SocketController
     public function handleConnect(string $clientId): void
     {
         $this->events[] = "connect:$clientId";
-        
+
         $this->emit($clientId, 'welcome', [
             'message' => 'Welcome to the server!',
-            'clientId' => $clientId
+            'clientId' => $clientId,
         ]);
     }
 
@@ -36,10 +36,10 @@ class TestSpecialEventsController extends SocketController
     public function handleDisconnect(string $clientId): void
     {
         $this->events[] = "disconnect:$clientId";
-        
+
         $this->broadcast('user.left', [
             'clientId' => $clientId,
-            'message' => "Client $clientId has left the server"
+            'message' => "Client $clientId has left the server",
         ]);
     }
 
@@ -53,10 +53,10 @@ class TestSpecialEventsController extends SocketController
     public function handleMessage(string $clientId, array $data): void
     {
         $this->events[] = "message:$clientId";
-        
+
         $this->broadcast('message.receive', [
             'message' => $data['message'] ?? '',
-            'from' => $clientId
+            'from' => $clientId,
         ]);
     }
 }
@@ -66,17 +66,17 @@ test('special events are registered correctly', function () {
     $server = $this->server; //@phpstan-ignore-line
 
     $controller = new TestSpecialEventsController();
-    
+
     $server->registerController($controller);
-    
+
     $router = $server->getRouter();
     expect($router)->toBeInstanceOf(Router::class);
-    
+
     $reflection = new ReflectionClass($router);
     $specialEventHandlersProperty = $reflection->getProperty('specialEventHandlers');
     $specialEventHandlersProperty->setAccessible(true);
     $specialEventHandlers = $specialEventHandlersProperty->getValue($router);
-    
+
     expect($specialEventHandlers['connect'])->toHaveCount(1);
     expect($specialEventHandlers['disconnect'])->toHaveCount(1);
     expect($specialEventHandlers['connect'][0][1])->toBe('handleConnect');
@@ -89,16 +89,16 @@ test('special events can be dispatched', function () {
 
     $controller = new TestSpecialEventsController();
     $server->registerController($controller);
-    
+
     $router = $server->getRouter();
-    
+
     $clientId = 123;
     $router->dispatchSpecialEvent($clientId, 'connect');
-    
+
     expect($controller->events)->toContain("connect:$clientId");
-    
+
     $router->dispatchSpecialEvent($clientId, 'disconnect');
-    
+
     expect($controller->events)->toContain("disconnect:$clientId");
 });
 
@@ -108,23 +108,23 @@ test('multiple controllers can have special event handlers', function () {
 
     $controller1 = new TestSpecialEventsController();
     $controller2 = new TestSpecialEventsController();
-    
+
     $server->registerController($controller1);
     $server->registerController($controller2);
-    
+
     $router = $server->getRouter();
-    
+
     $reflection = new ReflectionClass($router);
     $specialEventHandlersProperty = $reflection->getProperty('specialEventHandlers');
     $specialEventHandlersProperty->setAccessible(true);
     $specialEventHandlers = $specialEventHandlersProperty->getValue($router);
-    
+
     expect($specialEventHandlers['connect'])->toHaveCount(2);
     expect($specialEventHandlers['disconnect'])->toHaveCount(2);
-    
+
     $clientId = 456;
     $router->dispatchSpecialEvent($clientId, 'connect');
-    
+
     expect($controller1->events)->toContain("connect:$clientId");
     expect($controller2->events)->toContain("connect:$clientId");
 });
