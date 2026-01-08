@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesWebSocketFrames trait
- * 
+ *
  * Manages WebSocket frame encoding and decoding for server
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -17,7 +18,7 @@ trait HandlesWebSocketFrames
 {
     /**
      * Decode WebSocket frames from raw binary data
-     * 
+     *
      * @param string $data The raw WebSocket frame data
      * @return array{0: array<int, array<string, mixed>>, 1: string} An array containing [frames, remaining_data]
      */
@@ -25,35 +26,35 @@ trait HandlesWebSocketFrames
     {
         $frames = [];
         $originalDataLength = strlen($data);
-        
+
         // Maximum payload size
         $maxPayloadSize = $this->server->getMaxMessageSize();
-        
+
         while (strlen($data) > 0) {
             // Make sure we have at least 2 bytes for the basic header
             if (strlen($data) < 2) {
                 // Don't log as error - this is expected when waiting for more data
                 $this->logFrameDebug("Incomplete frame header (will buffer)", [
                     'remaining_bytes' => strlen($data),
-                    'required_bytes' => 2
+                    'required_bytes' => 2,
                 ]);
                 break;
             }
 
             $firstByte = ord($data[0]);
             $secondByte = ord($data[1]);
-            
+
             $fin = ($firstByte & 0x80) == 0x80;
             $opcode = $firstByte & 0x0F;
             $masked = ($secondByte & 0x80) == 0x80;
             $payloadLength = $secondByte & 0x7F;
-            
+
             // Validate opcode
             if (!$this->isValidOpcode($opcode)) {
                 $this->logFrameError("Invalid opcode", ['opcode' => $opcode]);
                 break;
             }
-            
+
             $offset = 2;
             $extendedPayloadLength = 0;
 
@@ -63,7 +64,7 @@ trait HandlesWebSocketFrames
                 if (strlen($data) < 4) {
                     $this->logFrameDebug("Incomplete extended 16-bit length (will buffer)", [
                         'remaining_bytes' => strlen($data),
-                        'required_bytes' => 4
+                        'required_bytes' => 4,
                     ]);
                     break;
                 }
@@ -82,7 +83,7 @@ trait HandlesWebSocketFrames
                 if (strlen($data) < 10) {
                     $this->logFrameDebug("Incomplete extended 64-bit length (will buffer)", [
                         'remaining_bytes' => strlen($data),
-                        'required_bytes' => 10
+                        'required_bytes' => 10,
                     ]);
                     break;
                 }
@@ -95,16 +96,16 @@ trait HandlesWebSocketFrames
                 $payloadLength = $extendedPayloadLength;
                 $offset += 8;
             }
-            
+
             // Validate payload length
             if ($payloadLength > $maxPayloadSize) {
                 $this->logFrameError("Payload too large", [
                     'payload_length' => $payloadLength,
-                    'max_allowed' => $maxPayloadSize
+                    'max_allowed' => $maxPayloadSize,
                 ]);
                 break;
             }
-            
+
             // Check if we have enough data for the entire frame
             $frameLength = $offset;
             if ($masked) {
@@ -118,7 +119,7 @@ trait HandlesWebSocketFrames
                 $this->logFrameDebug("Incomplete frame detected (will buffer)", [
                     'remaining_bytes' => strlen($data),
                     'required_bytes' => $frameLength,
-                    'payload_length' => $payloadLength
+                    'payload_length' => $payloadLength,
                 ]);
                 break;
             }
@@ -131,19 +132,19 @@ trait HandlesWebSocketFrames
 
                     $payload = substr($data, $offset, $payloadLength); // @phpstan-ignore-line
                     $unmaskedPayload = '';
-                    
+
                     // Apply mask
                     $length = strlen($payload);
                     for ($i = 0; $i < $length; $i++) {
                         $unmaskedPayload .= $payload[$i] ^ $maskKey[$i % 4];
                     }
-                    
+
                     $frames[] = [
                         'fin' => $fin,
                         'opcode' => $opcode,
                         'masked' => $masked,
                         'payload' => $unmaskedPayload,
-                        'payload_length' => $payloadLength
+                        'payload_length' => $payloadLength,
                     ];
                 } else {
                     $payload = substr($data, $offset, $payloadLength);  // @phpstan-ignore-line
@@ -152,46 +153,46 @@ trait HandlesWebSocketFrames
                         'opcode' => $opcode,
                         'masked' => $masked,
                         'payload' => $payload,
-                        'payload_length' => $payloadLength
+                        'payload_length' => $payloadLength,
                     ];
                 }
-                
+
                 // Log successful frame decoding
                 $this->logFrameDebug("Successfully decoded frame", [
                     'opcode' => $opcode,
                     'fin' => $fin,
                     'masked' => $masked,
-                    'payload_length' => $payloadLength
+                    'payload_length' => $payloadLength,
                 ]);
-                
+
             } catch (Throwable $e) {
                 $this->logFrameError("Error processing frame", [
                     'error' => $e->getMessage(),
                     'opcode' => $opcode,
-                    'payload_length' => $payloadLength
+                    'payload_length' => $payloadLength,
                 ]);
                 break;
             }
-            
+
             // Move to the next frame
             $data = substr($data, $frameLength);
         }
-        
+
         // Log summary
         if (!empty($frames)) {
             $this->logFrameDebug("Frame decoding summary", [
                 'frames_decoded' => count($frames),
                 'original_data_length' => $originalDataLength,
-                'remaining_bytes' => strlen($data)
+                'remaining_bytes' => strlen($data),
             ]);
         }
-        
+
         return [$frames, $data];
     }
 
     /**
      * Encode a message into a WebSocket frame
-     * 
+     *
      * @param string $payload The payload to encode
      * @param int $opcode The WebSocket opcode (1=text, 8=close, 9=ping, 10=pong)
      * @return string The encoded WebSocket frame
@@ -199,22 +200,22 @@ trait HandlesWebSocketFrames
     public function encodeWebSocketFrame(string $payload, int $opcode = 1): string
     {
         $payloadLength = strlen($payload);
-        
+
         // Validate payload length
         $maxPayloadSize = $this->server->getMaxMessageSize();
         if ($payloadLength > $maxPayloadSize) {
             $this->logFrameError("Payload too large for encoding", [
                 'payload_length' => $payloadLength,
-                'max_allowed' => $maxPayloadSize
+                'max_allowed' => $maxPayloadSize,
             ]);
             throw new \InvalidArgumentException("Payload too large: $payloadLength bytes");
         }
-        
+
         $header = '';
-        
+
         // Set FIN bit and opcode
         $header .= chr(0x80 | $opcode);
-        
+
         // Set payload length
         if ($payloadLength <= 125) {
             $header .= chr($payloadLength);
@@ -223,21 +224,21 @@ trait HandlesWebSocketFrames
         } else {
             $header .= chr(127) . pack('J', $payloadLength);
         }
-        
+
         $frame = $header . $payload;
-        
+
         $this->logFrameDebug("Encoded WebSocket frame", [
             'opcode' => $opcode,
             'payload_length' => $payloadLength,
-            'frame_length' => strlen($frame)
+            'frame_length' => strlen($frame),
         ]);
-        
+
         return $frame;
     }
 
     /**
      * Send a pong frame in response to a ping
-     * 
+     *
      * @param resource $client The client socket resource
      * @param string $payload The pong payload (usually empty)
      * @return void
@@ -247,16 +248,16 @@ trait HandlesWebSocketFrames
         try {
             $pongFrame = $this->encodeWebSocketFrame($payload, 10);
             $bytesWritten = fwrite($client, $pongFrame);
-            
+
             if ($bytesWritten === false || $bytesWritten < strlen($pongFrame)) {
                 $this->logFrameError("Failed to send pong frame", [
                     'bytes_written' => $bytesWritten,
-                    'frame_length' => strlen($pongFrame)
+                    'frame_length' => strlen($pongFrame),
                 ]);
             } else {
                 $this->logFrameDebug("Sent pong frame", [
                     'payload_length' => strlen($payload),
-                    'bytes_written' => $bytesWritten
+                    'bytes_written' => $bytesWritten,
                 ]);
             }
         } catch (Throwable $e) {
@@ -266,7 +267,7 @@ trait HandlesWebSocketFrames
 
     /**
      * Prepare a message for sending over WebSocket
-     * 
+     *
      * @param string $event The event name
      * @param array<string, mixed> $data The data to send
      * @return string The encoded WebSocket message
@@ -275,13 +276,13 @@ trait HandlesWebSocketFrames
     {
         $message = json_encode([
             'event' => $event,
-            'data' => $data
+            'data' => $data,
         ]);
-        
+
         if ($message === false) {
             $message = json_encode([
                 'event' => 'error',
-                'data' => ['message' => 'Failed to encode message']
+                'data' => ['message' => 'Failed to encode message'],
             ]);
             if ($message === false) {
                 $message = '{"event":"error","data":{"message":"JSON encoding error"}}';
@@ -293,7 +294,7 @@ trait HandlesWebSocketFrames
 
     /**
      * Check if an opcode is valid
-     * 
+     *
      * @param int $opcode The opcode to validate
      * @return bool True if the opcode is valid
      */
@@ -304,7 +305,7 @@ trait HandlesWebSocketFrames
 
     /**
      * Log frame debugging information
-     * 
+     *
      * @param string $message The log message
      * @param array<string, mixed> $context Additional context
      * @return void
@@ -318,7 +319,7 @@ trait HandlesWebSocketFrames
 
     /**
      * Log frame error information
-     * 
+     *
      * @param string $message The error message
      * @param array<string, mixed> $context Additional context
      * @return void

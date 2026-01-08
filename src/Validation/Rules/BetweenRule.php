@@ -1,9 +1,10 @@
 <?php
+
 /**
  * BetweenRule
- * 
+ *
  * Validates that a value is between two values
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class BetweenRule extends BaseRule
 {
     /**
      * Validate that a value is between min and max
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is between min and max
      */
@@ -52,7 +53,7 @@ class BetweenRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -62,4 +63,4 @@ class BetweenRule extends BaseRule
         $max = $this->getSecondParameter();
         return "The {$fieldName} field must be between {$min} and {$max}.";
     }
-} 
+}

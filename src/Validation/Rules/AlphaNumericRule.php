@@ -1,9 +1,10 @@
 <?php
+
 /**
  * AlphaNumericRule
- * 
+ *
  * Validates that a value contains only alphanumeric characters
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class AlphaNumericRule extends BaseRule
 {
     /**
      * Validate that a value contains only alphanumeric characters
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value contains only alphanumeric characters
      */
@@ -34,7 +35,7 @@ class AlphaNumericRule extends BaseRule
 
     /**
      * Sanitize an alphanumeric value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized alphanumeric value
      */
@@ -51,7 +52,7 @@ class AlphaNumericRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -59,4 +60,4 @@ class AlphaNumericRule extends BaseRule
     {
         return "The {$fieldName} field must contain only alphanumeric characters.";
     }
-} 
+}

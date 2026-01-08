@@ -46,13 +46,13 @@ trait HandlesHttpWs
 
         if ($this->clientTypes[$clientId] === 'unknown') {
             if (
-                str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ') ||
-                str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ') ||
-                str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ') ||
-                str_starts_with($data, 'HEAD ')
+                str_starts_with($data, 'GET ') || str_starts_with($data, 'POST ')
+                || str_starts_with($data, 'PUT ') || str_starts_with($data, 'DELETE ')
+                || str_starts_with($data, 'OPTIONS ') || str_starts_with($data, 'PATCH ')
+                || str_starts_with($data, 'HEAD ')
             ) {
-                if (stripos($data, 'Upgrade: websocket') !== false || 
-                    stripos($data, 'upgrade: websocket') !== false) {
+                if (stripos($data, 'Upgrade: websocket') !== false
+                    || stripos($data, 'upgrade: websocket') !== false) {
                     $this->clientTypes[$clientId] = 'ws';
                     $this->logger->debug("[Sockeon Identification] WebSocket client identified: $clientId");
                 } else {

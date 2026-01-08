@@ -1,9 +1,10 @@
 <?php
+
 /**
  * StringRule
- * 
+ *
  * Validates that a value is a string
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class StringRule extends BaseRule
 {
     /**
      * Validate that a value is a string
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is a string
      */
@@ -29,7 +30,7 @@ class StringRule extends BaseRule
 
     /**
      * Sanitize a value to string
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized string value
      */
@@ -44,7 +45,7 @@ class StringRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -52,4 +53,4 @@ class StringRule extends BaseRule
     {
         return "The {$fieldName} field must be a string.";
     }
-} 
+}

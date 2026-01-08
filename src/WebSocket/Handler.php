@@ -1,9 +1,10 @@
 <?php
+
 /**
  * WebSocketHandler class
- * 
+ *
  * Handles WebSocket protocol implementation, connections and message framing
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -20,7 +21,9 @@ use Throwable;
 
 class Handler
 {
-    use HandlesWebSocketFrames, HandlesWebSocketHandshake, HandlesWebSocketMessages;
+    use HandlesWebSocketFrames;
+    use HandlesWebSocketHandshake;
+    use HandlesWebSocketMessages;
     /**
      * Reference to the server instance
      * @var Server
@@ -53,7 +56,7 @@ class Handler
 
     /**
      * Constructor
-     * 
+     *
      * @param Server $server  The server instance
      * @param array<int, string> $allowedOrigins Allowed origins for WebSocket connections
      */
@@ -80,7 +83,7 @@ class Handler
 
     /**
      * Handle data from a WebSocket client
-     * 
+     *
      * @param string $clientId The client ID
      * @param resource $client The client socket resource
      * @param string $data The received data
@@ -102,7 +105,7 @@ class Handler
             if (!isset($this->frameBuffers[$clientId])) {
                 $this->frameBuffers[$clientId] = '';
             }
-            
+
             // Prepend buffered data to new data
             $data = $this->frameBuffers[$clientId] . $data;
             $this->frameBuffers[$clientId] = '';
@@ -112,13 +115,13 @@ class Handler
                 // Not enough data even for a frame header, buffer it
                 $this->frameBuffers[$clientId] = $data;
                 $this->server->getLogger()->debug("Buffering data (insufficient for frame header) for client: $clientId", [
-                    'buffered_bytes' => strlen($data)
+                    'buffered_bytes' => strlen($data),
                 ]);
                 return true;
             }
 
             [$frames, $remainingData] = $this->decodeWebSocketFrame($data);
-            
+
             // Buffer remaining data (incomplete frame) for next read
             if (strlen($remainingData) > 0) {
                 $this->frameBuffers[$clientId] = $remainingData;
@@ -126,17 +129,17 @@ class Handler
                 if (count($frames) > 0 || strlen($remainingData) > 1024) {
                     $this->server->getLogger()->debug("Buffering incomplete frame for client: $clientId", [
                         'buffered_bytes' => strlen($remainingData),
-                        'frames_decoded' => count($frames)
+                        'frames_decoded' => count($frames),
                     ]);
                 }
             }
-            
+
             if (empty($frames)) {
                 // Don't log if we're just waiting for more data (normal fragmentation)
                 // Only log if we have buffered data that's not being processed
                 if (strlen($remainingData) > 0 && strlen($remainingData) > 1024) {
                     $this->server->getLogger()->debug("Waiting for more data to complete frame for client: $clientId", [
-                        'buffered_bytes' => strlen($remainingData)
+                        'buffered_bytes' => strlen($remainingData),
                     ]);
                 }
                 return true;
@@ -145,11 +148,11 @@ class Handler
             foreach ($frames as $frame) {
                 $opcode = $frame['opcode'] ?? 0;
                 $payload = $frame['payload'] ?? '';
-                
+
                 if (!is_string($payload)) {
                     $payload = is_scalar($payload) ? (string) $payload : '';
                 }
-                
+
                 switch ($opcode) {
                     case 8:
                         $this->server->getLogger()->debug("Received close frame from client: $clientId");
@@ -157,16 +160,16 @@ class Handler
                         unset($this->frameBuffers[$clientId]);
                         unset($this->messageBuffers[$clientId]);
                         return false;
-                        
+
                     case 9:
                         $this->server->getLogger()->debug("Received ping from client: $clientId");
                         $this->sendPong($client, $payload);
                         break;
-                        
+
                     case 10:
                         $this->server->getLogger()->debug("Received pong from client: $clientId");
                         break;
-                        
+
                     case 1:
                     case 2:
                         // Check if this is the start of a fragmented message (FIN bit not set)
@@ -178,18 +181,18 @@ class Handler
                                 $this->server->getLogger()->warning("New fragmented message started while previous one was in progress from client: $clientId", [
                                     'previous_opcode' => $this->messageBuffers[$clientId]['opcode'],
                                     'previous_payload_length' => strlen($this->messageBuffers[$clientId]['payload']),
-                                    'new_opcode' => $opcode
+                                    'new_opcode' => $opcode,
                                 ]);
                             }
-                            
+
                             $this->messageBuffers[$clientId] = [ //@phpstan-ignore-line
                                 'opcode' => $opcode,
                                 'payload' => $payload,
-                                'fin' => false
+                                'fin' => false,
                             ];
                             $this->server->getLogger()->debug("Started fragmented message from client: $clientId", [
                                 'opcode' => $opcode,
-                                'initial_payload_length' => strlen($payload)
+                                'initial_payload_length' => strlen($payload),
                             ]);
                         } else {
                             // Complete message (not fragmented)
@@ -197,11 +200,11 @@ class Handler
                             if (isset($this->messageBuffers[$clientId])) {
                                 $this->server->getLogger()->warning("Received complete message while fragmented message was in progress from client: $clientId", [
                                     'previous_opcode' => $this->messageBuffers[$clientId]['opcode'],
-                                    'previous_payload_length' => strlen($this->messageBuffers[$clientId]['payload'])
+                                    'previous_payload_length' => strlen($this->messageBuffers[$clientId]['payload']),
                                 ]);
                                 unset($this->messageBuffers[$clientId]);
                             }
-                            
+
                             if (!empty($payload)) {
                                 $this->handleMessage($clientId, $payload);
                             } else {
@@ -209,16 +212,16 @@ class Handler
                             }
                         }
                         break;
-                        
+
                     case 0:
                         // Continuation frame - part of a fragmented message
                         $this->server->getLogger()->debug("Received continuation frame from client: $clientId");
                         $this->handleFragmentedMessage($clientId, $frame);
                         break;
-                        
+
                     default:
                         $this->server->getLogger()->warning("Unknown opcode received from client: $clientId", [
-                            'opcode' => $opcode
+                            'opcode' => $opcode,
                         ]);
                         break;
                 }
@@ -227,30 +230,30 @@ class Handler
             return true;
         } catch (Throwable $e) {
             $this->server->getLogger()->exception($e, [
-                'clientId' => $clientId, 
+                'clientId' => $clientId,
                 'context' => 'WebSocketHandler::handle',
-                'data_length' => strlen($data)
+                'data_length' => strlen($data),
             ]);
-            
+
             // Clear buffers on error to prevent corruption
             unset($this->frameBuffers[$clientId]);
             unset($this->messageBuffers[$clientId]);
-            
+
             try {
                 $this->sendErrorMessage($clientId, 'Internal server error processing WebSocket frame');
             } catch (Throwable $sendError) {
                 $this->server->getLogger()->warning("Failed to send error message to client: $clientId", [
-                    'error' => $sendError->getMessage()
+                    'error' => $sendError->getMessage(),
                 ]);
             }
-            
+
             return true;
         }
     }
 
     /**
      * Handle a fragmented message continuation frame
-     * 
+     *
      * @param string $clientId The client ID
      * @param array<string, mixed> $frame The continuation frame
      * @return void
@@ -265,7 +268,7 @@ class Handler
         /** @var bool $fin */
         $fin = $frame['fin'] ?? true;
         $payload = $frame['payload'] ?? '';
-        
+
         if (!is_string($payload)) {
             $payload = is_scalar($payload) ? (string) $payload : '';
         }
@@ -274,15 +277,15 @@ class Handler
         $currentSize = strlen($this->messageBuffers[$clientId]['payload']);
         $newSize = $currentSize + strlen($payload);
         $maxMessageSize = $this->server->getMaxMessageSize();
-        
+
         if ($newSize > $maxMessageSize) {
             $this->server->getLogger()->warning("Fragmented message exceeds size limit from client: $clientId", [
                 'current_size' => $currentSize,
                 'additional_size' => strlen($payload),
                 'total_size' => $newSize,
-                'limit' => $maxMessageSize
+                'limit' => $maxMessageSize,
             ]);
-            
+
             // Clear the buffer and send error
             unset($this->messageBuffers[$clientId]);
             $this->sendErrorMessage($clientId, 'Fragmented message exceeds maximum size limit');
@@ -298,25 +301,25 @@ class Handler
             $completePayload = $this->messageBuffers[$clientId]['payload'];
             $this->server->getLogger()->debug("Completed fragmented message from client: $clientId", [
                 'total_payload_length' => strlen($completePayload),
-                'opcode' => $this->messageBuffers[$clientId]['opcode']
+                'opcode' => $this->messageBuffers[$clientId]['opcode'],
             ]);
-            
+
             if (!empty($completePayload)) {
                 $this->handleMessage($clientId, $completePayload);
             }
-            
+
             // Clear the buffer
             unset($this->messageBuffers[$clientId]);
         } else {
             $this->server->getLogger()->debug("Received continuation frame (more to come) from client: $clientId", [
-                'current_payload_length' => strlen($this->messageBuffers[$clientId]['payload'])
+                'current_payload_length' => strlen($this->messageBuffers[$clientId]['payload']),
             ]);
         }
     }
 
     /**
      * Public method for testing - check if opcode is valid
-     * 
+     *
      * @param int $opcode The opcode to validate
      * @return bool True if the opcode is valid
      */

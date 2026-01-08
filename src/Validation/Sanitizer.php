@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Sanitizer class
- * 
+ *
  * Provides comprehensive sanitization helpers for user input
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class Sanitizer
 {
     /**
      * Sanitize a string value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param bool $trim Whether to trim whitespace
      * @param bool $stripTags Whether to strip HTML tags
@@ -43,7 +44,7 @@ class Sanitizer
 
     /**
      * Sanitize an email address
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized email
      */
@@ -55,24 +56,24 @@ class Sanitizer
 
     /**
      * Sanitize a URL
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized URL
      */
     public static function url(mixed $value): string
     {
         $url = self::string($value, true, true);
-        
+
         if (!empty($url) && !preg_match('/^https?:\/\//', $url)) {
             $url = 'http://' . $url;
         }
-        
+
         return $url;
     }
 
     /**
      * Sanitize an integer value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param int $default Default value if conversion fails
      * @return int The sanitized integer
@@ -103,7 +104,7 @@ class Sanitizer
 
     /**
      * Sanitize a float value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param float $default Default value if conversion fails
      * @return float The sanitized float
@@ -127,7 +128,7 @@ class Sanitizer
 
     /**
      * Sanitize a boolean value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return bool The sanitized boolean
      */
@@ -151,7 +152,7 @@ class Sanitizer
 
     /**
      * Sanitize an array value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return array<mixed> The sanitized array
      */
@@ -173,7 +174,7 @@ class Sanitizer
 
     /**
      * Sanitize HTML content
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param array<string> $allowedTags Allowed HTML tags
      * @return string The sanitized HTML
@@ -192,60 +193,60 @@ class Sanitizer
 
     /**
      * Sanitize a filename
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized filename
      */
     public static function filename(mixed $value): string
     {
         $filename = self::string($value, true, true);
-        
+
         $filename = preg_replace('/[^a-zA-Z0-9._-]/', '', $filename);
-        
+
         if (empty($filename)) {
             return '';
         }
-        
+
         $filename = basename($filename);
-        
+
         return $filename;
     }
 
     /**
      * Sanitize a phone number
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized phone number
      */
     public static function phone(mixed $value): string
     {
         $phone = self::string($value, true, true);
-        
+
         // Remove all non-digit characters except +, -, (, ), and space
         $result = preg_replace('/[^0-9+\-() ]/', '', $phone);
-        
+
         return trim($result !== null ? $result : '');
     }
 
     /**
      * Sanitize a credit card number
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized credit card number
      */
     public static function creditCard(mixed $value): string
     {
         $card = self::string($value, true, true);
-        
+
         // Remove all non-digit characters
         $result = preg_replace('/[^0-9]/', '', $card);
-        
+
         return $result !== null ? $result : '';
     }
 
     /**
      * Sanitize a password (basic sanitization)
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized password
      */
@@ -256,7 +257,7 @@ class Sanitizer
 
     /**
      * Sanitize JSON data
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return mixed The sanitized JSON data
      */
@@ -274,24 +275,24 @@ class Sanitizer
 
     /**
      * Sanitize an IP address
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized IP address
      */
     public static function ipAddress(mixed $value): string
     {
         $ip = self::string($value, true, true);
-        
+
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
             return $ip;
         }
-        
+
         return '';
     }
 
     /**
      * Sanitize a date string
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param string $format The expected date format
      * @return string The sanitized date
@@ -299,22 +300,22 @@ class Sanitizer
     public static function date(mixed $value, string $format = 'Y-m-d'): string
     {
         $date = self::string($value, true, true);
-        
+
         if (empty($date)) {
             return '';
         }
-        
+
         $timestamp = strtotime($date);
         if ($timestamp === false) {
             return '';
         }
-        
+
         return date($format, $timestamp);
     }
 
     /**
      * Sanitize a time string
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param string $format The expected time format
      * @return string The sanitized time
@@ -322,22 +323,22 @@ class Sanitizer
     public static function time(mixed $value, string $format = 'H:i:s'): string
     {
         $time = self::string($value, true, true);
-        
+
         if (empty($time)) {
             return '';
         }
-        
+
         $timestamp = strtotime($time);
         if ($timestamp === false) {
             return '';
         }
-        
+
         return date($format, $timestamp);
     }
 
     /**
      * Sanitize a datetime string
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @param string $format The expected datetime format
      * @return string The sanitized datetime
@@ -345,76 +346,76 @@ class Sanitizer
     public static function datetime(mixed $value, string $format = 'Y-m-d H:i:s'): string
     {
         $datetime = self::string($value, true, true);
-        
+
         if (empty($datetime)) {
             return '';
         }
-        
+
         $timestamp = strtotime($datetime);
         if ($timestamp === false) {
             return '';
         }
-        
+
         return date($format, $timestamp);
     }
 
     /**
      * Sanitize a color value (hex, rgb, rgba)
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized color
      */
     public static function color(mixed $value): string
     {
         $color = self::string($value, true, true);
-        
+
         if (preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
             return $color;
         }
-        
+
         if (preg_match('/^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/', $color)) {
             return $color;
         }
-        
+
         if (preg_match('/^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[0-9.]+\s*\)$/', $color)) {
             return $color;
         }
-        
+
         return '';
     }
 
     /**
      * Sanitize a CSS class name
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized CSS class
      */
     public static function cssClass(mixed $value): string
     {
         $class = self::string($value, true, true);
-        
+
         $result = preg_replace('/[^a-zA-Z0-9_-]/', '', $class);
-        
+
         return $result !== null ? $result : '';
     }
 
     /**
      * Sanitize an ID attribute
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized ID
      */
     public static function id(mixed $value): string
     {
         $id = self::string($value, true, true);
-        
+
         $result = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
         $id = $result !== null ? $result : '';
-        
+
         if (!empty($id) && !ctype_alpha($id[0])) {
             $id = 'id_' . $id;
         }
-        
+
         return $id;
     }
-} 
+}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Router class
  *
@@ -36,7 +37,10 @@ use Throwable;
 
 class Router
 {
-    use HandlesHttpDispatching, HandlesMiddlewareValidation, HandlesRouteRegistration, HandlesWebSocketDispatching;
+    use HandlesHttpDispatching;
+    use HandlesMiddlewareValidation;
+    use HandlesRouteRegistration;
+    use HandlesWebSocketDispatching;
     /**
      * WebSocket routes
      * @var array<string, array{0: SocketController, 1: string, 2: array<int, class-string>, 3: array<int, class-string>}>
@@ -55,9 +59,9 @@ class Router
      */
     protected array $specialEventHandlers = [
         'connect' => [],
-        'disconnect' => []
+        'disconnect' => [],
     ];
-    
+
     /**
      * Server instance
      * @var Server|null

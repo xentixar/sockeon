@@ -2,9 +2,9 @@
 
 /**
  * Configuration class for Sockeon
- * 
+ *
  * Manages global configuration settings for the Sockeon server
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -37,7 +37,7 @@ class Config
 
     /**
      * Get the default queue file path based on the operating system
-     * 
+     *
      * @return string The default queue file path
      */
     public static function getDefaultQueueFilePath(): string
@@ -52,7 +52,7 @@ class Config
 
     /**
      * Set a configuration value
-     * 
+     *
      * @param string $key The configuration key
      * @param string $value The configuration value
      * @return void
@@ -65,7 +65,7 @@ class Config
 
     /**
      * Get a configuration value
-     * 
+     *
      * @param string $key The configuration key
      * @param mixed $default Default value if key doesn't exist
      * @return mixed The configuration value
@@ -78,7 +78,7 @@ class Config
 
     /**
      * Get the queue file path
-     * 
+     *
      * @return string The queue file path
      */
     public static function getQueueFile(): string
@@ -90,7 +90,7 @@ class Config
 
     /**
      * Set the queue file path
-     * 
+     *
      * @param string $path The queue file path
      * @return void
      */
@@ -102,7 +102,7 @@ class Config
 
     /**
      * Get all configuration values
-     * 
+     *
      * @return array<string, mixed> All configuration values
      */
     public static function getAll(): array
@@ -113,7 +113,7 @@ class Config
 
     /**
      * Set the authentication key for WebSocket connections
-     * 
+     *
      * @param string|null $key The authentication key (null to disable authentication)
      * @return void
      */
@@ -125,7 +125,7 @@ class Config
 
     /**
      * Get the authentication key for WebSocket connections
-     * 
+     *
      * @return string|null The authentication key (null if authentication is disabled)
      */
     public static function getAuthKey(): ?string
@@ -137,7 +137,7 @@ class Config
 
     /**
      * Reset configuration to defaults
-     * 
+     *
      * @return void
      */
     public static function reset(): void
@@ -152,7 +152,7 @@ class Config
 
     /**
      * Set trust proxy settings
-     * 
+     *
      * @param bool|array<int, string> $trustProxy Trust proxy settings
      * @return void
      */
@@ -164,7 +164,7 @@ class Config
 
     /**
      * Get trust proxy settings
-     * 
+     *
      * @return bool|array<int, string> Trust proxy settings
      */
     public static function getTrustProxy(): bool|array
@@ -183,7 +183,7 @@ class Config
 
     /**
      * Set custom proxy headers
-     * 
+     *
      * @param array<string, string>|null $proxyHeaders Custom proxy headers
      * @return void
      */
@@ -195,7 +195,7 @@ class Config
 
     /**
      * Get custom proxy headers
-     * 
+     *
      * @return array<string, string>|null Custom proxy headers
      */
     public static function getProxyHeaders(): ?array
@@ -214,7 +214,7 @@ class Config
 
     /**
      * Load configuration from an array
-     * 
+     *
      * @param array<string, string> $config Configuration array
      * @return void
      */

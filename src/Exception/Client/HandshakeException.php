@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandshakeException class
- * 
+ *
  * Exception thrown when WebSocket handshake fails.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025

@@ -1,9 +1,10 @@
 <?php
+
 /**
  * MessageException class
- * 
+ *
  * Exception thrown when WebSocket message handling fails.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025

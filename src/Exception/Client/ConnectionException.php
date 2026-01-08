@@ -1,9 +1,10 @@
 <?php
+
 /**
  * ConnectionException class
- * 
+ *
  * Exception thrown when WebSocket connection fails.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025

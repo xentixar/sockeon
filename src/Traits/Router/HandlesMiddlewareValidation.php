@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesMiddlewareValidation trait
- * 
+ *
  * Manages middleware validation for HTTP and WebSocket routes
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025

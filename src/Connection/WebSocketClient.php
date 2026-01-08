@@ -1,10 +1,11 @@
 <?php
+
 /**
  * WebSocketClient class
- * 
+ *
  * PHP client for connecting to Sockeon WebSocket server, listening to events,
  * and emitting events.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -22,7 +23,10 @@ use Sockeon\Sockeon\Traits\Client\HandlesListening;
 
 class WebSocketClient
 {
-    use HandlesConnection, HandlesEvents, HandlesFrames, HandlesListening;
+    use HandlesConnection;
+    use HandlesEvents;
+    use HandlesFrames;
+    use HandlesListening;
     /**
      * WebSocket server host
      * @var string
@@ -68,7 +72,7 @@ class WebSocketClient
 
     /**
      * Constructor
-     * 
+     *
      * @param string $host     WebSocket server host
      * @param int    $port     WebSocket server port
      * @param string $path     WebSocket endpoint path

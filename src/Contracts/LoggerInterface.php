@@ -1,10 +1,11 @@
 <?php
+
 /**
  * LoggerInterface
- * 
+ *
  * Defines the standard interface for logging operations according to PSR-3.
  * Provides methods for logging at different severity levels.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -19,9 +20,9 @@ interface LoggerInterface
 {
     /**
      * Log a message with emergency level
-     * 
+     *
      * System is unusable
-     * 
+     *
      * @param string $message Log message
      * @param array<string, mixed> $context Additional context data
      */
@@ -106,7 +107,7 @@ interface LoggerInterface
      * @return void
      */
     public function exception(Throwable $exception, array $context = [], string $level = LogLevel::ERROR): void;
-    
+
     /**
      * Log a message with arbitrary level
      *

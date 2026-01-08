@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Performance Monitor
- * 
+ *
  * Tracks server performance metrics and resource usage
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -52,7 +53,7 @@ class PerformanceMonitor
 
     /**
      * Initialize base metrics
-     * 
+     *
      * @return void
      */
     protected function initializeMetrics(): void
@@ -62,31 +63,31 @@ class PerformanceMonitor
                 'uptime_seconds' => 0,
                 'memory_usage_mb' => 0,
                 'memory_peak_mb' => 0,
-                'cpu_usage_percent' => 0
+                'cpu_usage_percent' => 0,
             ],
             'connections' => [
                 'active_count' => 0,
                 'total_accepted' => 0,
                 'total_closed' => 0,
-                'connections_per_second' => 0
+                'connections_per_second' => 0,
             ],
             'requests' => [
                 'http_total' => 0,
                 'websocket_total' => 0,
                 'requests_per_second' => 0,
-                'average_response_time_ms' => 0
+                'average_response_time_ms' => 0,
             ],
             'errors' => [
                 'connection_errors' => 0,
                 'request_errors' => 0,
-                'error_rate_percent' => 0
-            ]
+                'error_rate_percent' => 0,
+            ],
         ];
     }
 
     /**
      * Update connection metrics
-     * 
+     *
      * @param array<string, mixed> $stats Connection statistics
      * @return void
      */
@@ -95,7 +96,7 @@ class PerformanceMonitor
         $activeCount = isset($stats['active_connections']) && is_int($stats['active_connections']) ? $stats['active_connections'] : 0;
         $totalAccepted = isset($stats['total_accepted']) && is_int($stats['total_accepted']) ? $stats['total_accepted'] : 0;
         $totalClosed = isset($stats['total_closed']) && is_int($stats['total_closed']) ? $stats['total_closed'] : 0;
-        
+
         if (!isset($this->metrics['connections']) || !is_array($this->metrics['connections'])) {
             $this->metrics['connections'] = [];
         }
@@ -105,14 +106,14 @@ class PerformanceMonitor
         $connections['total_accepted'] = $totalAccepted;
         $connections['total_closed'] = $totalClosed;
         $this->metrics['connections'] = $connections;
-        
+
         // Calculate connections per second
         $this->calculateRate('connections_per_second', $totalAccepted);
     }
 
     /**
      * Update request metrics
-     * 
+     *
      * @param string $type Request type (http/websocket)
      * @param float $responseTime Response time in milliseconds
      * @return void
@@ -124,7 +125,7 @@ class PerformanceMonitor
         }
         /** @var array<string, mixed> $requests */
         $requests = $this->metrics['requests'];
-        
+
         if ($type === 'http') {
             $httpTotal = isset($requests['http_total']) && is_int($requests['http_total']) ? $requests['http_total'] : 0;
             $requests['http_total'] = $httpTotal + 1;
@@ -138,14 +139,14 @@ class PerformanceMonitor
         $wsTotal = isset($requests['websocket_total']) && is_int($requests['websocket_total']) ? $requests['websocket_total'] : 0;
         $totalRequests = $httpTotal + $wsTotal;
         $currentAvg = isset($requests['average_response_time_ms']) && is_float($requests['average_response_time_ms']) ? $requests['average_response_time_ms'] : 0.0;
-        
+
         if ($totalRequests > 0) {
-            $requests['average_response_time_ms'] = 
-                (($currentAvg * ($totalRequests - 1)) + $responseTime) / $totalRequests;
+            $requests['average_response_time_ms']
+                = (($currentAvg * ($totalRequests - 1)) + $responseTime) / $totalRequests;
         } else {
             $requests['average_response_time_ms'] = $responseTime;
         }
-        
+
         $this->metrics['requests'] = $requests;
 
         // Calculate requests per second
@@ -154,7 +155,7 @@ class PerformanceMonitor
 
     /**
      * Record an error
-     * 
+     *
      * @param string $type Error type (connection/request)
      * @return void
      */
@@ -165,7 +166,7 @@ class PerformanceMonitor
         }
         /** @var array<string, mixed> $errors */
         $errors = $this->metrics['errors'];
-        
+
         if ($type === 'connection') {
             $connErrors = isset($errors['connection_errors']) && is_int($errors['connection_errors']) ? $errors['connection_errors'] : 0;
             $errors['connection_errors'] = $connErrors + 1;
@@ -182,23 +183,23 @@ class PerformanceMonitor
         $connErrors = isset($errors['connection_errors']) && is_int($errors['connection_errors']) ? $errors['connection_errors'] : 0;
         $reqErrors = isset($errors['request_errors']) && is_int($errors['request_errors']) ? $errors['request_errors'] : 0;
         $totalErrors = $connErrors + $reqErrors;
-        
+
         if ($totalRequests > 0) {
             $errors['error_rate_percent'] = ($totalErrors / $totalRequests) * 100;
         }
-        
+
         $this->metrics['errors'] = $errors;
     }
 
     /**
      * Collect system metrics
-     * 
+     *
      * @return void
      */
     public function collectSystemMetrics(): void
     {
         $currentTime = microtime(true);
-        
+
         // Only collect if interval has passed
         if ($currentTime - $this->lastCollection < $this->collectionInterval) {
             return;
@@ -209,7 +210,7 @@ class PerformanceMonitor
         }
         /** @var array<string, mixed> $server */
         $server = $this->metrics['server'];
-        
+
         // Update uptime
         $server['uptime_seconds'] = $currentTime - $this->startTime;
 
@@ -219,18 +220,18 @@ class PerformanceMonitor
 
         // CPU usage (simple approximation)
         $server['cpu_usage_percent'] = $this->getCpuUsage();
-        
+
         $this->metrics['server'] = $server;
 
         // Store history for trends
         $this->storeHistory();
-        
+
         $this->lastCollection = $currentTime;
     }
 
     /**
      * Calculate rate per second
-     * 
+     *
      * @param string $key Metric key
      * @param int $total Total count
      * @return void
@@ -261,7 +262,7 @@ class PerformanceMonitor
 
     /**
      * Get CPU usage approximation
-     * 
+     *
      * @return float CPU usage percentage
      */
     protected function getCpuUsage(): float
@@ -274,22 +275,22 @@ class PerformanceMonitor
             if (!is_array($usage)) {
                 return 0.0;
             }
-            
+
             $utimeSec = isset($usage['ru_utime.tv_sec']) && is_int($usage['ru_utime.tv_sec']) ? $usage['ru_utime.tv_sec'] : 0;
             $utimeUsec = isset($usage['ru_utime.tv_usec']) && is_int($usage['ru_utime.tv_usec']) ? $usage['ru_utime.tv_usec'] : 0;
             $stimeSec = isset($usage['ru_stime.tv_sec']) && is_int($usage['ru_stime.tv_sec']) ? $usage['ru_stime.tv_sec'] : 0;
             $stimeUsec = isset($usage['ru_stime.tv_usec']) && is_int($usage['ru_stime.tv_usec']) ? $usage['ru_stime.tv_usec'] : 0;
-            
+
             $currentCpuTime = $utimeSec * 1000000 + $utimeUsec + $stimeSec * 1000000 + $stimeUsec;
             $currentTime = microtime(true);
 
             if ($lastCpuTime !== null && $lastTime !== null && is_numeric($lastCpuTime) && is_numeric($lastTime)) {
-                $cpuDelta = $currentCpuTime - (float)$lastCpuTime;
-                $timeDelta = ($currentTime - (float)$lastTime) * 1000000;
-                
+                $cpuDelta = $currentCpuTime - (float) $lastCpuTime;
+                $timeDelta = ($currentTime - (float) $lastTime) * 1000000;
+
                 $lastCpuTime = $currentCpuTime;
                 $lastTime = $currentTime;
-                
+
                 return min(100.0, ($cpuDelta / $timeDelta) * 100);
             }
 
@@ -302,7 +303,7 @@ class PerformanceMonitor
 
     /**
      * Store metrics history
-     * 
+     *
      * @return void
      */
     protected function storeHistory(): void
@@ -314,7 +315,7 @@ class PerformanceMonitor
             if (!is_array($categoryMetrics)) {
                 continue;
             }
-            
+
             if (!isset($this->history[$category])) {
                 $this->history[$category] = [];
             }
@@ -323,20 +324,20 @@ class PerformanceMonitor
                 if (!is_string($key)) {
                     continue;
                 }
-                
+
                 if (!isset($this->history[$category][$key])) {
                     $this->history[$category][$key] = [];
                 }
 
-                $numericValue = is_numeric($value) ? (is_float($value) ? $value : (float)$value) : 0;
+                $numericValue = is_numeric($value) ? (is_float($value) ? $value : (float) $value) : 0;
                 $this->history[$category][$key][$timestamp] = $numericValue;
 
                 // Limit history size
                 if (count($this->history[$category][$key]) > $maxHistoryPoints) {
                     $this->history[$category][$key] = array_slice(
-                        $this->history[$category][$key], 
-                        -$maxHistoryPoints, 
-                        null, 
+                        $this->history[$category][$key],
+                        -$maxHistoryPoints,
+                        null,
                         true
                     );
                 }
@@ -346,7 +347,7 @@ class PerformanceMonitor
 
     /**
      * Get current metrics
-     * 
+     *
      * @return array<string, mixed>
      */
     public function getMetrics(): array
@@ -357,20 +358,20 @@ class PerformanceMonitor
 
     /**
      * Get metrics with history
-     * 
+     *
      * @return array<string, mixed>
      */
     public function getMetricsWithHistory(): array
     {
         return [
             'current' => $this->getMetrics(),
-            'history' => $this->history
+            'history' => $this->history,
         ];
     }
 
     /**
      * Reset all metrics
-     * 
+     *
      * @return void
      */
     public function reset(): void
@@ -383,18 +384,18 @@ class PerformanceMonitor
 
     /**
      * Get formatted uptime string
-     * 
+     *
      * @return string
      */
     public function getFormattedUptime(): string
     {
         $server = isset($this->metrics['server']) && is_array($this->metrics['server']) ? $this->metrics['server'] : [];
-        $uptimeSeconds = isset($server['uptime_seconds']) && is_numeric($server['uptime_seconds']) ? (float)$server['uptime_seconds'] : 0.0;
-        
-        $days = (int)floor($uptimeSeconds / 86400);
-        $hours = (int)floor(($uptimeSeconds % 86400) / 3600);
-        $minutes = (int)floor(($uptimeSeconds % 3600) / 60);
-        $seconds = (int)floor($uptimeSeconds % 60);
+        $uptimeSeconds = isset($server['uptime_seconds']) && is_numeric($server['uptime_seconds']) ? (float) $server['uptime_seconds'] : 0.0;
+
+        $days = (int) floor($uptimeSeconds / 86400);
+        $hours = (int) floor(($uptimeSeconds % 86400) / 3600);
+        $minutes = (int) floor(($uptimeSeconds % 3600) / 60);
+        $seconds = (int) floor($uptimeSeconds % 60);
 
         return sprintf('%dd %dh %dm %ds', $days, $hours, $minutes, $seconds);
     }

@@ -2,10 +2,10 @@
 
 /**
  * Abstract Event class
- * 
+ *
  * Base class for all WebSocket events in Sockeon
  * Provides standard methods for event identification and properties
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025

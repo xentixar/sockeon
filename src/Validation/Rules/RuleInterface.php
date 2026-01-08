@@ -1,9 +1,10 @@
 <?php
+
 /**
  * RuleInterface
- * 
+ *
  * Interface that all validation rules must implement
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ interface RuleInterface
 {
     /**
      * Validate a value
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if validation passes
      */
@@ -23,7 +24,7 @@ interface RuleInterface
 
     /**
      * Sanitize a value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return mixed The sanitized value
      */
@@ -31,9 +32,9 @@ interface RuleInterface
 
     /**
      * Get the error message for this rule
-     * 
+     *
      * @param string $fieldName The field name for the error message
      * @return string The error message
      */
     public function getMessage(string $fieldName): string;
-} 
+}

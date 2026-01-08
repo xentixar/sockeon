@@ -1,9 +1,10 @@
 <?php
+
 /**
  * AlphaRule
- * 
+ *
  * Validates that a value contains only alphabetic characters
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class AlphaRule extends BaseRule
 {
     /**
      * Validate that a value contains only alphabetic characters
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value contains only alphabetic characters
      */
@@ -34,7 +35,7 @@ class AlphaRule extends BaseRule
 
     /**
      * Sanitize an alpha value
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return string The sanitized alpha value
      */
@@ -51,7 +52,7 @@ class AlphaRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -59,4 +60,4 @@ class AlphaRule extends BaseRule
     {
         return "The {$fieldName} field must contain only alphabetic characters.";
     }
-} 
+}

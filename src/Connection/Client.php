@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Client class
- * 
+ *
  * Simplified wrapper for WebSocketClient to provide an easy-to-use
  * interface for connecting to Sockeon WebSocket servers.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -50,7 +51,7 @@ class Client
 
     /**
      * Constructor
-     * 
+     *
      * @param string $host     WebSocket server host
      * @param int    $port     WebSocket server port
      * @param string $path     WebSocket endpoint path
@@ -80,7 +81,7 @@ class Client
 
     /**
      * Disconnect from the WebSocket server
-     * 
+     *
      * @return bool True on success
      */
     public function disconnect(): bool
@@ -90,7 +91,7 @@ class Client
 
     /**
      * Register an event listener
-     * 
+     *
      * @param string $event    Event name to listen for
      * @param callable $callback Function to call when event is received
      * @return $this
@@ -103,7 +104,7 @@ class Client
 
     /**
      * Emit an event to the server
-     * 
+     *
      * @param string $event Event name
      * @param array<string, mixed> $data Event data
      * @return bool True on success
@@ -114,17 +115,17 @@ class Client
             return $this->client->emit($event, $data);
         } catch (Exception $e) {
             error_log($e->getMessage());
-            
+
             if ($this->autoReconnect && $this->reconnectAttempts < $this->maxReconnectAttempts) {
                 $this->reconnect();
-                
+
                 try {
                     return $this->client->emit($event, $data);
                 } catch (Exception $e) {
                     error_log("Failed to emit event after reconnection: " . $e->getMessage());
                 }
             }
-            
+
             return false;
         }
     }
@@ -139,7 +140,7 @@ class Client
      */
     public function run(?callable $callback = null, int $checkInterval = 50): void
     {
-        $this->client->run(function() use ($callback) {
+        $this->client->run(function () use ($callback) {
             if ($callback !== null) {
                 return call_user_func($callback);
             }
@@ -148,14 +149,14 @@ class Client
 
         if ($this->autoReconnect && $this->reconnectAttempts < $this->maxReconnectAttempts) {
             $this->reconnect();
-            
+
             $this->run($callback, $checkInterval);
         }
     }
 
     /**
      * Enable or disable automatic reconnection
-     * 
+     *
      * @param bool $enabled Whether to enable auto-reconnect
      * @param int $maxAttempts Maximum number of reconnection attempts
      * @param int $delay Delay between reconnection attempts in seconds
@@ -171,7 +172,7 @@ class Client
 
     /**
      * Check if client is connected
-     * 
+     *
      * @return bool
      */
     public function isConnected(): bool
@@ -181,15 +182,15 @@ class Client
 
     /**
      * Attempt to reconnect to the WebSocket server
-     * 
+     *
      * @return bool True if reconnection was successful
      */
     protected function reconnect(): bool
     {
         $this->reconnectAttempts++;
-        
+
         sleep($this->reconnectDelay);
-        
+
         try {
             return $this->client->connect();
         } catch (Exception $e) {
@@ -200,7 +201,7 @@ class Client
 
     /**
      * Reset reconnection attempts counter
-     * 
+     *
      * @return $this
      */
     public function resetReconnectAttempts(): self

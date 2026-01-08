@@ -34,7 +34,9 @@ trait HandlesQueue
         fclose($fp);
 
         foreach ($lines as $line) {
-            if (empty($line)) continue;
+            if (empty($line)) {
+                continue;
+            }
 
             $payload = json_decode($line, true);
             if (!is_array($payload) || !isset($payload['type'])) {
@@ -63,10 +65,10 @@ trait HandlesQueue
     protected function handleEmitQueue(array $payload): void
     {
         $clientIdRaw = $payload['clientId'] ?? '';
-        $clientId = is_string($clientIdRaw) ? $clientIdRaw : (is_numeric($clientIdRaw) ? (string)$clientIdRaw : '');
+        $clientId = is_string($clientIdRaw) ? $clientIdRaw : (is_numeric($clientIdRaw) ? (string) $clientIdRaw : '');
         $eventRaw = $payload['event'] ?? '';
         $event = is_string($eventRaw) ? $eventRaw : '';
-        
+
         /** @var array<string, mixed> $data */
         $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
 
@@ -84,10 +86,10 @@ trait HandlesQueue
     {
         $eventRaw = $payload['event'] ?? '';
         $event = is_string($eventRaw) ? $eventRaw : '';
-        
+
         /** @var array<string, mixed> $data */
         $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
-        
+
         $namespaceRaw = $payload['namespace'] ?? null;
         $namespace = is_string($namespaceRaw) ? $namespaceRaw : null;
         $roomRaw = $payload['room'] ?? null;

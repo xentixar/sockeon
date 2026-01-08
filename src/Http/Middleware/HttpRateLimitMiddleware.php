@@ -2,10 +2,10 @@
 
 /**
  * HTTP Rate Limiting Middleware
- * 
+ *
  * Implements rate limiting for HTTP requests to prevent abuse and ensure fair usage.
  * Tracks requests per IP address within configurable time windows.
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -43,7 +43,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Handle the HTTP request with rate limiting
-     * 
+     *
      * @param Request $request The HTTP request object
      * @param callable $next The next middleware handler to call
      * @param Server $server The server instance handling the HTTP request
@@ -65,7 +65,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             'has_route_config' => $useRouteConfig,
             'use_global_config' => $useGlobalConfig,
             'route_max_requests' => $routeRateLimit ? $routeRateLimit->getMaxRequests() : null,
-            'route_bypass_global' => $routeRateLimit ? $routeRateLimit->shouldBypassGlobal() : null
+            'route_bypass_global' => $routeRateLimit ? $routeRateLimit->shouldBypassGlobal() : null,
         ]);
 
         if (!$useRouteConfig && !$useGlobalConfig) {
@@ -88,7 +88,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                     $server->getLogger()->info("[Sockeon Rate Limit] Route rate limit exceeded", [
                         'client_ip' => $clientIp,
                         'route' => $request->getMethod() . ' ' . $request->getPath(),
-                        'limit' => $routeRateLimit->getMaxRequests()
+                        'limit' => $routeRateLimit->getMaxRequests(),
                     ]);
                     return $this->createRouteRateLimitResponse($clientIp, $routeRateLimit);
                 }
@@ -118,7 +118,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                 $server->getLogger()->info("[Sockeon Rate Limit] Global rate limit exceeded", [
                     'client_ip' => $clientIp,
                     'limit' => $globalRateLimitConfig->getMaxHttpRequestsPerIp(),
-                    'burst_allowance' => $globalRateLimitConfig->getBurstAllowance()
+                    'burst_allowance' => $globalRateLimitConfig->getBurstAllowance(),
                 ]);
                 return $this->createRateLimitResponse($clientIp, $globalRateLimitConfig);
             }
@@ -134,7 +134,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Check if the IP is rate limited
-     * 
+     *
      * @param string $ip Client IP address
      * @param \Sockeon\Sockeon\Config\RateLimitConfig $config Rate limit configuration
      * @return bool True if rate limited, false otherwise
@@ -157,7 +157,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Record a request for the given IP
-     * 
+     *
      * @param string $ip Client IP address
      * @return void
      */
@@ -174,7 +174,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Create rate limit exceeded response
-     * 
+     *
      * @param string $ip Client IP address
      * @param \Sockeon\Sockeon\Config\RateLimitConfig $config Rate limit configuration
      * @return Response Rate limit response
@@ -192,7 +192,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             'X-RateLimit-Limit' => (string) $limit,
             'X-RateLimit-Remaining' => (string) $remaining,
             'X-RateLimit-Reset' => (string) $resetTime,
-            'Retry-After' => (string) $retryAfter
+            'Retry-After' => (string) $retryAfter,
         ];
 
         $responseData = [
@@ -200,7 +200,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             'message' => 'You have exceeded the rate limit. Please try again later.',
             'retry_after' => $retryAfter,
             'limit' => $limit,
-            'window' => $config->getHttpTimeWindow()
+            'window' => $config->getHttpTimeWindow(),
         ];
 
         return Response::json($responseData, 429, $headers);
@@ -208,7 +208,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Clean up expired entries from the request store
-     * 
+     *
      * @param \Sockeon\Sockeon\Config\RateLimitConfig|null $config Rate limit configuration
      * @return void
      */
@@ -259,7 +259,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Get current rate limiting statistics
-     * 
+     *
      * @return array<string, mixed> Rate limiting statistics
      */
     public static function getStats(): array
@@ -293,13 +293,13 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                 'total_requests' => $routeRequests,
                 'store_size_kb' => round(strlen(serialize(self::$routeRequestStore)) / 1024, 2),
             ],
-            'last_cleanup' => self::$lastCleanup
+            'last_cleanup' => self::$lastCleanup,
         ];
     }
 
     /**
      * Clear all rate limiting data (useful for testing)
-     * 
+     *
      * @return void
      */
     public static function clearStore(): void
@@ -311,7 +311,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Get route-specific rate limit configuration from attributes
-     * 
+     *
      * @param Request $request The HTTP request
      * @param Server $server The server instance
      * @return RateLimit|null Route-specific rate limit configuration or null
@@ -334,7 +334,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             $server->getLogger()->debug("[Sockeon Rate Limit] Found route for rate limit lookup", [
                 'route_key' => $routeKey,
                 'controller' => get_class($controller),
-                'method' => $methodName
+                'method' => $methodName,
             ]);
 
             try {
@@ -347,7 +347,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                         'max_requests' => $rateLimit->getMaxRequests(),
                         'time_window' => $rateLimit->getTimeWindow(),
                         'burst_allowance' => $rateLimit->getBurstAllowance(),
-                        'bypass_global' => $rateLimit->shouldBypassGlobal()
+                        'bypass_global' => $rateLimit->shouldBypassGlobal(),
                     ]);
                     return $rateLimit;
                 } else {
@@ -357,14 +357,14 @@ class HttpRateLimitMiddleware implements HttpMiddleware
                 $server->getLogger()->warning("[Sockeon Rate Limit] Reflection error while checking for RateLimit attributes", [
                     'error' => $e->getMessage(),
                     'controller' => get_class($controller),
-                    'method' => $methodName
+                    'method' => $methodName,
                 ]);
                 // If reflection fails, continue without route-specific limits
             }
         } else {
             $server->getLogger()->debug("[Sockeon Rate Limit] Route not found in registered routes", [
                 'looking_for' => $routeKey,
-                'available_routes' => array_keys($routes)
+                'available_routes' => array_keys($routes),
             ]);
         }
 
@@ -373,7 +373,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Check if the IP is rate limited for a specific route
-     * 
+     *
      * @param string $ip Client IP address
      * @param RateLimit $rateLimitConfig Route-specific rate limit configuration
      * @param Request $request The HTTP request
@@ -399,7 +399,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Record a request for route-specific tracking
-     * 
+     *
      * @param string $ip Client IP address
      * @param Request $request The HTTP request
      * @return void
@@ -422,7 +422,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Create route-specific rate limit exceeded response
-     * 
+     *
      * @param string $ip Client IP address
      * @param RateLimit $rateLimitConfig Route-specific rate limit configuration
      * @return Response Rate limit response
@@ -441,7 +441,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             'X-RateLimit-Remaining' => (string) $remaining,
             'X-RateLimit-Reset' => (string) $resetTime,
             'X-RateLimit-Type' => 'route-specific',
-            'Retry-After' => (string) $retryAfter
+            'Retry-After' => (string) $retryAfter,
         ];
 
         $responseData = [
@@ -450,7 +450,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
             'retry_after' => $retryAfter,
             'limit' => $limit,
             'window' => $rateLimitConfig->getTimeWindow(),
-            'type' => 'route-specific'
+            'type' => 'route-specific',
         ];
 
         return Response::json($responseData, 429, $headers);
@@ -458,7 +458,7 @@ class HttpRateLimitMiddleware implements HttpMiddleware
 
     /**
      * Generate a unique key for route tracking
-     * 
+     *
      * @param Request $request The HTTP request
      * @return string Route key
      */

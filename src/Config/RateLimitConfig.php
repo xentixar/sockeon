@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Rate Limiting Configuration Class
- * 
+ *
  * Handles rate limiting configurations for HTTP requests, WebSocket messages,
  * and connection limits to protect against abuse and ensure fair usage
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -82,7 +83,7 @@ class RateLimitConfig
 
     /**
      * Constructor
-     * 
+     *
      * @param array<string, mixed> $config Configuration array
      */
     public function __construct(array $config = [])
@@ -92,7 +93,7 @@ class RateLimitConfig
 
     /**
      * Load configuration from array
-     * 
+     *
      * @param array<string, mixed> $config Configuration array
      * @return void
      */
@@ -151,7 +152,7 @@ class RateLimitConfig
 
     /**
      * Check if rate limiting is enabled
-     * 
+     *
      * @return bool
      */
     public function isEnabled(): bool
@@ -161,7 +162,7 @@ class RateLimitConfig
 
     /**
      * Get maximum HTTP requests per IP
-     * 
+     *
      * @return int
      */
     public function getMaxHttpRequestsPerIp(): int
@@ -171,7 +172,7 @@ class RateLimitConfig
 
     /**
      * Get HTTP time window
-     * 
+     *
      * @return int
      */
     public function getHttpTimeWindow(): int
@@ -181,7 +182,7 @@ class RateLimitConfig
 
     /**
      * Get maximum WebSocket messages per client
-     * 
+     *
      * @return int
      */
     public function getMaxWebSocketMessagesPerClient(): int
@@ -191,7 +192,7 @@ class RateLimitConfig
 
     /**
      * Get WebSocket time window
-     * 
+     *
      * @return int
      */
     public function getWebSocketTimeWindow(): int
@@ -201,7 +202,7 @@ class RateLimitConfig
 
     /**
      * Get maximum connections per IP
-     * 
+     *
      * @return int
      */
     public function getMaxConnectionsPerIp(): int
@@ -211,7 +212,7 @@ class RateLimitConfig
 
     /**
      * Get connection time window
-     * 
+     *
      * @return int
      */
     public function getConnectionTimeWindow(): int
@@ -221,7 +222,7 @@ class RateLimitConfig
 
     /**
      * Get maximum global connections
-     * 
+     *
      * @return int
      */
     public function getMaxGlobalConnections(): int
@@ -231,7 +232,7 @@ class RateLimitConfig
 
     /**
      * Get burst allowance
-     * 
+     *
      * @return int
      */
     public function getBurstAllowance(): int
@@ -241,7 +242,7 @@ class RateLimitConfig
 
     /**
      * Get cleanup interval
-     * 
+     *
      * @return int
      */
     public function getCleanupInterval(): int
@@ -251,7 +252,7 @@ class RateLimitConfig
 
     /**
      * Get whitelist
-     * 
+     *
      * @return array<int, string>
      */
     public function getWhitelist(): array
@@ -261,7 +262,7 @@ class RateLimitConfig
 
     /**
      * Check if an IP is whitelisted
-     * 
+     *
      * @param string $ip IP address to check
      * @return bool
      */
@@ -277,7 +278,7 @@ class RateLimitConfig
 
     /**
      * Match IP address against pattern (supports CIDR notation)
-     * 
+     *
      * @param string $ip IP address to check
      * @param string $pattern Pattern to match against
      * @return bool
@@ -291,18 +292,18 @@ class RateLimitConfig
         if (str_contains($pattern, '/')) {
             [$subnet, $mask] = explode('/', $pattern, 2);
             $mask = (int) $mask;
-            
+
             if ($mask < 0 || $mask > 32) {
                 return false;
             }
-            
+
             $ipLong = ip2long($ip);
             $subnetLong = ip2long($subnet);
-            
+
             if ($ipLong === false || $subnetLong === false) {
                 return false;
             }
-            
+
             $maskLong = -1 << (32 - $mask);
             return ($ipLong & $maskLong) === ($subnetLong & $maskLong);
         }
@@ -312,7 +313,7 @@ class RateLimitConfig
 
     /**
      * Set enabled status
-     * 
+     *
      * @param bool $enabled
      * @return void
      */
@@ -323,7 +324,7 @@ class RateLimitConfig
 
     /**
      * Set maximum HTTP requests per IP
-     * 
+     *
      * @param int $maxHttpRequestsPerIp
      * @return void
      */
@@ -334,7 +335,7 @@ class RateLimitConfig
 
     /**
      * Set HTTP time window
-     * 
+     *
      * @param int $httpTimeWindow
      * @return void
      */
@@ -345,7 +346,7 @@ class RateLimitConfig
 
     /**
      * Set maximum WebSocket messages per client
-     * 
+     *
      * @param int $maxWebSocketMessagesPerClient
      * @return void
      */
@@ -356,7 +357,7 @@ class RateLimitConfig
 
     /**
      * Set WebSocket time window
-     * 
+     *
      * @param int $webSocketTimeWindow
      * @return void
      */
@@ -367,7 +368,7 @@ class RateLimitConfig
 
     /**
      * Set maximum connections per IP
-     * 
+     *
      * @param int $maxConnectionsPerIp
      * @return void
      */
@@ -378,7 +379,7 @@ class RateLimitConfig
 
     /**
      * Set connection time window
-     * 
+     *
      * @param int $connectionTimeWindow
      * @return void
      */
@@ -389,7 +390,7 @@ class RateLimitConfig
 
     /**
      * Set maximum global connections
-     * 
+     *
      * @param int $maxGlobalConnections
      * @return void
      */
@@ -400,7 +401,7 @@ class RateLimitConfig
 
     /**
      * Set burst allowance
-     * 
+     *
      * @param int $burstAllowance
      * @return void
      */
@@ -411,7 +412,7 @@ class RateLimitConfig
 
     /**
      * Set cleanup interval
-     * 
+     *
      * @param int $cleanupInterval
      * @return void
      */
@@ -422,7 +423,7 @@ class RateLimitConfig
 
     /**
      * Set whitelist
-     * 
+     *
      * @param array<int, string> $whitelist
      * @return void
      */
@@ -433,7 +434,7 @@ class RateLimitConfig
 
     /**
      * Add IP to whitelist
-     * 
+     *
      * @param string $ip
      * @return void
      */
@@ -446,7 +447,7 @@ class RateLimitConfig
 
     /**
      * Remove IP from whitelist
-     * 
+     *
      * @param string $ip
      * @return void
      */

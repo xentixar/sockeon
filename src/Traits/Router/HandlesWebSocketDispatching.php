@@ -1,9 +1,10 @@
 <?php
+
 /**
  * HandlesWebSocketDispatching trait
- * 
+ *
  * Manages WebSocket event dispatching and special events
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -50,7 +51,7 @@ trait HandlesWebSocketDispatching
 
     /**
      * Dispatch a special event (connect/disconnect) to all registered handlers
-     * 
+     *
      * @param string $clientId The client identifier
      * @param string $eventType The special event type ('connect' or 'disconnect')
      * @return void
@@ -60,14 +61,14 @@ trait HandlesWebSocketDispatching
         if (!isset($this->specialEventHandlers[$eventType])) {
             return;
         }
-        
+
         foreach ($this->specialEventHandlers[$eventType] as [$controller, $method]) {
             try {
                 if ($this->server) {
                     $this->server->getMiddleware()->runWebSocketStack(
-                        $clientId, 
-                        $eventType, 
-                        [], 
+                        $clientId,
+                        $eventType,
+                        [],
                         function ($clientId, $data) use ($controller, $method) {
                             return $controller->$method($clientId);
                         },
@@ -82,7 +83,7 @@ trait HandlesWebSocketDispatching
                         'context' => "Special event handler: $eventType",
                         'clientId' => $clientId,
                         'controller' => get_class($controller),
-                        'method' => $method
+                        'method' => $method,
                     ]);
                 }
             }

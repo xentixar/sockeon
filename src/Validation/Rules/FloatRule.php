@@ -1,9 +1,10 @@
 <?php
+
 /**
  * FloatRule
- * 
+ *
  * Validates that a value is a float/numeric
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class FloatRule extends BaseRule
 {
     /**
      * Validate that a value is numeric
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is numeric
      */
@@ -29,7 +30,7 @@ class FloatRule extends BaseRule
 
     /**
      * Sanitize a value to float
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return float The sanitized float value
      */
@@ -43,7 +44,7 @@ class FloatRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -51,4 +52,4 @@ class FloatRule extends BaseRule
     {
         return "The {$fieldName} field must be a number.";
     }
-} 
+}

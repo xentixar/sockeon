@@ -1,9 +1,10 @@
 <?php
+
 /**
  * IntegerRule
- * 
+ *
  * Validates that a value is an integer
- * 
+ *
  * @package     Sockeon\Sockeon
  * @author      Sockeon
  * @copyright   Copyright (c) 2025
@@ -15,7 +16,7 @@ class IntegerRule extends BaseRule
 {
     /**
      * Validate that a value is an integer
-     * 
+     *
      * @param mixed $value The value to validate
      * @return bool True if the value is an integer
      */
@@ -29,7 +30,7 @@ class IntegerRule extends BaseRule
 
     /**
      * Sanitize a value to integer
-     * 
+     *
      * @param mixed $value The value to sanitize
      * @return int The sanitized integer value
      */
@@ -43,7 +44,7 @@ class IntegerRule extends BaseRule
 
     /**
      * Get the error message
-     * 
+     *
      * @param string $fieldName The field name
      * @return string The error message
      */
@@ -51,4 +52,4 @@ class IntegerRule extends BaseRule
     {
         return "The {$fieldName} field must be an integer.";
     }
-} 
+}
