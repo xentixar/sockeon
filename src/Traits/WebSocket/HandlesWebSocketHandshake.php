@@ -29,6 +29,7 @@ trait HandlesWebSocketHandshake
     {
         $handshakeRequest = new HandshakeRequest($data);
 
+        /** @var bool|array<string, mixed> $result */
         $result = $this->server->getMiddleware()->runHandshakeStack(
             $clientId,
             $handshakeRequest,
@@ -37,6 +38,10 @@ trait HandlesWebSocketHandshake
             },
             $this->server
         );
+
+        if ($result === false) {
+            $this->sendCustomResponse($client, []);
+        }
 
         if (is_array($result)) {
             $this->sendCustomResponse($client, $result);
