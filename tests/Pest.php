@@ -5,8 +5,7 @@ use Sockeon\Sockeon\Connection\Server;
 use Sockeon\Sockeon\Logging\Logger;
 use Tests\TestCase;
 
-pest()
-    ->extend(TestCase::class)
+uses(TestCase::class)
     ->beforeEach(function () {
         /**
          * @var int $port

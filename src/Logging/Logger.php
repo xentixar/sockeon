@@ -87,7 +87,7 @@ class Logger implements LoggerInterface
             $this->logDirectory = $logDirectory ?? dirname(__DIR__, 5) . '/logs';
             $this->separateLogFiles = $separateLogFiles;
             if (!file_exists($this->logDirectory)) {
-                mkdir($this->logDirectory, 0755, true);
+                mkdir($this->logDirectory, 0o755, true);
             }
         }
     }
@@ -303,7 +303,7 @@ class Logger implements LoggerInterface
             $levelDir = "{$this->logDirectory}/{$level}";
 
             if (!file_exists($levelDir)) {
-                mkdir($levelDir, 0755, true);
+                mkdir($levelDir, 0o755, true);
             }
 
             $levelLogFile = "{$levelDir}/{$date}.log";
@@ -366,7 +366,7 @@ class Logger implements LoggerInterface
         $this->logDirectory = $directory;
 
         if (!file_exists($this->logDirectory)) {
-            mkdir($this->logDirectory, 0755, true);
+            mkdir($this->logDirectory, 0o755, true);
         }
     }
 

@@ -8,7 +8,7 @@ $tempLogDir = '';
 beforeEach(function () use (&$tempLogDir) {
     $tempLogDir = sys_get_temp_dir() . '/sockeon_logger_test_' . uniqid();
     if (!file_exists($tempLogDir)) {
-        mkdir($tempLogDir, 0755, true);
+        mkdir($tempLogDir, 0o755, true);
     }
 });
 
