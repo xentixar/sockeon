@@ -1,51 +1,32 @@
 # Sockeon
 
-Welcome to Sockeon! A framework-agnostic PHP WebSocket and HTTP server library that provides attribute-based routing and powerful namespaces and rooms functionality.
+Build real-time applications with PHP. Sockeon is a modern WebSocket and HTTP server library that brings event-driven, bidirectional communication to your PHP projects without external dependencies.
 
-## Features
+Perfect for chat applications, live dashboards, real-time notifications, collaborative tools, and any application requiring instant data synchronization. 
 
-- WebSocket and HTTP combined server
-- Attribute-based routing for both WebSocket events and HTTP endpoints
-- Advanced HTTP request and response handling
-- Path parameters and query parameter support
-- RESTful API support with content negotiation
-- Namespaces and rooms support for WebSocket communication
-- Middleware support for authentication and request processing
-- WebSocket handshake middleware for custom connection validation
-- Key-based WebSocket authentication for secure connections
-- Zero dependencies - built with PHP core functionality only
-- Easy-to-use event-based architecture
-- Real-time bidirectional communication
-- Room-based broadcasting for efficient message distribution
-- Automatic client connection management
-- WebSocket protocol features including ping/pong for connection health monitoring
-- Comprehensive CORS support with configurable allowed origins, methods, and headers
-- Secure origin validation for WebSocket connections and HTTP requests
-- PSR-3 compliant logging system with flexible configuration options
-- Exception handling with contextual logging and stack traces
-- JSON data handling and serialization
-- Cross-platform compatibility
-- PHP client implementation for connecting to Sockeon WebSocket servers
+## Installation
 
-## Documentation
+Install via Composer:
 
-For complete documentation, examples, and API reference, please visit:
-
-[https://sockeon.github.io](https://sockeon.github.io)
+```bash
+composer require sockeon/sockeon
+```
 
 ## Requirements
 
-- PHP >= 8.1
+- PHP 8.1 or higher
+- ext-sockets
+- ext-openssl
 
-## Contributing
+## Documentation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+For complete documentation, visit [https://sockeon.com](https://sockeon.com)
+
+## Security Vulnerabilities
+
+If you discover a security vulnerability, please email [xentixar@gmail.com](mailto:xentixar@gmail.com).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Sockeon is open-sourced software licensed under the [MIT license](LICENSE).
 
-## Links
-
-- [GitHub Repository](https://github.com/sockeon/sockeon)
-- [Issue Tracker](https://github.com/sockeon/sockeon/issues)
