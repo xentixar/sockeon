@@ -35,7 +35,7 @@ For complete documentation, examples, and API reference, please visit:
 
 ## Requirements
 
-- PHP >= 8.0
+- PHP >= 8.1
 
 ## Contributing
 

@@ -20,7 +20,7 @@
         }
     ],
     "require": {
-        "php": ">=8.0",
+        "php": ">=8.1",
         "ext-openssl": "*",
         "ext-sockets": "*"
     },
@@ -39,9 +39,9 @@
         "framework-agnostic"
     ],
     "require-dev": {
-        "pestphp/pest": "^3.8",
-        "phpstan/phpstan": "^2.1",
-        "friendsofphp/php-cs-fixer": "^3.92"
+        "pestphp/pest": "^2.0",
+        "phpstan/phpstan": "^1.10",
+        "friendsofphp/php-cs-fixer": "^3.0"
     },
     "config": {
         "allow-plugins": {
