@@ -84,6 +84,15 @@ class ServerConfig
     protected int $maxMessageSize = 65536; // 64KB
 
     /**
+     * Register system controllers (e.g., room management).
+     * Set to false if you want to implement custom room handling.
+     * Default: true
+     *
+     * @var bool
+     */
+    protected bool $registerSystemControllers = true;
+
+    /**
      * Create a new server configuration instance
      *
      * @param array<string, mixed> $config
@@ -110,6 +119,10 @@ class ServerConfig
 
         if (isset($config['max_message_size']) && is_int($config['max_message_size'])) {
             $this->maxMessageSize = $config['max_message_size'];
+        }
+
+        if (isset($config['register_system_controllers'])) {
+            $this->registerSystemControllers = (bool) $config['register_system_controllers'];
         }
 
         // Initialize CORS config
@@ -417,5 +430,26 @@ class ServerConfig
     public function setHealthCheckPath(?string $healthCheckPath): void
     {
         $this->healthCheckPath = $healthCheckPath;
+    }
+
+    /**
+     * Check if system controllers should be registered
+     *
+     * @return bool
+     */
+    public function shouldRegisterSystemControllers(): bool
+    {
+        return $this->registerSystemControllers;
+    }
+
+    /**
+     * Set whether to register system controllers
+     *
+     * @param bool $register
+     * @return void
+     */
+    public function setRegisterSystemControllers(bool $register): void
+    {
+        $this->registerSystemControllers = $register;
     }
 }
