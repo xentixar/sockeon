@@ -107,4 +107,3 @@ test('system room controller works with custom namespaces', function () {
     $defaultClients = $server->getNamespaceManager()->getClientsInRoom('admin-room', '/');
     expect($defaultClients)->not->toHaveKey('test-client-5');
 });
-

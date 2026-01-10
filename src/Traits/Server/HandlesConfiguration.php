@@ -91,7 +91,7 @@ trait HandlesConfiguration
 
     /**
      * Register built-in system controllers
-     * 
+     *
      * These controllers handle common operations like room management.
      * Can be disabled by setting 'register_system_controllers' => false in ServerConfig.
      *
@@ -101,7 +101,7 @@ trait HandlesConfiguration
     {
         // Register room management controller
         $this->registerController(new SystemRoomController());
-        
+
         $this->logger->debug('[Sockeon Server] System controllers registered');
     }
 }
