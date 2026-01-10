@@ -26,4 +26,5 @@
 /phpstan.neon export-ignore
 /Makefile export-ignore
 /.php-cs-fixer.cache export-ignore
+/.php-cs-fixer.dist.php export-ignore
 /.github export-ignore
