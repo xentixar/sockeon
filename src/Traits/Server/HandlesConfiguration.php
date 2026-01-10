@@ -4,6 +4,7 @@ namespace Sockeon\Sockeon\Traits\Server;
 
 use Sockeon\Sockeon\Config\CorsConfig;
 use Sockeon\Sockeon\Config\ServerConfig;
+use Sockeon\Sockeon\Controllers\SystemRoomController;
 use Sockeon\Sockeon\Core\Config;
 use Sockeon\Sockeon\Core\Middleware;
 use Sockeon\Sockeon\Core\NamespaceManager;
@@ -65,6 +66,11 @@ trait HandlesConfiguration
             $this->middleware->addHttpMiddleware(\Sockeon\Sockeon\Http\Middleware\HttpRateLimitMiddleware::class);
             $this->middleware->addWebSocketMiddleware(\Sockeon\Sockeon\WebSocket\Middleware\WebSocketRateLimitMiddleware::class);
         }
+
+        // Register system controllers if enabled (default: true)
+        if ($config->shouldRegisterSystemControllers()) {
+            $this->registerSystemControllers();
+        }
     }
 
     /**
@@ -81,5 +87,21 @@ trait HandlesConfiguration
         }
 
         return $origins ?: ['*'];
+    }
+
+    /**
+     * Register built-in system controllers
+     *
+     * These controllers handle common operations like room management.
+     * Can be disabled by setting 'register_system_controllers' => false in ServerConfig.
+     *
+     * @return void
+     */
+    protected function registerSystemControllers(): void
+    {
+        // Register room management controller
+        $this->registerController(new SystemRoomController());
+
+        $this->logger->debug('[Sockeon Server] System controllers registered');
     }
 }
