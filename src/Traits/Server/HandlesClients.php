@@ -127,7 +127,14 @@ trait HandlesClients
 
                 $write = $except = null;
 
-                if (@stream_select($read, $write, $except, 0, 50000)) {
+                // Optimize stream_select timeout based on activity
+                // When idle (no clients), use longer timeout to reduce CPU usage
+                // When active, use shorter timeout for better responsiveness
+                $clientCount = count($readSockets) - 1; // Subtract 1 for server socket
+                $timeoutSeconds = 0;
+                $timeoutMicroseconds = $clientCount === 0 ? 100000 : 10000; // 100ms idle, 10ms active
+
+                if (@stream_select($read, $write, $except, $timeoutSeconds, $timeoutMicroseconds)) {
                     $this->acceptNewClient($read);
                     $this->handleClientData($read);
                 }
@@ -136,12 +143,8 @@ trait HandlesClients
                 usleep(50000); // Reduced sleep for faster recovery
             }
 
-            // Micro-sleep to prevent CPU spinning when idle, but yield to OS scheduler
-            if (empty($readSockets) || count($this->clients) === 0) {
-                usleep(10000); // Longer sleep when no clients
-            } else {
-                usleep(1000); // Short sleep when active
-            }
+            // Remove redundant micro-sleep - stream_select timeout already handles CPU yielding
+            // Only sleep if stream_select was interrupted or failed
         }
     }
 
