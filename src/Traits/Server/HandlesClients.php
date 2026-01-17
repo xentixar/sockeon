@@ -234,7 +234,9 @@ trait HandlesClients
                 if ($data === '' || $data === false) {
                     $this->disconnectClient($clientId);
                     continue;
-                }                if (($this->clientTypes[$clientId] ?? 'unknown') === 'ws') {
+                }
+
+                if (($this->clientTypes[$clientId] ?? 'unknown') === 'ws') {
                     $this->handleHttpWs($clientId, $client, $data);
                 } else {
                     if (!isset($this->clientBuffers[$clientId])) {
