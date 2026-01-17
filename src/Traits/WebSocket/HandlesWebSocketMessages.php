@@ -85,7 +85,8 @@ trait HandlesWebSocketMessages
                 'data_keys' => array_keys($data),
             ]);
 
-            $this->server->getRouter()->dispatch($clientId, $event, $data); //@phpstan-ignore-line
+            $router = $this->server->getRouter();
+            $router->dispatch($clientId, $event, $data);
         } catch (Throwable $e) {
             $this->server->getLogger()->exception($e, [
                 'clientId' => $clientId,

@@ -81,9 +81,7 @@ trait HandlesConfiguration
     {
         $origins = [];
         foreach ($cors->getAllowedOrigins() as $origin) {
-            if (is_string($origin)) { //@phpstan-ignore-line
-                $origins[] = $origin;
-            }
+            $origins[] = $origin;
         }
 
         return $origins ?: ['*'];
