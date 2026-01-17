@@ -156,9 +156,8 @@ class Handler
                 switch ($opcode) {
                     case 8:
                         $this->server->getLogger()->debug("Received close frame from client: $clientId");
-                        // Clear buffers on disconnect
-                        unset($this->frameBuffers[$clientId]);
-                        unset($this->messageBuffers[$clientId]);
+                        // Clear buffers on disconnect to free memory
+                        $this->cleanupClientBuffers($clientId);
                         return false;
 
                     case 9:
@@ -235,9 +234,8 @@ class Handler
                 'data_length' => strlen($data),
             ]);
 
-            // Clear buffers on error to prevent corruption
-            unset($this->frameBuffers[$clientId]);
-            unset($this->messageBuffers[$clientId]);
+            // Clear buffers on error to prevent corruption and free memory
+            $this->cleanupClientBuffers($clientId);
 
             try {
                 $this->sendErrorMessage($clientId, 'Internal server error processing WebSocket frame');
@@ -249,6 +247,18 @@ class Handler
 
             return true;
         }
+    }
+
+    /**
+     * Clean up all buffers for a client to free memory
+     *
+     * @param string $clientId
+     * @return void
+     */
+    protected function cleanupClientBuffers(string $clientId): void
+    {
+        // Clear all buffers to free memory
+        unset($this->frameBuffers[$clientId], $this->messageBuffers[$clientId], $this->handshakes[$clientId]);
     }
 
     /**
@@ -287,7 +297,7 @@ class Handler
             ]);
 
             // Clear the buffer and send error
-            unset($this->messageBuffers[$clientId]);
+            $this->cleanupClientBuffers($clientId);
             $this->sendErrorMessage($clientId, 'Fragmented message exceeds maximum size limit');
             return;
         }
@@ -308,7 +318,7 @@ class Handler
                 $this->handleMessage($clientId, $completePayload);
             }
 
-            // Clear the buffer
+            // Clear the buffer to free memory
             unset($this->messageBuffers[$clientId]);
         } else {
             $this->server->getLogger()->debug("Received continuation frame (more to come) from client: $clientId", [
