@@ -281,6 +281,7 @@ trait HandlesClients
 
                     if ($this->isCompleteHttpRequest($this->clientBuffers[$clientId])) {
                         $this->handleHttpWs($clientId, $client, $this->clientBuffers[$clientId]);
+                        // Clear buffer immediately after use to free memory
                         unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
                     } else {
                         if (microtime(true) - $this->clientBufferTimestamps[$clientId] > 15) {
@@ -364,12 +365,22 @@ trait HandlesClients
     protected function cleanupExpiredBuffers(): void
     {
         $currentTime = microtime(true);
+        $expiredClients = [];
+
         foreach ($this->clientBufferTimestamps as $clientId => $timestamp) {
             if ($currentTime - $timestamp > 15) {
-                $this->logger->warning("Cleaning up expired buffer for client: $clientId");
-                unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
-                $this->disconnectClient($clientId);
+                $expiredClients[] = $clientId;
             }
+        }
+
+        // Clean up expired buffers in batch to reduce fragmentation
+        foreach ($expiredClients as $clientId) {
+            $this->logger->warning("Cleaning up expired buffer for client: $clientId");
+
+            // Clear buffer memory
+            unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
+
+            $this->disconnectClient($clientId);
         }
     }
 
@@ -439,11 +450,16 @@ trait HandlesClients
                     }
                 }
 
-                // Clean up all client data
-                unset($this->clients[$clientId], $this->clientTypes[$clientId], $this->clientData[$clientId]);
-                if (isset($this->clientBuffers[$clientId])) {
-                    unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
+                // Clean up all client data and buffers to free memory immediately
+                unset($this->clients[$clientId], $this->clientTypes[$clientId]);
+
+                // Explicitly clear client data array entry
+                if (isset($this->clientData[$clientId])) {
+                    unset($this->clientData[$clientId]);
                 }
+
+                // Clear buffers to free memory
+                unset($this->clientBuffers[$clientId], $this->clientBufferTimestamps[$clientId]);
 
                 // Clean up resource-to-clientId mapping
                 if ($resourceId !== null) {

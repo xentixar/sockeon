@@ -171,23 +171,48 @@ class ConnectionPool
 
     /**
      * Clean up expired connections from pools
+     * Optimized to reduce memory fragmentation by reusing queue structure
      *
      * @return void
      */
     public function cleanup(): void
     {
         foreach ($this->pools as $type => $pool) {
-            /** @var SplQueue<array<string, mixed>> $validConnections */
-            $validConnections = new SplQueue();
+            $validCount = 0;
+            $totalCount = $pool->count();
 
+            // If pool is empty or all connections are valid, skip cleanup
+            if ($totalCount === 0) {
+                continue;
+            }
+
+            // Check if any connections need cleanup
+            $needsCleanup = false;
+            $tempConnections = [];
             while (!$pool->isEmpty()) {
                 $connection = $pool->dequeue();
                 if ($this->isConnectionValid($connection)) {
-                    $validConnections->enqueue($connection);
+                    $tempConnections[] = $connection;
+                    $validCount++;
+                } else {
+                    $needsCleanup = true;
                 }
             }
 
-            $this->pools[$type] = $validConnections;
+            // Only rebuild queue if cleanup is needed to reduce fragmentation
+            if ($needsCleanup) {
+                /** @var SplQueue<array<string, mixed>> $validConnections */
+                $validConnections = new SplQueue();
+                foreach ($tempConnections as $connection) {
+                    $validConnections->enqueue($connection);
+                }
+                $this->pools[$type] = $validConnections;
+            } else {
+                // Rebuild queue with same connections to maintain structure
+                foreach ($tempConnections as $connection) {
+                    $pool->enqueue($connection);
+                }
+            }
         }
     }
 
