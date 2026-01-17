@@ -209,6 +209,12 @@ trait HandlesClients
     protected array $clientBufferTimestamps = [];
 
     /**
+     * Maximum buffer size per client (10MB to handle large HTTP requests)
+     * @var int
+     */
+    protected int $maxBufferSize = 10485760; // 10MB
+
+    /**
      * @param array<resource> $read
      */
     protected function handleClientData(array $read): void
@@ -223,8 +229,16 @@ trait HandlesClients
             }
 
             try {
-                // Check if client is still connected before reading
-                if (!is_resource($client) || feof($client)) {
+                // Proactive dead connection detection
+                if (!is_resource($client)) {
+                    $this->disconnectClient($clientId);
+                    continue;
+                }
+
+                // Check if connection is closed using stream_select or feof
+                $readCheck = [$client];
+                $write = $except = null;
+                if (@stream_select($readCheck, $write, $except, 0, 0) === false || @feof($client)) {
                     $this->disconnectClient($clientId);
                     continue;
                 }
@@ -232,7 +246,10 @@ trait HandlesClients
                 $data = @fread($client, 32768); // Moderate buffer size
 
                 if ($data === '' || $data === false) {
-                    $this->disconnectClient($clientId);
+                    // Check if connection is actually closed
+                    if (@feof($client)) {
+                        $this->disconnectClient($clientId);
+                    }
                     continue;
                 }
 
@@ -243,6 +260,20 @@ trait HandlesClients
                         $this->clientBuffers[$clientId] = '';
                         $this->clientBufferTimestamps[$clientId] = microtime(true);
                     }
+
+                    // Check buffer size to prevent overflow
+                    $currentBufferSize = strlen($this->clientBuffers[$clientId]);
+                    $newDataSize = strlen($data);
+                    if ($currentBufferSize + $newDataSize > $this->maxBufferSize) {
+                        $this->logger->warning("Client buffer overflow detected for client: $clientId", [
+                            'current_size' => $currentBufferSize,
+                            'new_data_size' => $newDataSize,
+                            'max_buffer_size' => $this->maxBufferSize,
+                        ]);
+                        $this->disconnectClient($clientId);
+                        continue;
+                    }
+
                     $this->clientBuffers[$clientId] .= $data;
 
                     if ($this->isCompleteHttpRequest($this->clientBuffers[$clientId])) {
@@ -349,7 +380,21 @@ trait HandlesClients
         $deadConnections = [];
 
         foreach ($this->clients as $clientId => $client) {
-            if (!is_resource($client) || @feof($client)) {
+            if (!is_resource($client)) {
+                $deadConnections[] = $clientId;
+                continue;
+            }
+
+            // More thorough dead connection detection
+            $readCheck = [$client];
+            $write = $except = null;
+            $selectResult = @stream_select($readCheck, $write, $except, 0, 0);
+
+            // Connection is dead if:
+            // 1. Not a valid resource (already checked above)
+            // 2. stream_select fails (connection closed)
+            // 3. feof returns true (end of stream)
+            if ($selectResult === false || @feof($client)) {
                 $deadConnections[] = $clientId;
             }
         }
@@ -359,7 +404,9 @@ trait HandlesClients
             $this->disconnectClient($clientId);
         }
 
-        $this->logger->info("[Sockeon Cleanup] Active connections: " . count($this->clients));
+        if (!empty($deadConnections)) {
+            $this->logger->info("[Sockeon Cleanup] Cleaned up " . count($deadConnections) . " dead connection(s). Active connections: " . count($this->clients));
+        }
     }
 
     public function disconnectClient(string $clientId): void
